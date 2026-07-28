@@ -1,0 +1,131 @@
+import { Injectable, Inject } from '@nestjs/common';
+import { 
+  societies, 
+  subscriptions, 
+  plans, 
+  featureFlags, 
+  systemLogs,
+  users,
+  userSocieties,
+  ledgers,
+  roles
+} from '../../../database/schema';
+import { DRIZZLE_PROVIDER, DrizzleDB } from '@core/database/database.module';
+import { eq, and, sql } from 'drizzle-orm';
+
+@Injectable()
+export class SuperAdminRepository {
+  constructor(
+    @Inject(DRIZZLE_PROVIDER) private readonly db: DrizzleDB,
+  ) {}
+
+  /**
+   * Aggregates platformwide multi-tenant analytical stats.
+   */
+  async getPlatformSummary() {
+    const societiesCount = await this.db
+      .select({ count: sql<number>`count(${societies.id})::integer` })
+      .from(societies);
+
+    const activeSubs = await this.db
+      .select({
+        mrr: sql<string>`sum(${plans.price}::numeric)`,
+        count: sql<number>`count(${subscriptions.id})::integer`,
+      })
+      .from(subscriptions)
+      .innerJoin(plans, eq(subscriptions.planId, plans.id))
+      .where(eq(subscriptions.status, 'ACTIVE'));
+
+    return {
+      societiesCount: societiesCount[0]?.count || 0,
+      activeSubscriptions: activeSubs[0]?.count || 0,
+      monthlyRecurringRevenue: Number(activeSubs[0]?.mrr) || 0,
+    };
+  }
+
+  async getSystemLogs() {
+    return this.db
+      .select()
+      .from(systemLogs)
+      .limit(50);
+  }
+
+  async getFeatureFlags() {
+    return this.db
+      .select()
+      .from(featureFlags);
+  }
+
+  async createSocietyWithSetup(societyData: any, presidentData: any, executorId?: string) {
+    return this.db.transaction(async (tx) => {
+      // 1. Create the Society
+      const societyId = require('crypto').randomUUID();
+      const newSociety = await tx.insert(societies).values({
+        id: societyId,
+        name: societyData.name,
+        slug: societyData.slug,
+        address: societyData.address || null,
+        registrationNumber: societyData.registrationNumber || null,
+        pan: societyData.pan || null,
+        gstin: societyData.gstin || null,
+      }).returning();
+
+      // 2. Setup President User
+      const userId = require('crypto').randomUUID();
+      const existingUser = await tx.select().from(users).where(eq(users.email, presidentData.email)).limit(1);
+      
+      let finalUserId = existingUser[0]?.id;
+      
+      if (!finalUserId) {
+        await tx.insert(users).values({
+          id: userId,
+          email: presidentData.email,
+          name: presidentData.name,
+          mobile: presidentData.mobile,
+        });
+        finalUserId = userId;
+      }
+
+      // 3. Map user as PRESIDENT
+      const role = await tx.select().from(roles).where(eq(roles.name, 'PRESIDENT')).limit(1);
+      
+      if (role[0]) {
+        await tx.insert(userSocieties).values({
+          id: require('crypto').randomUUID(),
+          userId: finalUserId,
+          societyId: societyId,
+          roleId: role[0].id,
+        });
+        
+        // If an executorId is provided and is different from the president's ID, also map them so they can view the society
+        if (executorId && executorId !== finalUserId) {
+          // Verify executor exists in the DB to avoid foreign key constraint errors
+          const executorUser = await tx.select().from(users).where(eq(users.id, executorId)).limit(1);
+          if (executorUser[0]) {
+            await tx.insert(userSocieties).values({
+              id: require('crypto').randomUUID(),
+              userId: executorId,
+              societyId: societyId,
+              roleId: role[0].id, // Giving them PRESIDENT equivalent access for now so they can manage it
+            });
+          }
+        }
+      }
+
+      // 4. Create Default Ledgers
+      const defaultLedgers = [
+        { id: require('crypto').randomUUID(), societyId, name: 'Bank Account - Main', group: 'ASSETS', code: 'BANK-01', isActive: true },
+        { id: require('crypto').randomUUID(), societyId, name: 'Cash in Hand Account', group: 'ASSETS', code: 'CASH-01', isActive: true },
+        { id: require('crypto').randomUUID(), societyId, name: 'Maintenance Dues Receivables', group: 'ASSETS', code: 'REC-01', isActive: true },
+        { id: require('crypto').randomUUID(), societyId, name: 'Vendor & Service Payables', group: 'LIABILITIES', code: 'PAY-01', isActive: true },
+        { id: require('crypto').randomUUID(), societyId, name: 'Maintenance Charges Income', group: 'INCOME', code: 'INC-01', isActive: true },
+        { id: require('crypto').randomUUID(), societyId, name: 'General Expenses', group: 'EXPENSES', code: 'EXP-01', isActive: true },
+      ];
+      
+      // @ts-ignore
+      await tx.insert(ledgers).values(defaultLedgers);
+
+      return newSociety[0];
+    });
+  }
+}

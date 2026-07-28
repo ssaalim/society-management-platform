@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./apps/frontend:/app/apps/frontend
+      - ./packages:/app/packages
+    command: npm run dev --workspace=frontend
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:4000/api/v1
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./apps/backend:/app/apps/backend
+      - ./packages:/app/packages
+    command: npm run start:dev --workspace=backend
+    environment:
+      - PORT=4000
+      - HOST=0.0.0.0
+      - NODE_ENV=development
+      - FRONTEND_URL=http://localhost:3000
+      - DATABASE_URL=postgresql://postgres:postgrespassword@postgres:5432/society_db
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - redis
+      - postgres
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_dev_data:/data
+
+  postgres:
+    image: postgres:15-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgrespassword
+      - POSTGRES_DB=society_db
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+
+volumes:
+  redis_dev_data:
+  postgres_dev_data:

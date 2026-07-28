@@ -1,0 +1,1 @@
+ALTER TABLE "settings" ADD COLUMN "maintenance_formula" text DEFAULT '(area * rate) + parking + water' NOT NULL;

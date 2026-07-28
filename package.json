@@ -1,0 +1,27 @@
+{
+  "name": "society-management-platform",
+  "version": "1.0.0",
+  "description": "Production-grade Society Management SaaS Platform for India",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev --workspace=backend\" \"npm run dev --workspace=frontend\"",
+    "build": "npm run build --workspaces --if-present",
+    "start": "npm run start --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "test": "npm run test --workspaces --if-present",
+    "migration": "npm run migration --workspace=backend",
+    "seed": "npm run seed --workspace=backend",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "docker": "docker-compose up --build",
+    "docker:dev": "docker-compose -f docker-compose.dev.yml up --build"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.4",
+    "prettier": "^3.0.3"
+  }
+}

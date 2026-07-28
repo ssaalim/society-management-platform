@@ -1,0 +1,488 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 224 71% 4%;
+    --foreground: 213 31% 91%;
+
+    --card: 224 71% 4%;
+    --card-foreground: 213 31% 91%;
+
+    --popover: 224 71% 4%;
+    --popover-foreground: 213 31% 91%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 222.2 47.4% 11.2%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 223 47% 11%;
+    --muted-foreground: 215.4 16.3% 56.9%;
+
+    --accent: 216 34% 17%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 216 34% 17%;
+    --input: 216 34% 17%;
+    --ring: 212.7 26.8% 83.9%;
+
+    --radius: 0.75rem;
+  }
+}
+
+@layer base {
+  body {
+    font-family: 'Outfit', sans-serif;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+}
+
+/* ==========================================================================
+   DAY / LIGHT THEME OVERRIDES (Full Visibility & High Contrast Overhaul)
+   ========================================================================== */
+
+/* 1. Global Page Background & Grid Overlay */
+html.light, 
+html.light body, 
+html.light main, 
+html.light .bg-\[\#030712\] {
+  background-color: #f1f5f9 !important; /* Soft slate-100 canvas for high card contrast */
+  color: #0f172a !important;
+}
+
+html.light .bg-\[linear-gradient\(to_right\,\#0f172a_1px\,transparent_1px\)\,\linear-gradient\(to_bottom\,\#0f172a_1px\,transparent_1px\)\] {
+  background-image: linear-gradient(to right, #cbd5e1 1px, transparent 1px), linear-gradient(to bottom, #cbd5e1 1px, transparent 1px) !important;
+}
+
+/* 2. Top Header Navigation Bar & Ribbon */
+html.light header {
+  background-color: #ffffff !important;
+  border-bottom-color: #cbd5e1 !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+}
+
+html.light header .border-t {
+  border-top-color: #cbd5e1 !important;
+  background-color: #f8fafc !important;
+}
+
+/* Selected Menu Tab */
+html.light .bg-indigo-600\/20 {
+  background-color: #4f46e5 !important;
+  color: #ffffff !important;
+  border-color: #4338ca !important;
+  font-weight: 700 !important;
+  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.3);
+}
+
+html.light .bg-indigo-600\/20 svg {
+  color: #ffffff !important;
+}
+
+/* Unselected Menu Tab Hover */
+html.light header a.text-slate-400:hover {
+  background-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* 3. Cards, Containers, Tiles & Modals */
+html.light .bg-slate-900\/20,
+html.light .bg-slate-900\/30,
+html.light .bg-slate-900\/40,
+html.light .bg-slate-900\/60,
+html.light .bg-slate-900,
+html.light .bg-slate-900\/50,
+html.light .bg-slate-950\/20,
+html.light .bg-slate-950\/30,
+html.light .bg-slate-950\/40,
+html.light .bg-slate-950\/50,
+html.light .bg-slate-950\/60,
+html.light .bg-slate-950\/80,
+html.light .bg-slate-950\/90,
+html.light .bg-slate-950 {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.06);
+}
+
+html.light .hover\:bg-slate-950\/50:hover,
+html.light .hover\:bg-slate-900\/30:hover,
+html.light .hover\:bg-slate-900\/20:hover,
+html.light .hover\:bg-slate-900\/10:hover {
+  background-color: #f8fafc !important;
+  border-color: #94a3b8 !important;
+}
+
+/* Icon Box Containers (Inside Stat Cards and Tiles) */
+html.light .bg-slate-900\/60,
+html.light .bg-slate-950\/50,
+html.light .bg-slate-950\/60 {
+  background-color: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+}
+
+/* 4. Role Banner Gradient Accents in Day Mode */
+html.light .from-amber-500\/20 {
+  background-image: linear-gradient(to right, #fffbe6, #ffffff) !important;
+  border-color: #fcd34d !important;
+}
+
+html.light .from-violet-500\/20 {
+  background-image: linear-gradient(to right, #f5f3ff, #ffffff) !important;
+  border-color: #c4b5fd !important;
+}
+
+html.light .from-emerald-500\/20 {
+  background-image: linear-gradient(to right, #ecfdf5, #ffffff) !important;
+  border-color: #6ee7b7 !important;
+}
+
+html.light .from-cyan-500\/20 {
+  background-image: linear-gradient(to right, #ecfeff, #ffffff) !important;
+  border-color: #67e8f9 !important;
+}
+
+html.light .from-sky-500\/20 {
+  background-image: linear-gradient(to right, #f0f9ff, #ffffff) !important;
+  border-color: #7dd3fc !important;
+}
+
+html.light .from-teal-500\/20 {
+  background-image: linear-gradient(to right, #f0fdf4, #ffffff) !important;
+  border-color: #86efac !important;
+}
+
+html.light .from-red-500\/20 {
+  background-image: linear-gradient(to right, #fef2f2, #ffffff) !important;
+  border-color: #fca5a5 !important;
+}
+
+/* 5. Society Switcher & Dropdowns */
+html.light button.bg-slate-950\/40 {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+html.light .bg-slate-950.shadow-2xl {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 20px 30px -10px rgba(15, 23, 42, 0.15) !important;
+}
+
+html.light .bg-indigo-950\/40 {
+  background-color: #eef2ff !important;
+  color: #3730a3 !important;
+}
+
+/* 6. Typography High Contrast */
+html.light .text-slate-100,
+html.light .text-slate-200 {
+  color: #0f172a !important; /* Deep navy text */
+}
+
+html.light .text-slate-300 {
+  color: #1e293b !important;
+}
+
+html.light .text-slate-400 {
+  color: #475569 !important; /* Crisp slate-600 for secondary text */
+}
+
+html.light .text-slate-500,
+html.light .text-slate-600 {
+  color: #64748b !important;
+}
+
+/* 7. Form Controls, Inputs, File Upload & Action Buttons */
+html.light input,
+html.light select,
+html.light textarea {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+html.light input::placeholder,
+html.light textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* File Upload & Secondary Buttons */
+html.light label.border-slate-800,
+html.light button.border-slate-800 {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #1e293b !important;
+  font-weight: 600 !important;
+}
+
+html.light label.border-slate-800:hover,
+html.light button.border-slate-800:hover {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+  border-color: #94a3b8 !important;
+}
+
+/* Primary Indigo Action Buttons */
+html.light .bg-indigo-600 {
+  background-color: #4f46e5 !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+}
+
+html.light .bg-indigo-600:hover {
+  background-color: #4338ca !important;
+}
+
+/* 8. Quick Action Link Cards in Light Mode */
+html.light .quick-action-tile,
+html.light a.border-violet-900\/30,
+html.light a.border-emerald-900\/30,
+html.light a.border-amber-900\/30,
+html.light a.border-cyan-900\/30,
+html.light a.border-sky-900\/30,
+html.light a.border-indigo-900\/30,
+html.light a.border-red-900\/30 {
+  background-color: #ffffff !important;
+  background-image: none !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06) !important;
+}
+
+html.light .quick-action-tile:hover,
+html.light a.border-violet-900\/30:hover,
+html.light a.border-emerald-900\/30:hover,
+html.light a.border-amber-900\/30:hover,
+html.light a.border-cyan-900\/30:hover,
+html.light a.border-sky-900\/30:hover,
+html.light a.border-indigo-900\/30:hover,
+html.light a.border-red-900\/30:hover {
+  background-color: #f8fafc !important;
+  border-color: #4f46e5 !important;
+  box-shadow: 0 4px 16px rgba(79, 70, 229, 0.15) !important;
+}
+
+html.light .quick-action-icon {
+  background-color: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+}
+
+html.light .quick-action-title {
+  color: #0f172a !important;
+  font-weight: 700 !important;
+}
+
+html.light .quick-action-desc {
+  color: #475569 !important;
+}
+
+/* 9. Status Badges & Pills in Light Mode (Vibrant High-Contrast Overhaul) */
+html.light .bg-slate-900.border-slate-800,
+html.light .bg-slate-950\/50 {
+  background-color: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #1e293b !important;
+  font-weight: 700 !important;
+}
+
+html.light .bg-emerald-950\/30,
+html.light .bg-emerald-900\/50,
+html.light .text-emerald-400 {
+  background-color: #d1fae5 !important;
+  border-color: #6ee7b7 !important;
+  color: #065f46 !important; /* Deep emerald for text readability */
+  font-weight: 700 !important;
+}
+
+html.light .bg-red-950\/30,
+html.light .bg-red-900\/50,
+html.light .text-red-400 {
+  background-color: #fee2e2 !important;
+  border-color: #fca5a5 !important;
+  color: #991b1b !important; /* Deep crimson red for text readability */
+  font-weight: 700 !important;
+}
+
+html.light .bg-amber-950\/30,
+html.light .bg-amber-900\/50,
+html.light .text-amber-400 {
+  background-color: #fef3c7 !important;
+  border-color: #fcd34d !important;
+  color: #92400e !important; /* Deep amber for text readability */
+  font-weight: 700 !important;
+}
+
+html.light .bg-sky-950\/30,
+html.light .bg-sky-900\/50,
+html.light .text-sky-400 {
+  background-color: #e0f2fe !important;
+  border-color: #7dd3fc !important;
+  color: #075985 !important; /* Deep sky blue for text readability */
+  font-weight: 700 !important;
+}
+
+html.light .bg-violet-950\/30,
+html.light .bg-violet-900\/50,
+html.light .text-violet-400 {
+  background-color: #ede9fe !important;
+  border-color: #c4b5fd !important;
+  color: #5b21b6 !important; /* Deep violet for text readability */
+  font-weight: 700 !important;
+}
+
+html.light .bg-cyan-950\/30,
+html.light .bg-cyan-900\/50,
+html.light .text-cyan-400 {
+  background-color: #cffafe !important;
+  border-color: #67e8f9 !important;
+  color: #155e75 !important; /* Deep cyan for text readability */
+  font-weight: 700 !important;
+}
+
+html.light .bg-indigo-950\/30,
+html.light .bg-indigo-950\/40,
+html.light .bg-indigo-950\/60,
+html.light .bg-indigo-900\/50,
+html.light .text-indigo-400,
+html.light .text-indigo-300 {
+  background-color: #e0e7ff !important;
+  border-color: #a5b4fc !important;
+  color: #3730a3 !important; /* Deep indigo for text readability */
+  font-weight: 700 !important;
+}
+
+/* 10. Society Switcher & Dropdown Hover in Light Mode */
+html.light .society-switcher-btn {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+html.light .society-switcher-btn:hover {
+  background-color: #f8fafc !important;
+  border-color: #94a3b8 !important;
+}
+
+html.light .society-switcher-dropdown {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 20px 30px -10px rgba(15, 23, 42, 0.15) !important;
+}
+
+html.light .society-switcher-option {
+  color: #334155 !important;
+}
+
+html.light .society-switcher-option:hover {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+  font-weight: 600 !important;
+}
+
+html.light .society-switcher-option-active {
+  background-color: #e0e7ff !important;
+  color: #3730a3 !important;
+  font-weight: 700 !important;
+}
+
+/* 11. Notification Popover & Item Tiles in Light Mode */
+html.light .notif-popover {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 20px 30px -10px rgba(15, 23, 42, 0.18) !important;
+}
+
+html.light .notif-tile {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+html.light .notif-unread {
+  background-color: #eef2ff !important;
+  border-left-color: #4f46e5 !important;
+  border-left-width: 4px !important;
+}
+
+html.light .notif-title {
+  color: #0f172a !important;
+  font-weight: 700 !important;
+}
+
+html.light .notif-body {
+  color: #334155 !important;
+}
+
+html.light .notif-time {
+  color: #64748b !important;
+}
+
+/* 12. Table Styling & Headers */
+html.light table th {
+  background-color: #f1f5f9 !important;
+  color: #1e293b !important;
+  border-bottom: 2px solid #cbd5e1 !important;
+  font-weight: 700 !important;
+}
+
+html.light table td {
+  border-bottom: 1px solid #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+html.light tr.bg-slate-950\/80,
+html.light tr.bg-slate-950\/50 {
+  background-color: #f8fafc !important;
+}
+
+/* 13. Borders & Greys Readability Overhaul */
+html.light .border-slate-800,
+html.light .border-slate-800\/30,
+html.light .border-slate-800\/40,
+html.light .border-slate-800\/50,
+html.light .border-slate-800\/60,
+html.light .border-slate-700,
+html.light .border-slate-700\/50 {
+  border-color: #cbd5e1 !important; /* Sharp slate-300 border */
+}
+
+/* 14. Payment Modal Popup Overhaul (Dark & Light Theme) */
+
+html.light .modal-summary-box {
+  background-color: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+html.light .modal-history-box {
+  background-color: #eef2ff !important;
+  border-color: #c7d2fe !important;
+  color: #1e1b4b !important;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
