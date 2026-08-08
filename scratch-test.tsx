@@ -108,14 +108,14 @@ interface StatCardProps {
 
 function StatCard({ label, value, icon, trend, trendLabel, accent, colorTheme = 'slate' }: StatCardProps) {
   const themeClasses: Record<string, { bg: string, text: string, border: string, iconBg: string, label: string }> = {
-    emerald: { bg: 'bg-white hover:bg-slate-50 dark:bg-slate-950/30 dark:hover:bg-slate-950/50', border: 'border-emerald-200 dark:border-emerald-900/30', text: 'text-emerald-950 dark:text-slate-100', label: 'text-emerald-700 dark:text-slate-400', iconBg: 'bg-white dark:bg-slate-900/60 border-emerald-200 dark:border-slate-800/40' },
-    sky: { bg: 'bg-white hover:bg-slate-50 dark:bg-slate-950/30 dark:hover:bg-slate-950/50', border: 'border-sky-200 dark:border-sky-900/30', text: 'text-sky-950 dark:text-slate-100', label: 'text-sky-700 dark:text-slate-400', iconBg: 'bg-white dark:bg-slate-900/60 border-sky-200 dark:border-slate-800/40' },
-    amber: { bg: 'bg-white hover:bg-slate-50 dark:bg-slate-950/30 dark:hover:bg-slate-950/50', border: 'border-amber-200 dark:border-amber-900/30', text: 'text-amber-950 dark:text-slate-100', label: 'text-amber-700 dark:text-slate-400', iconBg: 'bg-white dark:bg-slate-900/60 border-amber-200 dark:border-slate-800/40' },
-    violet: { bg: 'bg-white hover:bg-slate-50 dark:bg-slate-950/30 dark:hover:bg-slate-950/50', border: 'border-violet-200 dark:border-violet-900/30', text: 'text-violet-950 dark:text-slate-100', label: 'text-violet-700 dark:text-slate-400', iconBg: 'bg-white dark:bg-slate-900/60 border-violet-200 dark:border-slate-800/40' },
-    indigo: { bg: 'bg-white hover:bg-slate-50 dark:bg-slate-950/30 dark:hover:bg-slate-950/50', border: 'border-indigo-200 dark:border-indigo-900/30', text: 'text-indigo-950 dark:text-slate-100', label: 'text-indigo-700 dark:text-slate-400', iconBg: 'bg-white dark:bg-slate-900/60 border-indigo-200 dark:border-slate-800/40' },
-    red: { bg: 'bg-white hover:bg-slate-50 dark:bg-slate-950/30 dark:hover:bg-slate-950/50', border: 'border-red-200 dark:border-red-900/30', text: 'text-red-950 dark:text-slate-100', label: 'text-red-700 dark:text-slate-400', iconBg: 'bg-white dark:bg-slate-900/60 border-red-200 dark:border-slate-800/40' },
-    cyan: { bg: 'bg-white hover:bg-slate-50 dark:bg-slate-950/30 dark:hover:bg-slate-950/50', border: 'border-cyan-200 dark:border-cyan-900/30', text: 'text-cyan-950 dark:text-slate-100', label: 'text-cyan-700 dark:text-slate-400', iconBg: 'bg-white dark:bg-slate-900/60 border-cyan-200 dark:border-slate-800/40' },
-    slate: { bg: 'bg-white hover:bg-slate-50 dark:bg-slate-950/30 dark:hover:bg-slate-950/50', border: 'border-slate-200 dark:border-slate-800', text: 'text-slate-900 dark:text-slate-100', label: 'text-slate-500 dark:text-slate-400', iconBg: 'bg-white dark:bg-slate-900/60 border-slate-200 dark:border-slate-800/40' },
+    emerald: { bg: 'bg-emerald-50 hover:bg-emerald-100 dark:bg-white dark:bg-slate-950/30 dark:hover:bg-white dark:bg-slate-950/50', border: 'border-emerald-200 dark:border-emerald-900/30', text: 'text-emerald-950 dark:text-slate-100', label: 'text-emerald-700 dark:text-slate-700 dark:text-slate-400', iconBg: 'bg-emerald-100 dark:bg-slate-50 dark:bg-slate-900/60 border-emerald-200 dark:border-slate-200 dark:border-slate-800/40' },
+    sky: { bg: 'bg-sky-50 hover:bg-sky-100 dark:bg-white dark:bg-slate-950/30 dark:hover:bg-white dark:bg-slate-950/50', border: 'border-sky-200 dark:border-sky-900/30', text: 'text-sky-950 dark:text-slate-100', label: 'text-sky-700 dark:text-slate-700 dark:text-slate-400', iconBg: 'bg-sky-100 dark:bg-slate-50 dark:bg-slate-900/60 border-sky-200 dark:border-slate-200 dark:border-slate-800/40' },
+    amber: { bg: 'bg-amber-50 hover:bg-amber-100 dark:bg-white dark:bg-slate-950/30 dark:hover:bg-white dark:bg-slate-950/50', border: 'border-amber-200 dark:border-amber-900/30', text: 'text-amber-950 dark:text-slate-100', label: 'text-amber-700 dark:text-slate-700 dark:text-slate-400', iconBg: 'bg-amber-100 dark:bg-slate-50 dark:bg-slate-900/60 border-amber-200 dark:border-slate-200 dark:border-slate-800/40' },
+    violet: { bg: 'bg-violet-50 hover:bg-violet-100 dark:bg-white dark:bg-slate-950/30 dark:hover:bg-white dark:bg-slate-950/50', border: 'border-violet-200 dark:border-violet-900/30', text: 'text-violet-950 dark:text-slate-100', label: 'text-violet-700 dark:text-slate-700 dark:text-slate-400', iconBg: 'bg-violet-100 dark:bg-slate-50 dark:bg-slate-900/60 border-violet-200 dark:border-slate-200 dark:border-slate-800/40' },
+    indigo: { bg: 'bg-indigo-50 hover:bg-indigo-100 dark:bg-white dark:bg-slate-950/30 dark:hover:bg-white dark:bg-slate-950/50', border: 'border-indigo-200 dark:border-indigo-900/30', text: 'text-indigo-950 dark:text-slate-100', label: 'text-indigo-700 dark:text-slate-700 dark:text-slate-400', iconBg: 'bg-indigo-100 dark:bg-slate-50 dark:bg-slate-900/60 border-indigo-200 dark:border-slate-200 dark:border-slate-800/40' },
+    red: { bg: 'bg-red-50 hover:bg-red-100 dark:bg-white dark:bg-slate-950/30 dark:hover:bg-white dark:bg-slate-950/50', border: 'border-red-200 dark:border-red-900/30', text: 'text-red-950 dark:text-slate-100', label: 'text-red-700 dark:text-slate-700 dark:text-slate-400', iconBg: 'bg-red-100 dark:bg-slate-50 dark:bg-slate-900/60 border-red-200 dark:border-slate-200 dark:border-slate-800/40' },
+    cyan: { bg: 'bg-cyan-50 hover:bg-cyan-100 dark:bg-white dark:bg-slate-950/30 dark:hover:bg-white dark:bg-slate-950/50', border: 'border-cyan-200 dark:border-cyan-900/30', text: 'text-cyan-950 dark:text-slate-100', label: 'text-cyan-700 dark:text-slate-700 dark:text-slate-400', iconBg: 'bg-cyan-100 dark:bg-slate-50 dark:bg-slate-900/60 border-cyan-200 dark:border-slate-200 dark:border-slate-800/40' },
+    slate: { bg: 'bg-white hover:bg-slate-50 dark:bg-white dark:bg-slate-950/30 dark:hover:bg-white dark:bg-slate-950/50', border: 'border-slate-200 dark:border-slate-200 dark:border-slate-800', text: 'text-slate-900 dark:text-slate-100', label: 'text-slate-500 dark:text-slate-500 dark:text-slate-700 dark:text-slate-400', iconBg: 'bg-slate-100 dark:bg-slate-50 dark:bg-slate-900/60 border-slate-200 dark:border-slate-200 dark:border-slate-800/40' },
   };
 
   const t = themeClasses[colorTheme] || themeClasses.slate;
@@ -132,7 +132,7 @@ function StatCard({ label, value, icon, trend, trendLabel, accent, colorTheme = 
       <div className="flex items-baseline gap-2">
         <span className={`text-2xl font-black ${t.text}`}>{value}</span>
         {trend && trendLabel && (
-          <span className={`text-[10px] font-semibold flex items-center gap-0.5 ${trend === 'up' ? 'text-emerald-400' : trend === 'down' ? 'text-red-400' : 'text-slate-500'
+          <span className={`text-[10px] font-semibold flex items-center gap-0.5 ${trend === 'up' ? 'text-emerald-400' : trend === 'down' ? 'text-red-400' : 'text-slate-500 dark:text-slate-500'
             }`}>
             {trend === 'up' ? <TrendingUp className="h-3 w-3" /> : trend === 'down' ? <TrendingDown className="h-3 w-3" /> : null}
             {trendLabel}
@@ -157,13 +157,12 @@ interface QuickActionProps {
 
 function QuickAction({ label, description, href, icon, accent, colorTheme = 'slate' }: QuickActionProps) {
   const themeClasses: Record<string, { bg: string, text: string, desc: string, border: string, iconBg: string }> = {
-    emerald: { bg: 'bg-white hover:bg-slate-50 dark:bg-slate-950/40 dark:hover:bg-slate-950/60', border: 'border-emerald-200 dark:border-emerald-900/30', text: 'text-emerald-950 dark:text-slate-200', desc: 'text-emerald-700/70 dark:text-slate-400', iconBg: 'bg-white dark:bg-slate-900/80 border-emerald-200 dark:border-slate-800/60' },
-    sky: { bg: 'bg-white hover:bg-slate-50 dark:bg-slate-950/40 dark:hover:bg-slate-950/60', border: 'border-sky-200 dark:border-sky-900/30', text: 'text-sky-950 dark:text-slate-200', desc: 'text-sky-700/70 dark:text-slate-400', iconBg: 'bg-white dark:bg-slate-900/80 border-sky-200 dark:border-slate-800/60' },
-    amber: { bg: 'bg-white hover:bg-slate-50 dark:bg-slate-950/40 dark:hover:bg-slate-950/60', border: 'border-amber-200 dark:border-amber-900/30', text: 'text-amber-950 dark:text-slate-200', desc: 'text-amber-700/70 dark:text-slate-400', iconBg: 'bg-white dark:bg-slate-900/80 border-amber-200 dark:border-slate-800/60' },
-    violet: { bg: 'bg-white hover:bg-slate-50 dark:bg-slate-950/40 dark:hover:bg-slate-950/60', border: 'border-violet-200 dark:border-violet-900/30', text: 'text-violet-950 dark:text-slate-200', desc: 'text-violet-700/70 dark:text-slate-400', iconBg: 'bg-white dark:bg-slate-900/80 border-violet-200 dark:border-slate-800/60' },
-    indigo: { bg: 'bg-white hover:bg-slate-50 dark:bg-slate-950/40 dark:hover:bg-slate-950/60', border: 'border-indigo-200 dark:border-indigo-900/30', text: 'text-indigo-950 dark:text-slate-200', desc: 'text-indigo-700/70 dark:text-slate-400', iconBg: 'bg-white dark:bg-slate-900/80 border-indigo-200 dark:border-slate-800/60' },
-    cyan: { bg: 'bg-white hover:bg-slate-50 dark:bg-slate-950/40 dark:hover:bg-slate-950/60', border: 'border-cyan-200 dark:border-cyan-900/30', text: 'text-cyan-950 dark:text-slate-200', desc: 'text-cyan-700/70 dark:text-slate-400', iconBg: 'bg-white dark:bg-slate-900/80 border-cyan-200 dark:border-slate-800/60' },
-    slate: { bg: 'bg-white hover:bg-slate-50 dark:bg-slate-950/40 dark:hover:bg-slate-950/60', border: 'border-slate-200 dark:border-slate-800', text: 'text-slate-900 dark:text-slate-200', desc: 'text-slate-500 dark:text-slate-400', iconBg: 'bg-white dark:bg-slate-900/80 border-slate-200 dark:border-slate-800/60' },
+    emerald: { bg: 'bg-emerald-50 hover:bg-emerald-100 dark:bg-white dark:bg-slate-950/40 dark:hover:bg-white dark:bg-slate-950/60', border: 'border-emerald-200 dark:border-emerald-900/30', text: 'text-emerald-950 dark:text-slate-900 dark:text-slate-200', desc: 'text-emerald-700 dark:text-slate-700 dark:text-slate-400', iconBg: 'bg-emerald-100 dark:bg-slate-50 dark:bg-slate-900/80 border-emerald-200 dark:border-slate-200 dark:border-slate-800/60' },
+    sky: { bg: 'bg-sky-50 hover:bg-sky-100 dark:bg-white dark:bg-slate-950/40 dark:hover:bg-white dark:bg-slate-950/60', border: 'border-sky-200 dark:border-sky-900/30', text: 'text-sky-950 dark:text-slate-900 dark:text-slate-200', desc: 'text-sky-700 dark:text-slate-700 dark:text-slate-400', iconBg: 'bg-sky-100 dark:bg-slate-50 dark:bg-slate-900/80 border-sky-200 dark:border-slate-200 dark:border-slate-800/60' },
+    amber: { bg: 'bg-amber-50 hover:bg-amber-100 dark:bg-white dark:bg-slate-950/40 dark:hover:bg-white dark:bg-slate-950/60', border: 'border-amber-200 dark:border-amber-900/30', text: 'text-amber-950 dark:text-slate-900 dark:text-slate-200', desc: 'text-amber-700 dark:text-slate-700 dark:text-slate-400', iconBg: 'bg-amber-100 dark:bg-slate-50 dark:bg-slate-900/80 border-amber-200 dark:border-slate-200 dark:border-slate-800/60' },
+    violet: { bg: 'bg-violet-50 hover:bg-violet-100 dark:bg-white dark:bg-slate-950/40 dark:hover:bg-white dark:bg-slate-950/60', border: 'border-violet-200 dark:border-violet-900/30', text: 'text-violet-950 dark:text-slate-900 dark:text-slate-200', desc: 'text-violet-700 dark:text-slate-700 dark:text-slate-400', iconBg: 'bg-violet-100 dark:bg-slate-50 dark:bg-slate-900/80 border-violet-200 dark:border-slate-200 dark:border-slate-800/60' },
+    indigo: { bg: 'bg-indigo-50 hover:bg-indigo-100 dark:bg-white dark:bg-slate-950/40 dark:hover:bg-white dark:bg-slate-950/60', border: 'border-indigo-200 dark:border-indigo-900/30', text: 'text-indigo-950 dark:text-slate-900 dark:text-slate-200', desc: 'text-indigo-700 dark:text-slate-700 dark:text-slate-400', iconBg: 'bg-indigo-100 dark:bg-slate-50 dark:bg-slate-900/80 border-indigo-200 dark:border-slate-200 dark:border-slate-800/60' },
+    slate: { bg: 'bg-white hover:bg-slate-50 dark:bg-white dark:bg-slate-950/40 dark:hover:bg-white dark:bg-slate-950/60', border: 'border-slate-200 dark:border-slate-200 dark:border-slate-800', text: 'text-slate-900 dark:text-slate-900 dark:text-slate-200', desc: 'text-slate-500 dark:text-slate-500 dark:text-slate-700 dark:text-slate-400', iconBg: 'bg-slate-100 dark:bg-slate-50 dark:bg-slate-900/80 border-slate-200 dark:border-slate-200 dark:border-slate-800/60' },
   };
 
   const t = themeClasses[colorTheme] || themeClasses.slate;
@@ -178,10 +177,10 @@ function QuickAction({ label, description, href, icon, accent, colorTheme = 'sla
         {icon}
       </div>
       <div className="flex-1 min-w-0">
-        <h4 className={`text-sm font-semibold transition-colors quick-action-title ${t.text}`}>{label}</h4>
+        <h4 className={`text-sm font-semibold transition-colors quick-action-title ${t.text} group-hover:text-indigo-600 dark:group-hover:text-indigo-400`}>{label}</h4>
         <p className={`text-[11px] truncate quick-action-desc ${t.desc}`}>{description}</p>
       </div>
-      <ArrowRight className="h-4 w-4 text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors shrink-0" />
+      <ArrowRight className="h-4 w-4 text-slate-700 dark:text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors shrink-0" />
     </Link>
   );
 }
@@ -204,16 +203,16 @@ function ActivityRow({ item }: { item: ActivityItem }) {
     OPEN: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900/50',
     ASSIGNED: 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/30 dark:text-sky-400 dark:border-sky-900/50',
     RESOLVED: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-900/50',
-    CLOSED: 'bg-white text-slate-700 border-slate-300 dark:bg-slate-800/30 dark:text-slate-400 dark:border-slate-700/50',
+    CLOSED: 'bg-slate-100 text-slate-600 border-slate-300 dark:bg-slate-100 dark:bg-slate-800/30 dark:text-slate-700 dark:text-slate-400 dark:border-slate-300 dark:border-slate-700/50',
     CLEARED: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-900/50',
     OVERDUE: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/30 dark:text-red-400 dark:border-red-900/50',
   };
 
   return (
-    <div className="flex items-center justify-between p-3 rounded-lg bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/60 hover:bg-slate-50 dark:hover:bg-slate-900/60 transition-all shadow-sm dark:shadow-none">
+    <div className="flex items-center justify-between p-3 rounded-lg bg-white dark:bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-200 dark:border-slate-800/60 hover:bg-slate-50 dark:hover:bg-slate-50 dark:bg-slate-900/60 transition-all shadow-sm dark:shadow-none">
       <div className="flex flex-col gap-1 overflow-hidden">
-        <span className="text-sm font-semibold text-slate-900 dark:text-slate-200 truncate pr-2">{item.title}</span>
-        <span className="text-[10px] text-slate-500 dark:text-slate-400">{item.timestamp}</span>
+        <span className="text-sm font-semibold text-slate-900 dark:text-slate-900 dark:text-slate-200 truncate pr-2">{item.title}</span>
+        <span className="text-[10px] text-slate-500 dark:text-slate-500 dark:text-slate-700 dark:text-slate-400">{item.timestamp}</span>
       </div>
       {item.status && (
         <span className={`text-[10px] font-bold px-2 py-1 rounded border uppercase tracking-wider ${statusColors[item.status.toUpperCase()] || statusColors.OPEN}`}>
@@ -378,7 +377,7 @@ export default function DashboardPage() {
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="h-8 w-8 text-indigo-500 animate-spin" />
-          <span className="text-xs text-slate-500">Loading dashboard...</span>
+          <span className="text-xs text-slate-500 dark:text-slate-500">Loading dashboard...</span>
         </div>
       </div>
     );
@@ -395,7 +394,7 @@ export default function DashboardPage() {
           label="Total Billed"
           value={`₹${stats.totalBilled?.toLocaleString('en-IN') || '0'}`}
           icon={<IndianRupee className="h-4 w-4 text-emerald-400" />}
-          accent="border-emerald-200 dark:border-emerald-900/30"
+          accent="border-emerald-900/30"
         />
         <StatCard
           label="Total Collected"
@@ -403,7 +402,7 @@ export default function DashboardPage() {
           icon={<Wallet className="h-4 w-4 text-sky-400" />}
           trend={stats.collectionRate >= 80 ? 'up' : 'down'}
           trendLabel={`${stats.collectionRate}% rate`}
-          accent="border-sky-200 dark:border-sky-900/30"
+          accent="border-sky-900/30"
         />
         <StatCard
           label="Open Complaints"
@@ -411,7 +410,7 @@ export default function DashboardPage() {
           icon={<MessageSquare className="h-4 w-4 text-amber-400" />}
           trend={stats.openComplaints > 3 ? 'down' : 'up'}
           trendLabel={stats.openComplaints > 3 ? 'Needs attention' : 'Under control'}
-          accent="border-amber-200 dark:border-amber-900/30"
+          accent="border-amber-900/30"
         />
         <StatCard
           label="Pending Reviews"
@@ -419,14 +418,14 @@ export default function DashboardPage() {
           icon={<Receipt className="h-4 w-4 text-blue-400" />}
           trend={stats.pendingReviewsCount > 0 ? 'down' : 'neutral'}
           trendLabel={stats.pendingReviewsCount > 0 ? 'Action required' : 'All clear'}
-          accent="border-blue-200 dark:border-blue-900/30"
+          accent="border-blue-900/30"
           colorTheme="sky"
         />
         <StatCard
           label="Active Members"
           value={stats.membersCount || 0}
           icon={<Users className="h-4 w-4 text-violet-400" />}
-          accent="border-violet-200 dark:border-violet-900/30"
+          accent="border-violet-900/30"
         />
       </div>
 
@@ -436,13 +435,13 @@ export default function DashboardPage() {
           label="Total Flats"
           value={stats.flatsCount || 0}
           icon={<Building className="h-4 w-4 text-indigo-400" />}
-          accent="border-indigo-200 dark:border-indigo-900/30"
+          accent="border-indigo-900/30"
         />
         <StatCard
           label="Paid Invoices"
           value={stats.paidCount || 0}
           icon={<CheckCircle2 className="h-4 w-4 text-emerald-400" />}
-          accent="border-emerald-200 dark:border-emerald-900/30"
+          accent="border-emerald-900/30"
         />
         <StatCard
           label="Unpaid Invoices"
@@ -450,7 +449,7 @@ export default function DashboardPage() {
           icon={<CreditCard className="h-4 w-4 text-amber-400" />}
           trend={stats.unpaidCount > 0 ? 'down' : 'up'}
           trendLabel={stats.unpaidCount > 0 ? 'Pending' : 'All clear'}
-          accent="border-amber-200 dark:border-amber-900/30"
+          accent="border-amber-900/30"
         />
         <StatCard
           label="Overdue Invoices"
@@ -458,16 +457,16 @@ export default function DashboardPage() {
           icon={<AlertTriangle className="h-4 w-4 text-red-400" />}
           trend={stats.residentOverdueCount > 0 ? 'down' : 'up'}
           trendLabel={stats.residentOverdueCount > 0 ? `₹${stats.overdueAmount?.toLocaleString('en-IN') || '0'} Due` : 'All clear'}
-          accent="border-red-200 dark:border-red-900/30"
+          accent="border-red-900/30"
         />
       </div>
 
       {/* Activity Feeds + Quick Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent Bills */}
-        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/20 shadow-sm dark:shadow-none p-5 space-y-3">
+        <div className="rounded-xl border border-slate-200 dark:border-slate-200 dark:border-slate-800 bg-white dark:bg-white dark:bg-slate-950/20 shadow-sm dark:shadow-none p-5 space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Recent Bills</h3>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-500 dark:text-slate-700 dark:text-slate-400">Recent Bills</h3>
             <Link href={`/${slug}/maintenance`} className="text-[10px] text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-semibold">View All →</Link>
           </div>
           {recentBills.length === 0 ? (
@@ -478,9 +477,9 @@ export default function DashboardPage() {
         </div>
 
         {/* Recent Complaints */}
-        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/20 shadow-sm dark:shadow-none p-5 space-y-3">
+        <div className="rounded-xl border border-slate-200 dark:border-slate-200 dark:border-slate-800 bg-white dark:bg-white dark:bg-slate-950/20 shadow-sm dark:shadow-none p-5 space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Complaints</h3>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-500 dark:text-slate-700 dark:text-slate-400">Complaints</h3>
             <Link href={`/${slug}/complaints`} className="text-[10px] text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-semibold">View All →</Link>
           </div>
           {recentComplaints.length === 0 ? (
@@ -491,9 +490,9 @@ export default function DashboardPage() {
         </div>
 
         {/* Recent Receipts */}
-        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/20 shadow-sm dark:shadow-none p-5 space-y-3">
+        <div className="rounded-xl border border-slate-200 dark:border-slate-200 dark:border-slate-800 bg-white dark:bg-white dark:bg-slate-950/20 shadow-sm dark:shadow-none p-5 space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Recent Payments</h3>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-500 dark:text-slate-700 dark:text-slate-400">Recent Payments</h3>
             <Link href={`/${slug}/payments`} className="text-[10px] text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-semibold">View All →</Link>
           </div>
           {recentReceipts.length === 0 ? (
@@ -506,14 +505,14 @@ export default function DashboardPage() {
 
       {/* Quick Actions */}
       <div>
-        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Quick Actions</h3>
+        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-500 dark:text-slate-700 dark:text-slate-400 mb-3">Quick Actions</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          <QuickAction label="Manage Members" description="View and manage society members" href={`/${slug}/members`} icon={<Users className="h-4 w-4 text-violet-400" />} colorTheme="violet" accent="border-violet-200 dark:border-violet-900/30" />
-          <QuickAction label="Generate Bills" description="Create maintenance bills" href={`/${slug}/maintenance`} icon={<CreditCard className="h-4 w-4 text-emerald-400" />} colorTheme="emerald" accent="border-emerald-200 dark:border-emerald-900/30" />
-          <QuickAction label="View Complaints" description="Track and resolve complaints" href={`/${slug}/complaints`} icon={<MessageSquare className="h-4 w-4 text-amber-400" />} colorTheme="amber" accent="border-amber-200 dark:border-amber-900/30" />
-          <QuickAction label="Accounting" description="Ledgers, vouchers, and statements" href={`/${slug}/accounting`} icon={<BookOpen className="h-4 w-4 text-cyan-400" />} colorTheme="cyan" accent="border-cyan-200 dark:border-cyan-900/30" />
-          <QuickAction label="Society Assets" description="View and manage capital assets" href={`/${slug}/assets`} icon={<Box className="h-4 w-4 text-sky-400" />} colorTheme="sky" accent="border-sky-200 dark:border-sky-900/30" />
-          <QuickAction label="Reports" description="Financial and operational reports" href={`/${slug}/reports`} icon={<BarChart3 className="h-4 w-4 text-indigo-400" />} colorTheme="indigo" accent="border-indigo-200 dark:border-indigo-900/30" />
+          <QuickAction label="Manage Members" description="View and manage society members" href={`/${slug}/members`} icon={<Users className="h-4 w-4 text-violet-400" />} accent="border-violet-900/30" />
+          <QuickAction label="Generate Bills" description="Create maintenance bills" href={`/${slug}/maintenance`} icon={<CreditCard className="h-4 w-4 text-emerald-400" />} accent="border-emerald-900/30" />
+          <QuickAction label="View Complaints" description="Track and resolve complaints" href={`/${slug}/complaints`} icon={<MessageSquare className="h-4 w-4 text-amber-400" />} accent="border-amber-900/30" />
+          <QuickAction label="Accounting" description="Ledgers, vouchers, and statements" href={`/${slug}/accounting`} icon={<BookOpen className="h-4 w-4 text-cyan-400" />} accent="border-cyan-900/30" />
+          <QuickAction label="Society Assets" description="View and manage capital assets" href={`/${slug}/assets`} icon={<Box className="h-4 w-4 text-sky-400" />} accent="border-sky-900/30" />
+          <QuickAction label="Reports" description="Financial and operational reports" href={`/${slug}/reports`} icon={<BarChart3 className="h-4 w-4 text-indigo-400" />} accent="border-indigo-900/30" />
         </div>
       </div>
     </>
@@ -529,7 +528,7 @@ export default function DashboardPage() {
           label="Total Billed"
           value={`₹${stats.totalBilled?.toLocaleString('en-IN') || '0'}`}
           icon={<IndianRupee className="h-4 w-4 text-emerald-400" />}
-          accent="border-emerald-200 dark:border-emerald-900/30"
+          accent="border-emerald-900/30"
         />
         <StatCard
           label="Total Collected"
@@ -537,7 +536,7 @@ export default function DashboardPage() {
           icon={<Wallet className="h-4 w-4 text-sky-400" />}
           trend={stats.collectionRate >= 80 ? 'up' : 'down'}
           trendLabel={`${stats.collectionRate}% collection`}
-          accent="border-sky-200 dark:border-sky-900/30"
+          accent="border-sky-900/30"
         />
         <StatCard
           label="Outstanding"
@@ -545,26 +544,26 @@ export default function DashboardPage() {
           icon={<AlertTriangle className="h-4 w-4 text-red-400" />}
           trend={stats.outstanding > 0 ? 'down' : 'up'}
           trendLabel={stats.outstanding > 0 ? 'Pending recovery' : 'All clear'}
-          accent="border-red-200 dark:border-red-900/30"
+          accent="border-red-900/30"
         />
         <StatCard
           label="Collection Rate"
           value={`${stats.collectionRate || 0}%`}
           icon={<PieChart className="h-4 w-4 text-indigo-400" />}
-          accent="border-indigo-200 dark:border-indigo-900/30"
+          accent="border-indigo-900/30"
         />
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <StatCard label="Paid Invoices" value={stats.paidCount || 0} icon={<CheckCircle2 className="h-4 w-4 text-emerald-400" />} accent="border-emerald-200 dark:border-emerald-900/30" />
-        <StatCard label="Unpaid Invoices" value={stats.unpaidCount || 0} icon={<AlertTriangle className="h-4 w-4 text-red-400" />} accent="border-red-200 dark:border-red-900/30" />
-        <StatCard label="Total Flats" value={stats.flatsCount || 0} icon={<Building className="h-4 w-4 text-violet-400" />} accent="border-violet-200 dark:border-violet-900/30" />
+        <StatCard label="Paid Invoices" value={stats.paidCount || 0} icon={<CheckCircle2 className="h-4 w-4 text-emerald-400" />} accent="border-emerald-900/30" />
+        <StatCard label="Unpaid Invoices" value={stats.unpaidCount || 0} icon={<AlertTriangle className="h-4 w-4 text-red-400" />} accent="border-red-900/30" />
+        <StatCard label="Total Flats" value={stats.flatsCount || 0} icon={<Building className="h-4 w-4 text-violet-400" />} accent="border-violet-900/30" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/20 p-5 space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Recent Bills</h3>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-500 dark:text-slate-700 dark:text-slate-400">Recent Bills</h3>
             <Link href={`/${slug}/maintenance`} className="text-[10px] text-indigo-400 hover:text-indigo-300 font-semibold">View All →</Link>
           </div>
           {recentBills.length === 0 ? (
@@ -576,7 +575,7 @@ export default function DashboardPage() {
 
         <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/20 p-5 space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Recent Payments</h3>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-500 dark:text-slate-700 dark:text-slate-400">Recent Payments</h3>
             <Link href={`/${slug}/payments`} className="text-[10px] text-indigo-400 hover:text-indigo-300 font-semibold">View All →</Link>
           </div>
           {recentReceipts.length === 0 ? (
@@ -588,13 +587,13 @@ export default function DashboardPage() {
       </div>
 
       <div>
-        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Quick Actions</h3>
+        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-500 dark:text-slate-700 dark:text-slate-400 mb-3">Quick Actions</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          <QuickAction label="Generate Bills" description="Create and manage maintenance bills" href={`/${slug}/maintenance`} icon={<CreditCard className="h-4 w-4 text-emerald-400" />} colorTheme="emerald" accent="border-emerald-200 dark:border-emerald-900/30" />
-          <QuickAction label="Record Payments" description="Log payment receipts" href={`/${slug}/payments`} icon={<Receipt className="h-4 w-4 text-sky-400" />} colorTheme="sky" accent="border-sky-200 dark:border-sky-900/30" />
-          <QuickAction label="Accounting" description="Ledgers and financial statements" href={`/${slug}/accounting`} icon={<BookOpen className="h-4 w-4 text-cyan-400" />} colorTheme="cyan" accent="border-cyan-200 dark:border-cyan-900/30" />
-          <QuickAction label="Financial Reports" description="Collection and defaulter reports" href={`/${slug}/reports`} icon={<BarChart3 className="h-4 w-4 text-indigo-400" />} colorTheme="indigo" accent="border-indigo-200 dark:border-indigo-900/30" />
-          <QuickAction label="Society Assets" description="Capital equipment and AMC tracking" href={`/${slug}/assets`} icon={<Box className="h-4 w-4 text-amber-400" />} colorTheme="amber" accent="border-amber-200 dark:border-amber-900/30" />
+          <QuickAction label="Generate Bills" description="Create and manage maintenance bills" href={`/${slug}/maintenance`} icon={<CreditCard className="h-4 w-4 text-emerald-400" />} accent="border-emerald-900/30" />
+          <QuickAction label="Record Payments" description="Log payment receipts" href={`/${slug}/payments`} icon={<Receipt className="h-4 w-4 text-sky-400" />} accent="border-sky-900/30" />
+          <QuickAction label="Accounting" description="Ledgers and financial statements" href={`/${slug}/accounting`} icon={<BookOpen className="h-4 w-4 text-cyan-400" />} accent="border-cyan-900/30" />
+          <QuickAction label="Financial Reports" description="Collection and defaulter reports" href={`/${slug}/reports`} icon={<BarChart3 className="h-4 w-4 text-indigo-400" />} accent="border-indigo-900/30" />
+          <QuickAction label="Society Assets" description="Capital equipment and AMC tracking" href={`/${slug}/assets`} icon={<Box className="h-4 w-4 text-amber-400" />} accent="border-amber-900/30" />
         </div>
       </div>
     </>
@@ -610,32 +609,32 @@ export default function DashboardPage() {
           label="Total Billed"
           value={`₹${stats.totalBilled?.toLocaleString('en-IN') || '0'}`}
           icon={<IndianRupee className="h-4 w-4 text-emerald-400" />}
-          accent="border-emerald-200 dark:border-emerald-900/30"
+          accent="border-emerald-900/30"
         />
         <StatCard
           label="Total Collected"
           value={`₹${stats.totalCollected?.toLocaleString('en-IN') || '0'}`}
           icon={<Wallet className="h-4 w-4 text-sky-400" />}
-          accent="border-sky-200 dark:border-sky-900/30"
+          accent="border-sky-900/30"
         />
         <StatCard
           label="Outstanding"
           value={`₹${stats.outstanding?.toLocaleString('en-IN') || '0'}`}
           icon={<AlertTriangle className="h-4 w-4 text-red-400" />}
-          accent="border-red-200 dark:border-red-900/30"
+          accent="border-red-900/30"
         />
         <StatCard
           label="Total Flats"
           value={stats.flatsCount || 0}
           icon={<Building className="h-4 w-4 text-violet-400" />}
-          accent="border-violet-200 dark:border-violet-900/30"
+          accent="border-violet-900/30"
         />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/20 p-5 space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Recent Bills</h3>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-500 dark:text-slate-700 dark:text-slate-400">Recent Bills</h3>
             <Link href={`/${slug}/maintenance`} className="text-[10px] text-indigo-400 hover:text-indigo-300 font-semibold">View All →</Link>
           </div>
           {recentBills.length === 0 ? (
@@ -647,7 +646,7 @@ export default function DashboardPage() {
 
         <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/20 p-5 space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Recent Payments</h3>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-500 dark:text-slate-700 dark:text-slate-400">Recent Payments</h3>
             <Link href={`/${slug}/payments`} className="text-[10px] text-indigo-400 hover:text-indigo-300 font-semibold">View All →</Link>
           </div>
           {recentReceipts.length === 0 ? (
@@ -659,11 +658,11 @@ export default function DashboardPage() {
       </div>
 
       <div>
-        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Quick Actions</h3>
+        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-500 dark:text-slate-700 dark:text-slate-400 mb-3">Quick Actions</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          <QuickAction label="Accounting" description="Manage ledgers, vouchers, trial balance" href={`/${slug}/accounting`} icon={<BookOpen className="h-4 w-4 text-cyan-400" />} colorTheme="cyan" accent="border-cyan-200 dark:border-cyan-900/30" />
-          <QuickAction label="View Bills" description="Review maintenance invoices" href={`/${slug}/maintenance`} icon={<FileText className="h-4 w-4 text-emerald-400" />} colorTheme="emerald" accent="border-emerald-200 dark:border-emerald-900/30" />
-          <QuickAction label="Society Assets" description="Capital equipment and AMC costs" href={`/${slug}/assets`} icon={<Box className="h-4 w-4 text-amber-400" />} colorTheme="amber" accent="border-amber-200 dark:border-amber-900/30" />
+          <QuickAction label="Accounting" description="Manage ledgers, vouchers, trial balance" href={`/${slug}/accounting`} icon={<BookOpen className="h-4 w-4 text-cyan-400" />} accent="border-cyan-900/30" />
+          <QuickAction label="View Bills" description="Review maintenance invoices" href={`/${slug}/maintenance`} icon={<FileText className="h-4 w-4 text-emerald-400" />} accent="border-emerald-900/30" />
+          <QuickAction label="Society Assets" description="Capital equipment and AMC costs" href={`/${slug}/assets`} icon={<Box className="h-4 w-4 text-amber-400" />} accent="border-amber-900/30" />
         </div>
       </div>
     </>
@@ -675,16 +674,16 @@ export default function DashboardPage() {
   const renderCommitteeDashboard = () => (
     <>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard label="Open Complaints" value={stats.openComplaints || 0} icon={<MessageSquare className="h-4 w-4 text-amber-400" />} accent="border-amber-200 dark:border-amber-900/30" />
-        <StatCard label="Resolved Tickets" value={stats.resolvedComplaints || 0} icon={<ClipboardCheck className="h-4 w-4 text-emerald-400" />} accent="border-emerald-200 dark:border-emerald-900/30" />
-        <StatCard label="Active Members" value={stats.membersCount || 0} icon={<Users className="h-4 w-4 text-violet-400" />} accent="border-violet-200 dark:border-violet-900/30" />
-        <StatCard label="Total Flats" value={stats.flatsCount || 0} icon={<Building className="h-4 w-4 text-indigo-400" />} accent="border-indigo-200 dark:border-indigo-900/30" />
+        <StatCard label="Open Complaints" value={stats.openComplaints || 0} icon={<MessageSquare className="h-4 w-4 text-amber-400" />} accent="border-amber-900/30" />
+        <StatCard label="Resolved Tickets" value={stats.resolvedComplaints || 0} icon={<ClipboardCheck className="h-4 w-4 text-emerald-400" />} accent="border-emerald-900/30" />
+        <StatCard label="Active Members" value={stats.membersCount || 0} icon={<Users className="h-4 w-4 text-violet-400" />} accent="border-violet-900/30" />
+        <StatCard label="Total Flats" value={stats.flatsCount || 0} icon={<Building className="h-4 w-4 text-indigo-400" />} accent="border-indigo-900/30" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/20 p-5 space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Active Complaints</h3>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-500 dark:text-slate-700 dark:text-slate-400">Active Complaints</h3>
             <Link href={`/${slug}/complaints`} className="text-[10px] text-indigo-400 hover:text-indigo-300 font-semibold">View All →</Link>
           </div>
           {recentComplaints.length === 0 ? (
@@ -696,7 +695,7 @@ export default function DashboardPage() {
 
         <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/20 p-5 space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Recent Bills</h3>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-500 dark:text-slate-700 dark:text-slate-400">Recent Bills</h3>
             <Link href={`/${slug}/maintenance`} className="text-[10px] text-indigo-400 hover:text-indigo-300 font-semibold">View All →</Link>
           </div>
           {recentBills.length === 0 ? (
@@ -708,11 +707,11 @@ export default function DashboardPage() {
       </div>
 
       <div>
-        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Quick Actions</h3>
+        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-500 dark:text-slate-700 dark:text-slate-400 mb-3">Quick Actions</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          <QuickAction label="View Complaints" description="Track and escalate tickets" href={`/${slug}/complaints`} icon={<MessageSquare className="h-4 w-4 text-amber-400" />} colorTheme="amber" accent="border-amber-200 dark:border-amber-900/30" />
-          <QuickAction label="Member Directory" description="View and manage members" href={`/${slug}/members`} icon={<Users className="h-4 w-4 text-violet-400" />} colorTheme="violet" accent="border-violet-200 dark:border-violet-900/30" />
-          <QuickAction label="Flat Units" description="Browse society flat units" href={`/${slug}/flats`} icon={<Building className="h-4 w-4 text-indigo-400" />} colorTheme="indigo" accent="border-indigo-200 dark:border-indigo-900/30" />
+          <QuickAction label="View Complaints" description="Track and escalate tickets" href={`/${slug}/complaints`} icon={<MessageSquare className="h-4 w-4 text-amber-400" />} accent="border-amber-900/30" />
+          <QuickAction label="Member Directory" description="View and manage members" href={`/${slug}/members`} icon={<Users className="h-4 w-4 text-violet-400" />} accent="border-violet-900/30" />
+          <QuickAction label="Flat Units" description="Browse society flat units" href={`/${slug}/flats`} icon={<Building className="h-4 w-4 text-indigo-400" />} accent="border-indigo-900/30" />
         </div>
       </div>
     </>
@@ -750,32 +749,32 @@ export default function DashboardPage() {
           icon={<IndianRupee className="h-4 w-4 text-red-400" />}
           trend={stats.outstanding > 0 ? 'down' : 'up'}
           trendLabel={stats.outstanding > 0 ? 'Due' : 'No dues'}
-          accent="border-red-200 dark:border-red-900/30"
+          accent="border-red-900/30"
         />
         <StatCard
           label="My Bills"
           value={recentBills.length}
           icon={<CreditCard className="h-4 w-4 text-emerald-400" />}
-          accent="border-emerald-200 dark:border-emerald-900/30"
+          accent="border-emerald-900/30"
         />
         <StatCard
           label="My Complaints"
           value={stats.totalComplaints || 0}
           icon={<MessageSquare className="h-4 w-4 text-amber-400" />}
-          accent="border-amber-200 dark:border-amber-900/30"
+          accent="border-amber-900/30"
         />
         <StatCard
           label="Payments Made"
           value={recentReceipts.length}
           icon={<Receipt className="h-4 w-4 text-sky-400" />}
-          accent="border-sky-200 dark:border-sky-900/30"
+          accent="border-sky-900/30"
         />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/20 p-5 space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">My Bills</h3>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-500 dark:text-slate-700 dark:text-slate-400">My Bills</h3>
             <Link href={`/${slug}/maintenance`} className="text-[10px] text-indigo-400 hover:text-indigo-300 font-semibold">View All →</Link>
           </div>
           {recentBills.length === 0 ? (
@@ -787,7 +786,7 @@ export default function DashboardPage() {
 
         <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/20 p-5 space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">My Complaints</h3>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-500 dark:text-slate-700 dark:text-slate-400">My Complaints</h3>
             <Link href={`/${slug}/complaints`} className="text-[10px] text-indigo-400 hover:text-indigo-300 font-semibold">View All →</Link>
           </div>
           {recentComplaints.length === 0 ? (
@@ -799,13 +798,13 @@ export default function DashboardPage() {
       </div>
 
       <div>
-        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Quick Actions</h3>
+        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-500 dark:text-slate-700 dark:text-slate-400 mb-3">Quick Actions</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          <QuickAction label="Resident Portal" description="Gate approvals, polls, and services" href={`/${slug}/resident`} icon={<Home className="h-4 w-4 text-sky-400" />} colorTheme="sky" accent="border-sky-200 dark:border-sky-900/30" />
-          <QuickAction label="My Flat" description="View your flat details" href={`/${slug}/flats`} icon={<Building className="h-4 w-4 text-indigo-400" />} colorTheme="indigo" accent="border-indigo-200 dark:border-indigo-900/30" />
-          <QuickAction label="File Complaint" description="Raise a new maintenance ticket" href={`/${slug}/complaints`} icon={<MessageSquare className="h-4 w-4 text-amber-400" />} colorTheme="amber" accent="border-amber-200 dark:border-amber-900/30" />
-          <QuickAction label="Member Directory" description="View society member contacts" href={`/${slug}/members`} icon={<Users className="h-4 w-4 text-violet-400" />} colorTheme="violet" accent="border-violet-200 dark:border-violet-900/30" />
-          <QuickAction label="Society Assets" description="View common area equipment" href={`/${slug}/assets`} icon={<Box className="h-4 w-4 text-emerald-400" />} colorTheme="emerald" accent="border-emerald-200 dark:border-emerald-900/30" />
+          <QuickAction label="Resident Portal" description="Gate approvals, polls, and services" href={`/${slug}/resident`} icon={<Home className="h-4 w-4 text-sky-400" />} accent="border-sky-900/30" />
+          <QuickAction label="My Flat" description="View your flat details" href={`/${slug}/flats`} icon={<Building className="h-4 w-4 text-indigo-400" />} accent="border-indigo-900/30" />
+          <QuickAction label="File Complaint" description="Raise a new maintenance ticket" href={`/${slug}/complaints`} icon={<MessageSquare className="h-4 w-4 text-amber-400" />} accent="border-amber-900/30" />
+          <QuickAction label="Member Directory" description="View society member contacts" href={`/${slug}/members`} icon={<Users className="h-4 w-4 text-violet-400" />} accent="border-violet-900/30" />
+          <QuickAction label="Society Assets" description="View common area equipment" href={`/${slug}/assets`} icon={<Box className="h-4 w-4 text-emerald-400" />} accent="border-emerald-900/30" />
         </div>
       </div>
     </>
@@ -843,20 +842,20 @@ export default function DashboardPage() {
         <div className={`rounded-2xl border bg-gradient-to-r ${config.accent} backdrop-blur-xl p-6 sm:p-8 shadow-sm dark:shadow-none`}>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-white/80 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800/50 shadow-sm dark:shadow-none">
+              <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-white/80 dark:bg-white dark:bg-slate-950/50 border border-slate-200 dark:border-slate-200 dark:border-slate-800/50 shadow-sm dark:shadow-none">
                 {config.icon}
               </div>
               <div>
                 <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">{config.label}</h1>
-                <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">{config.tagline}</p>
+                <p className="text-xs text-slate-600 dark:text-slate-700 dark:text-slate-400 mt-0.5">{config.tagline}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <div className="hidden sm:flex flex-col text-right">
-                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{(user as any)?.name || user?.email || ''}</span>
+                <span className="text-xs font-semibold text-slate-700 dark:text-slate-800 dark:text-slate-300">{(user as any)?.name || user?.email || ''}</span>
                 <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold uppercase tracking-wider">{userRole.replace('_', ' ')}</span>
               </div>
-              <div className="h-10 w-10 rounded-full bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700/50 flex items-center justify-center text-sm font-bold text-slate-700 dark:text-slate-300 shadow-sm dark:shadow-none">
+              <div className="h-10 w-10 rounded-full bg-white dark:bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-300 dark:border-slate-700/50 flex items-center justify-center text-sm font-bold text-slate-700 dark:text-slate-800 dark:text-slate-300 shadow-sm dark:shadow-none">
                 {((user as any)?.name || user?.email || '?')[0].toUpperCase()}
               </div>
             </div>

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../providers/auth-context';
 import { apiClient } from '../../../lib/api/client';
-import { Building, Search, Filter, ShieldAlert, Plus, Calculator, Settings, Receipt, Loader2, CheckCircle, AlertCircle, Calendar, History, CheckSquare, Square, Layers, X } from 'lucide-react';
+import { Building, Search, Filter, ShieldAlert, Plus, Calculator, Settings, Receipt, Loader2, CheckCircle, AlertCircle, Calendar, History, CheckSquare, Square, Layers, X, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
 
@@ -627,7 +627,7 @@ export default function MaintenanceDashboardPage() {
                             {bill.status !== 'PAID' && (
                               <button
                                 onClick={() => handleOpenSinglePaymentModal(bill)}
-                                className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-400 hover:text-emerald-300 transition-all border border-emerald-900/50 bg-emerald-950/30 px-2.5 py-1 rounded-md"
+                                className="inline-flex items-center gap-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg shadow-sm transition-all"
                               >
                                 <Receipt className="h-3.5 w-3.5" /> Record Payment
                               </button>
@@ -637,7 +637,7 @@ export default function MaintenanceDashboardPage() {
                                 href={`/${society_slug}/maintenance/${bill.id}`}
                                 className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-all"
                               >
-                                Open Invoice
+                                Open Invoice <ArrowRight className="h-3.5 w-3.5" />
                               </Link>
                             )}
                           </td>
@@ -749,18 +749,21 @@ export default function MaintenanceDashboardPage() {
               {/* Option 1: PER_SQ_FT */}
               <div 
                 onClick={() => setCalculationType('PER_SQ_FT')}
-                className={`p-4 rounded-xl border cursor-pointer transition-all space-y-2 ${
+                className={`p-4 rounded-xl border-2 cursor-pointer transition-all space-y-2 relative ${
                   calculationType === 'PER_SQ_FT'
-                    ? 'bg-indigo-950/50 border-indigo-500 text-slate-100 shadow-md ring-1 ring-indigo-500'
-                    : 'bg-slate-950/60 border-slate-800 text-slate-500 dark:text-slate-400 hover:border-slate-700'
+                    ? 'bg-indigo-50 border-indigo-600 text-slate-900 shadow-lg ring-2 ring-indigo-600 dark:bg-indigo-950/50 dark:border-indigo-500 dark:text-slate-100 dark:ring-indigo-500'
+                    : 'bg-white dark:bg-slate-950/60 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700'
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-indigo-400">Mode 1</span>
-                  <span className="text-sm">📏</span>
+                  <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Mode 1</span>
+                  <div className="flex items-center gap-1.5">
+                    {calculationType === 'PER_SQ_FT' && <CheckCircle className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />}
+                    <span className="text-sm">📏</span>
+                  </div>
                 </div>
-                <h4 className="text-sm font-bold text-slate-200">Per Sq. Ft. Rate</h4>
-                <p className="text-[11px] text-slate-500 leading-relaxed">
+                <h4 className="text-sm font-bold text-slate-900 dark:text-slate-200">Per Sq. Ft. Rate</h4>
+                <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
                   Calculated based on the area of each flat (Area × Rate per Sq. Ft.)
                 </p>
               </div>
@@ -768,18 +771,21 @@ export default function MaintenanceDashboardPage() {
               {/* Option 2: PER_FLAT_TYPE */}
               <div 
                 onClick={() => setCalculationType('PER_FLAT_TYPE')}
-                className={`p-4 rounded-xl border cursor-pointer transition-all space-y-2 ${
+                className={`p-4 rounded-xl border-2 cursor-pointer transition-all space-y-2 relative ${
                   calculationType === 'PER_FLAT_TYPE'
-                    ? 'bg-indigo-950/50 border-indigo-500 text-slate-100 shadow-md ring-1 ring-indigo-500'
-                    : 'bg-slate-950/60 border-slate-800 text-slate-500 dark:text-slate-400 hover:border-slate-700'
+                    ? 'bg-indigo-50 border-indigo-600 text-slate-900 shadow-lg ring-2 ring-indigo-600 dark:bg-indigo-950/50 dark:border-indigo-500 dark:text-slate-100 dark:ring-indigo-500'
+                    : 'bg-white dark:bg-slate-950/60 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700'
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-indigo-400">Mode 2</span>
-                  <span className="text-sm">🏢</span>
+                  <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Mode 2</span>
+                  <div className="flex items-center gap-1.5">
+                    {calculationType === 'PER_FLAT_TYPE' && <CheckCircle className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />}
+                    <span className="text-sm">🏢</span>
+                  </div>
                 </div>
-                <h4 className="text-sm font-bold text-slate-200">Per Flat Type</h4>
-                <p className="text-[11px] text-slate-500 leading-relaxed">
+                <h4 className="text-sm font-bold text-slate-900 dark:text-slate-200">Per Flat Type</h4>
+                <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
                   Different fixed rates per flat type (1BHK, 2BHK, 3BHK, Shop, etc.)
                 </p>
               </div>
@@ -787,18 +793,21 @@ export default function MaintenanceDashboardPage() {
               {/* Option 3: FLAT_RATE_SAME_FOR_ALL */}
               <div 
                 onClick={() => setCalculationType('FLAT_RATE_SAME_FOR_ALL')}
-                className={`p-4 rounded-xl border cursor-pointer transition-all space-y-2 ${
+                className={`p-4 rounded-xl border-2 cursor-pointer transition-all space-y-2 relative ${
                   calculationType === 'FLAT_RATE_SAME_FOR_ALL'
-                    ? 'bg-indigo-950/50 border-indigo-500 text-slate-100 shadow-md ring-1 ring-indigo-500'
-                    : 'bg-slate-950/60 border-slate-800 text-slate-500 dark:text-slate-400 hover:border-slate-700'
+                    ? 'bg-indigo-50 border-indigo-600 text-slate-900 shadow-lg ring-2 ring-indigo-600 dark:bg-indigo-950/50 dark:border-indigo-500 dark:text-slate-100 dark:ring-indigo-500'
+                    : 'bg-white dark:bg-slate-950/60 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700'
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-indigo-400">Mode 3</span>
-                  <span className="text-sm">⚖️</span>
+                  <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Mode 3</span>
+                  <div className="flex items-center gap-1.5">
+                    {calculationType === 'FLAT_RATE_SAME_FOR_ALL' && <CheckCircle className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />}
+                    <span className="text-sm">⚖️</span>
+                  </div>
                 </div>
-                <h4 className="text-sm font-bold text-slate-200">Same For All Flats</h4>
-                <p className="text-[11px] text-slate-500 leading-relaxed">
+                <h4 className="text-sm font-bold text-slate-900 dark:text-slate-200">Same For All Flats</h4>
+                <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
                   Uniform fixed maintenance fee charged equally to all flat units.
                 </p>
               </div>
@@ -882,12 +891,12 @@ export default function MaintenanceDashboardPage() {
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-300">Formula Expression Syntax</label>
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Formula Expression Syntax</label>
                 <input
                   type="text"
                   value={formulaString}
                   onChange={(e) => setFormulaString(e.target.value)}
-                  className="w-full rounded-lg border border-slate-800 bg-black/60 py-2.5 px-3.5 text-sm text-slate-100 focus:border-slate-700 focus:outline-none mt-1 font-mono font-bold"
+                  className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-2.5 px-3.5 text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-500 focus:outline-none mt-1 font-mono font-bold shadow-sm"
                   placeholder="(area * rate) + parking + water"
                   required
                 />
@@ -909,7 +918,7 @@ export default function MaintenanceDashboardPage() {
                       key={v.tag}
                       type="button"
                       onClick={() => setFormulaString((prev) => `${prev} + ${v.tag}`.trim())}
-                      className="px-2.5 py-1 rounded-md bg-slate-900 border border-slate-800 hover:border-indigo-500 text-indigo-300 font-mono text-xs font-semibold transition-all"
+                      className="px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-indigo-500 text-indigo-700 dark:text-indigo-300 font-mono text-xs font-semibold transition-all"
                     >
                       +{v.tag}
                     </button>

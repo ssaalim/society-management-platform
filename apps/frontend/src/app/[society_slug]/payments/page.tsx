@@ -220,17 +220,17 @@ export default function PaymentsCheckoutPage() {
                       </div>
                     </td>
                     <td className="p-4 text-right space-x-2">
-                      {isManagementRole && rec.status === 'REVIEW' && (
+                      {isManagementRole && rec.status === 'PENDING' && (
                         <>
                           <button
                             onClick={() => handleOpenActionModal(rec.id, 'approve', Number(rec.amountPaid))}
-                            className="text-[11px] font-bold text-emerald-400 hover:text-emerald-300 bg-emerald-950/40 px-2 py-1 rounded"
+                            className="inline-flex items-center gap-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg shadow-sm transition-all"
                           >
                             Approve
                           </button>
                           <button
                             onClick={() => handleOpenActionModal(rec.id, 'reject', Number(rec.amountPaid))}
-                            className="text-[11px] font-bold text-red-400 hover:text-red-300 bg-red-950/40 px-2 py-1 rounded"
+                            className="inline-flex items-center gap-1.5 text-xs font-bold bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-lg shadow-sm transition-all"
                           >
                             Reject
                           </button>
@@ -240,13 +240,13 @@ export default function PaymentsCheckoutPage() {
                         <>
                           <button
                             onClick={() => handleOpenActionModal(rec.id, 'refund', Number(rec.amountPaid))}
-                            className="text-xs font-semibold text-amber-400 hover:text-amber-300 transition-all"
+                            className="inline-flex items-center gap-1.5 text-xs font-bold bg-amber-600 hover:bg-amber-500 text-white px-3 py-1.5 rounded-lg shadow-sm transition-all"
                           >
                             Refund
                           </button>
                           <button
                             onClick={() => handleOpenActionModal(rec.id, 'cancel', Number(rec.amountPaid))}
-                            className="text-xs font-semibold text-red-400 hover:text-red-300 transition-all"
+                            className="inline-flex items-center gap-1.5 text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white px-3 py-1.5 rounded-lg shadow-sm transition-all"
                           >
                             Cancel
                           </button>

@@ -269,51 +269,51 @@ export default function MaintenanceBillDetailPage() {
           const isPartial = newBalanceDue > 0;
 
           return (
-            <form onSubmit={handleRecordPayment} className="space-y-5 max-w-xl bg-slate-950/40 border border-slate-800 p-6 rounded-2xl shadow-xl">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-200 flex items-center gap-1.5">
-                  <CreditCard className="h-4 w-4 text-emerald-400" /> Record Payment Receipt
+            <form onSubmit={handleRecordPayment} className="space-y-5 max-w-xl bg-white dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-xl">
+              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-slate-200 flex items-center gap-1.5">
+                  <CreditCard className="h-4 w-4 text-emerald-600 dark:text-emerald-400" /> Record Payment Receipt
                 </h3>
-                <span className="text-xs font-semibold text-amber-400">
+                <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">
                   Balance Due: ₹ {balanceDue.toLocaleString('en-IN')}
                 </span>
               </div>
 
               {/* Total Due & Paid Summary Header Card */}
-              <div className="grid grid-cols-3 gap-2 bg-slate-900/80 border border-slate-800 p-3 rounded-xl text-center text-xs">
+              <div className="grid grid-cols-3 gap-2 bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 p-3 rounded-xl text-center text-xs">
                 <div>
                   <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-semibold block">Total Billed</span>
-                  <span className="font-bold text-slate-200">₹ {totalInvoiceDue.toLocaleString('en-IN')}</span>
+                  <span className="font-bold text-slate-900 dark:text-slate-200">₹ {totalInvoiceDue.toLocaleString('en-IN')}</span>
                 </div>
                 <div>
                   <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-semibold block">Paid So Far</span>
-                  <span className="font-bold text-emerald-400">₹ {totalPaidSoFar.toLocaleString('en-IN')}</span>
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400">₹ {totalPaidSoFar.toLocaleString('en-IN')}</span>
                 </div>
                 <div>
                   <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-semibold block">Remaining Due</span>
-                  <span className="font-black text-amber-400">₹ {balanceDue.toLocaleString('en-IN')}</span>
+                  <span className="font-black text-amber-600 dark:text-amber-400">₹ {balanceDue.toLocaleString('en-IN')}</span>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="text-xs text-slate-500 dark:text-slate-400 font-medium">Amount Received (₹)</label>
+                  <label className="text-xs text-slate-600 dark:text-slate-400 font-medium">Amount Received (₹)</label>
                   <input
                     type="number"
                     step="0.01"
                     value={amountPaid}
                     onChange={(e) => setAmountPaid(Number(e.target.value))}
-                    className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-slate-700 focus:outline-none mt-1 font-bold"
+                    className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-900 dark:text-slate-200 focus:border-indigo-500 focus:outline-none mt-1 font-bold"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs text-slate-500 dark:text-slate-400 font-medium">Payment Mode</label>
+                  <label className="text-xs text-slate-600 dark:text-slate-400 font-medium">Payment Mode</label>
                   <select
                     value={paymentMode}
                     onChange={(e) => setPaymentMode(e.target.value)}
-                    className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-500 dark:text-slate-400 focus:border-slate-700 focus:outline-none appearance-none mt-1"
+                    className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-900 dark:text-slate-300 focus:border-indigo-500 focus:outline-none appearance-none mt-1"
                   >
                     <option value="UPI">UPI</option>
                     <option value="NEFT">NEFT / RTGS</option>
@@ -325,37 +325,37 @@ export default function MaintenanceBillDetailPage() {
               </div>
 
               {/* Live Calculation Preview */}
-              <div className="bg-black/60 border border-slate-800 p-3 rounded-lg space-y-1.5 text-xs">
+              <div className="bg-white dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 p-3 rounded-lg space-y-1.5 text-xs shadow-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">After Logged Payment:</span>
+                  <span className="text-[11px] text-slate-600 dark:text-slate-400 font-medium">After Logged Payment:</span>
                   <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border uppercase tracking-wider ${
                     isPartial
-                      ? 'bg-amber-950/60 border-amber-800/80 text-amber-400'
-                      : 'bg-emerald-950/60 border-emerald-800/80 text-emerald-400'
+                      ? 'bg-amber-50 dark:bg-amber-950/60 border-amber-200 dark:border-amber-800/80 text-amber-700 dark:text-amber-400'
+                      : 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800/80 text-emerald-700 dark:text-emerald-400'
                   }`}>
                     {isPartial ? 'PARTIAL PAYMENT' : 'FULL PAYMENT'}
                   </span>
                 </div>
-                <div className="flex items-center justify-between text-slate-300 text-xs">
+                <div className="flex items-center justify-between text-slate-700 dark:text-slate-300 text-xs">
                   <span>Total Paid out of Billed Due:</span>
-                  <span className="font-bold text-emerald-400">
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400">
                     ₹ {newTotalPaid.toLocaleString('en-IN')} <span className="text-[10px] text-slate-500">out of ₹ {totalInvoiceDue.toLocaleString('en-IN')} Total Due</span>
                   </span>
                 </div>
-                <div className="flex items-center justify-between text-slate-300 text-xs">
+                <div className="flex items-center justify-between text-slate-700 dark:text-slate-300 text-xs">
                   <span>Balance Remaining Due:</span>
-                  <span className="font-black text-amber-400">₹ {newBalanceDue.toLocaleString('en-IN')}</span>
+                  <span className="font-black text-amber-600 dark:text-amber-400">₹ {newBalanceDue.toLocaleString('en-IN')}</span>
                 </div>
               </div>
 
               <div>
-                <label className="text-xs text-slate-500 dark:text-slate-400 font-medium">Transaction ID / Reference Number</label>
+                <label className="text-xs text-slate-600 dark:text-slate-400 font-medium">Transaction ID / Reference Number</label>
                 <input
                   type="text"
                   placeholder="UPI Ref, Cheque No, Bank Txn ID"
                   value={transactionId}
                   onChange={(e) => setTransactionId(e.target.value)}
-                  className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-slate-700 focus:outline-none mt-1 font-mono"
+                  className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-900 dark:text-slate-200 focus:border-indigo-500 focus:outline-none mt-1 font-mono"
                 />
               </div>
 
