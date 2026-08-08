@@ -10,7 +10,9 @@ import {
   flatOwners, 
   flatTenants, 
   flats, 
-  vehicles 
+  vehicles,
+  userSocieties,
+  roles
 } from '../../../database/schema';
 import { DRIZZLE_PROVIDER, DrizzleDB } from '@core/database/database.module';
 import { ClsService } from 'nestjs-cls';
@@ -107,11 +109,25 @@ export class MemberRepository extends TenantBaseRepository<typeof members> {
         )
       );
 
+    // Fetch assigned system role
+    const userRoleQuery = await this.db
+      .select({ roleName: roles.name })
+      .from(userSocieties)
+      .innerJoin(roles, eq(userSocieties.roleId, roles.id))
+      .where(
+        and(
+          eq(userSocieties.userId, userId),
+          eq(userSocieties.societyId, this.activeTenantId)
+        )
+      );
+    const assignedRole = userRoleQuery.length > 0 ? userRoleQuery[0].roleName : (details.member.memberType || 'OWNER');
+
     return {
       ...details.member,
       name: details.name,
       email: details.email,
       mobile: details.mobile,
+      role: assignedRole,
       familyMembers: family,
       nominees: nomineeList,
       ownedFlats,

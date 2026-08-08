@@ -47,6 +47,7 @@ export const societies = pgTable('societies', {
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().notNull(), // Linked to supabase auth.users.id
   email: varchar('email', { length: 255 }).notNull().unique(),
+  password: text('password'),
   name: varchar('name', { length: 255 }),
   mobile: varchar('mobile', { length: 15 }),
   avatarUrl: text('avatar_url'),
@@ -232,7 +233,8 @@ export const members = pgTable('members', {
   policeVerificationUrl: text('police_verification_url'),
   emergencyContactName: varchar('emergency_contact_name', { length: 150 }),
   emergencyContactPhone: varchar('emergency_contact_phone', { length: 15 }),
-  status: varchar('status', { length: 50 }).default('ACTIVE').notNull(), // ACTIVE, EXPIRED, PENDING
+  status: varchar('status', { length: 50 }).default('ACTIVE').notNull(), // ACTIVE, EXPIRED, PENDING, INACTIVE
+  canLogin: boolean('can_login').default(true).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 }, (table) => ({

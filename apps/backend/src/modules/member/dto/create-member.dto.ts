@@ -20,7 +20,17 @@ export const createMemberSchema = z.object({
   email: z.string().email('Invalid email address'),
   mobile: z.string().max(15).optional().nullable(),
   membershipNumber: z.string().max(50).optional(),
-  memberType: z.enum(['OWNER', 'CO_OWNER', 'TENANT']).default('OWNER'),
+  memberType: z.enum([
+    'OWNER', 
+    'CO_OWNER', 
+    'TENANT', 
+    'ADMIN', 
+    'ACCOUNTANT', 
+    'PRESIDENT', 
+    'SECRETARY', 
+    'TREASURER', 
+    'COMMITTEE_MEMBER'
+  ]).default('OWNER'),
   photoUrl: z.string().url().optional().nullable(),
   aadhaarUrl: z.string().url().optional().nullable(),
   panUrl: z.string().url().optional().nullable(),
@@ -29,6 +39,9 @@ export const createMemberSchema = z.object({
   emergencyContactName: z.string().max(150).optional().nullable(),
   emergencyContactPhone: z.string().max(15).optional().nullable(),
   status: z.string().default('ACTIVE'),
+  canLogin: z.boolean().default(true),
+  password: z.string().min(6, 'Password must be at least 6 characters').optional().nullable(),
+  role: z.string().optional(),
   familyMembers: z.array(familyMemberSchema).optional(),
   nominees: z.array(nomineeSchema).optional(),
 });

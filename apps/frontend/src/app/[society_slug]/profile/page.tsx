@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { updateSocietySchema, UpdateSocietyDto } from '../../../../../backend/src/modules/society/dto/update-society.dto';
 import { useAuth } from '../../providers/auth-context';
 import { apiClient } from '../../../lib/api/client';
-import { Building, UploadCloud, CheckCircle, FileText, Loader2, AlertCircle , X } from 'lucide-react';
+import { Building, UploadCloud, CheckCircle, FileText, Loader2, AlertCircle, X, Settings } from 'lucide-react';
 import { useParams } from 'next/navigation';
 
 export default function SocietyProfilePage() {
@@ -119,13 +119,13 @@ export default function SocietyProfilePage() {
   }
 
   return (
-    <main className="relative flex min-h-screen flex-col items-center justify-start overflow-x-hidden w-full py-12 px-4 sm:px-6 lg:px-8">
+    <main className="relative flex min-h-screen flex-col items-center justify-start overflow-x-hidden w-full py-8 px-4 sm:px-6 md:px-8 lg:px-10">
       {/* Visual background grids */}
       <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
 
-      <div className="w-full max-w-4xl z-10 space-y-8 bg-slate-900/30 border border-slate-800 p-8 rounded-2xl backdrop-blur-xl">
+      <div className="w-full max-w-[1450px] mx-auto space-y-8 z-10">
         <div className="flex items-center gap-3">
-          <Building className="h-8 w-8 text-indigo-400" />
+          <Settings className="h-8 w-8 text-indigo-400" />
           <div>
             <h2 className="text-2xl font-bold tracking-tight text-slate-100">Society Profile</h2>
             <p className="text-xs text-slate-500 dark:text-slate-400">View official registration certificates, tax identifiers, and bye-laws</p>

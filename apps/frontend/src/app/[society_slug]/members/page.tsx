@@ -39,8 +39,10 @@ export default function MembersListingPage() {
     name: '',
     email: '',
     mobile: '',
-    memberType: 'OWNER' as 'OWNER' | 'CO_OWNER' | 'TENANT',
+    memberType: 'OWNER',
     status: 'ACTIVE',
+    canLogin: true,
+    password: '',
   });
   const [isCreating, setIsCreating] = useState(false);
 
@@ -125,12 +127,14 @@ export default function MembersListingPage() {
         mobile: newMemberForm.mobile,
         memberType: newMemberForm.memberType,
         status: newMemberForm.status,
+        canLogin: newMemberForm.canLogin,
+        password: newMemberForm.password || undefined,
       };
       const res = await apiClient.post('/members', payload);
       if (res.data?.success) {
         setMessage({ type: 'success', text: `Member "${newMemberForm.name}" added successfully.` });
         setShowAddMember(false);
-        setNewMemberForm({ name: '', email: '', mobile: '', memberType: 'OWNER', status: 'ACTIVE' });
+        setNewMemberForm({ name: '', email: '', mobile: '', memberType: 'OWNER', status: 'ACTIVE', canLogin: true, password: '' });
         
         // Refresh list
         const refRes = await apiClient.get('/members');
@@ -146,11 +150,11 @@ export default function MembersListingPage() {
   };
 
   return (
-    <main className="relative flex min-h-screen flex-col items-center justify-start overflow-x-hidden w-full py-12 px-4 sm:px-6 lg:px-8">
+    <main className="relative flex min-h-screen flex-col items-center justify-start overflow-x-hidden w-full py-8 px-4 sm:px-6 md:px-8 lg:px-10">
       {/* Background Grids */}
       <div className="absolute inset-0 -z-10 block bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
 
-      <div className="w-full max-w-6xl z-10 space-y-8 bg-slate-900/30 border border-slate-800 p-4 md:p-8 rounded-2xl shadow-none backdrop-blur-xl">
+      <div className="w-full max-w-[1450px] mx-auto space-y-8 z-10">
         
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -279,12 +283,12 @@ export default function MembersListingPage() {
                       </span>
                     </td>
                     <td className="p-4">
-                      <span className={`text-[10px] font-semibold rounded-full px-2 py-0.5 uppercase ${
+                      <span className={`text-[10px] font-bold rounded-full px-2.5 py-1 border uppercase tracking-wider ${
                         member.status === 'ACTIVE' 
-                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                          : 'bg-amber-50 text-amber-700 border border-amber-200'
+                          ? 'bg-emerald-950/40 border-emerald-800 text-emerald-400'
+                          : 'bg-amber-950/40 border-amber-800 text-amber-400'
                       }`}>
-                        {member.status}
+                        {member.status || 'ACTIVE'}
                       </span>
                     </td>
                     <td className="p-4 text-right">
@@ -394,15 +398,21 @@ export default function MembersListingPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="text-[11px] text-slate-400 font-medium">Member Type</label>
+                    <label className="text-[11px] text-slate-400 font-medium">System Role & Category</label>
                     <select
                       value={newMemberForm.memberType}
-                      onChange={(e) => setNewMemberForm({ ...newMemberForm, memberType: e.target.value as any })}
-                      className="w-full mt-1 rounded-lg border border-slate-800 bg-slate-900/50 py-2.5 px-3.5 text-sm text-slate-400 focus:border-indigo-600/50 focus:outline-none appearance-none transition-all"
+                      onChange={(e) => setNewMemberForm({ ...newMemberForm, memberType: e.target.value })}
+                      className="w-full mt-1 rounded-lg border border-slate-800 bg-slate-900/50 py-2.5 px-3.5 text-sm text-slate-200 focus:border-indigo-600/50 focus:outline-none transition-all"
                     >
-                      <option value="OWNER">Owner</option>
+                      <option value="OWNER">Owner (Default)</option>
                       <option value="CO_OWNER">Co-owner</option>
                       <option value="TENANT">Tenant</option>
+                      <option value="ADMIN">Admin</option>
+                      <option value="ACCOUNTANT">Accountant</option>
+                      <option value="PRESIDENT">President</option>
+                      <option value="SECRETARY">Secretary</option>
+                      <option value="TREASURER">Treasurer</option>
+                      <option value="COMMITTEE_MEMBER">Committee Member</option>
                     </select>
                   </div>
                   <div>
@@ -410,12 +420,35 @@ export default function MembersListingPage() {
                     <select
                       value={newMemberForm.status}
                       onChange={(e) => setNewMemberForm({ ...newMemberForm, status: e.target.value })}
-                      className="w-full mt-1 rounded-lg border border-slate-800 bg-slate-900/50 py-2.5 px-3.5 text-sm text-slate-400 focus:border-indigo-600/50 focus:outline-none appearance-none transition-all"
+                      className="w-full mt-1 rounded-lg border border-slate-800 bg-slate-900/50 py-2.5 px-3.5 text-sm text-slate-200 focus:border-indigo-600/50 focus:outline-none transition-all"
                     >
-                      <option value="ACTIVE">Active</option>
-                      <option value="INACTIVE">Inactive</option>
-                      <option value="SUSPENDED">Suspended</option>
+                      <option value="ACTIVE">ACTIVE</option>
+                      <option value="INACTIVE">INACTIVE</option>
                     </select>
+                  </div>
+                </div>
+
+                {/* Step 3: Login Credentials */}
+                <div className="space-y-3 pt-2 border-t border-slate-800">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] text-slate-300 font-bold">Allow System Login</label>
+                    <input
+                      type="checkbox"
+                      checked={newMemberForm.canLogin}
+                      onChange={(e) => setNewMemberForm({ ...newMemberForm, canLogin: e.target.checked })}
+                      className="h-4 w-4 rounded border-slate-700 bg-slate-900 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] text-slate-400 font-medium">Initial System Password</label>
+                    <input
+                      type="password"
+                      value={newMemberForm.password}
+                      onChange={(e) => setNewMemberForm({ ...newMemberForm, password: e.target.value })}
+                      placeholder="Optional password (min 6 chars)"
+                      className="w-full mt-1 rounded-lg border border-slate-800 bg-slate-900/50 py-2.5 px-3.5 text-sm text-slate-200 placeholder-slate-600 focus:border-indigo-600/50 focus:outline-none font-mono"
+                    />
                   </div>
                 </div>
               </div>

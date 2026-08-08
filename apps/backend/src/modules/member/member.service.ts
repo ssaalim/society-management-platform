@@ -22,7 +22,7 @@ export class MemberService {
   ) {}
 
   async create(dto: CreateMemberDto, executorUserId?: string) {
-    const { familyMembers: family, nominees: nomineeList, name, email, mobile, ...memberProps } = dto;
+    const { familyMembers: family, nominees: nomineeList, name, email, mobile, password, role, canLogin, status, ...memberProps } = dto;
     const activeTenantId = this.memberRepository['activeTenantId'];
 
     // 1. Resolve or Create User
@@ -41,8 +41,12 @@ export class MemberService {
           email,
           name,
           mobile: mobile || null,
+          password: password || null,
+          isActive: status ? status === 'ACTIVE' : true,
         }).returning();
         user = newUsers[0];
+      } else if (password) {
+        await this.db.update(users).set({ password, updatedAt: new Date() }).where(eq(users.id, user.id));
       }
       resolvedUserId = user.id;
     }
@@ -66,12 +70,36 @@ export class MemberService {
     }
 
     // 3. Insert base member profile
+    const memberType = role || memberProps.memberType || 'OWNER';
     const member = await this.memberRepository.insert({
       ...memberProps,
+      memberType,
+      status: status || 'ACTIVE',
+      canLogin: canLogin !== undefined ? canLogin : true,
       userId: resolvedUserId,
       membershipNumber,
       societyId: activeTenantId,
     });
+
+    // 4. Assign role in user_societies
+    const existingRole = await this.db.query.roles.findFirst({
+      where: eq(roles.name, memberType),
+    });
+    if (existingRole) {
+      const userSoc = await this.db.query.userSocieties.findFirst({
+        where: and(
+          eq(userSocieties.userId, resolvedUserId),
+          eq(userSocieties.societyId, activeTenantId)
+        ),
+      });
+      if (!userSoc) {
+        await this.db.insert(userSocieties).values({
+          userId: resolvedUserId,
+          societyId: activeTenantId,
+          roleId: existingRole.id,
+        });
+      }
+    }
 
     // 2. Insert family details if present
     if (family && family.length > 0) {
@@ -230,13 +258,63 @@ export class MemberService {
       throw new NotFoundException('Member profile not found.');
     }
 
-    const { familyMembers: family, nominees: nomineeList, ...memberProps } = dto;
+    const { familyMembers: family, nominees: nomineeList, canLogin, status, password, role, ...memberProps } = dto;
     const activeTenantId = this.memberRepository['activeTenantId'];
 
-    // 1. Update properties
+    // 1. Update member properties
+    const updatePayload: any = { ...memberProps };
+    if (canLogin !== undefined) updatePayload.canLogin = canLogin;
+    if (status !== undefined) updatePayload.status = status;
+    const targetRoleName = role || dto.memberType;
+    if (targetRoleName !== undefined) updatePayload.memberType = targetRoleName;
+
     let updated = current;
-    if (Object.keys(memberProps).length > 0) {
-      updated = await this.memberRepository.update(id, memberProps);
+    if (Object.keys(updatePayload).length > 0) {
+      updated = await this.memberRepository.update(id, updatePayload);
+    }
+
+    // 2. Handle User Name, Email, Mobile, Password, & Account Active status update
+    if (current.userId) {
+      const userUpdates: any = { updatedAt: new Date() };
+      if (dto.name) userUpdates.name = dto.name;
+      if (dto.email) userUpdates.email = dto.email;
+      if (dto.mobile !== undefined) userUpdates.mobile = dto.mobile;
+      if (password) userUpdates.password = password;
+      if (status !== undefined) userUpdates.isActive = status === 'ACTIVE';
+
+      await this.db
+        .update(users)
+        .set(userUpdates)
+        .where(eq(users.id, current.userId));
+    }
+
+    // 4. Sync Role in user_societies if role is specified
+    if (targetRoleName && current.userId) {
+      const existingRole = await this.db.query.roles.findFirst({
+        where: eq(roles.name, targetRoleName),
+      });
+
+      if (existingRole) {
+        const userSoc = await this.db.query.userSocieties.findFirst({
+          where: and(
+            eq(userSocieties.userId, current.userId),
+            eq(userSocieties.societyId, activeTenantId)
+          ),
+        });
+
+        if (userSoc) {
+          await this.db
+            .update(userSocieties)
+            .set({ roleId: existingRole.id, updatedAt: new Date() })
+            .where(eq(userSocieties.id, userSoc.id));
+        } else {
+          await this.db.insert(userSocieties).values({
+            userId: current.userId,
+            societyId: activeTenantId,
+            roleId: existingRole.id,
+          });
+        }
+      }
     }
 
     // 2. Synchronize family members if provided

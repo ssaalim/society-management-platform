@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../providers/auth-context';
 import { apiClient } from '../../../lib/api/client';
-import { Building, Search, Filter, ShieldAlert, Plus, Calculator, Settings, Receipt, Loader2, CheckCircle, AlertCircle, Calendar, History, CheckSquare, Square, Layers, X, ArrowRight } from 'lucide-react';
+import { Building, Search, Filter, ShieldAlert, Plus, Calculator, Settings, Receipt, Loader2, CheckCircle, AlertCircle, Calendar, History, CheckSquare, Square, Layers, X, ArrowRight, CreditCard } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
 
@@ -48,7 +48,7 @@ export default function MaintenanceDashboardPage() {
 
   const { society_slug } = useParams();
   const { activeSociety } = useAuth();
-  
+
   const isManagementRole = ['SUPER_ADMIN', 'PRESIDENT', 'SECRETARY', 'TREASURER', 'ACCOUNTANT'].includes(activeSociety?.role || '');
 
   const [billsList, setBillsList] = useState<BillListItem[]>([]);
@@ -287,9 +287,9 @@ export default function MaintenanceDashboardPage() {
       });
 
       if (res.data?.success) {
-        setMessage({ 
-          type: 'success', 
-          text: `Invoices generated successfully for ${res.data.data.count} flats.` 
+        setMessage({
+          type: 'success',
+          text: `Invoices generated successfully for ${res.data.data.count} flats.`
         });
         setActiveView('bills');
         fetchBills();
@@ -374,18 +374,17 @@ export default function MaintenanceDashboardPage() {
   );
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
-        
-        {/* Header Title Section */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800 pb-6">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-100 flex items-center gap-2">
-              <Building className="h-6 w-6 text-indigo-400" /> Billing & Maintenance Portal
-            </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Manage billing cycles, record single/multi-invoice payments, track part payments, and audit double-entry ledger postings.
-            </p>
+    <main className="min-h-screen w-full bg-slate-950 text-slate-100 p-4 sm:p-6 md:p-8 lg:p-10">
+      <div className="w-full max-w-[1450px] mx-auto space-y-8">
+
+        {/* Header */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <CreditCard className="h-8 w-8 text-indigo-400" />
+            <div>
+              <h2 className="text-2xl font-bold tracking-tight text-slate-100">Billing & Maintenance Portal</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Manage billing cycles, record single/multi-invoice payments, track part payments, and audit double-entry ledger postings</p>
+            </div>
           </div>
 
           {/* Action Tabs for Management */}
@@ -428,11 +427,10 @@ export default function MaintenanceDashboardPage() {
         {/* Global Feedback Banner */}
         {message && (
           <div
-            className={`p-4 rounded-xl border flex items-center gap-3 text-xs font-medium ${
-              message.type === 'success'
+            className={`p-4 rounded-xl border flex items-center gap-3 text-xs font-medium ${message.type === 'success'
                 ? 'bg-emerald-950/40 border-emerald-900/60 text-emerald-300'
                 : 'bg-red-950/40 border-red-900/60 text-red-300'
-            }`}
+              }`}
           >
             {message.type === 'success' ? <CheckCircle className="h-5 w-5 shrink-0" /> : <AlertCircle className="h-5 w-5 shrink-0" />}
             <span>{message.text}</span>
@@ -476,7 +474,7 @@ export default function MaintenanceDashboardPage() {
         {/* Main Content Area */}
         {activeView === 'bills' && (
           <div className="space-y-4">
-            
+
             {/* Filter Search Bar */}
             <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-slate-950/40 p-3 border border-slate-800 rounded-xl">
               <div className="relative w-full sm:w-80">
@@ -530,19 +528,19 @@ export default function MaintenanceDashboardPage() {
                 <table className="w-full text-left text-xs border-collapse whitespace-nowrap">
                   <thead>
                     <tr className="bg-black/60 text-slate-500 dark:text-slate-400 font-semibold border-b border-slate-800">
-                        <th className="p-4 w-10">
-                          <button
-                            onClick={handleSelectAllPending}
-                            title={
-                              selectedFlatNumber
-                                ? `Select all unpaid invoices for Flat ${selectedFlatNumber}`
-                                : 'Select all unpaid invoices for first flat'
-                            }
-                            className="text-slate-500 dark:text-slate-400 hover:text-indigo-400"
-                          >
-                            <Layers className="h-4 w-4" />
-                          </button>
-                        </th>
+                      <th className="p-4 w-10">
+                        <button
+                          onClick={handleSelectAllPending}
+                          title={
+                            selectedFlatNumber
+                              ? `Select all unpaid invoices for Flat ${selectedFlatNumber}`
+                              : 'Select all unpaid invoices for first flat'
+                          }
+                          className="text-slate-500 dark:text-slate-400 hover:text-indigo-400"
+                        >
+                          <Layers className="h-4 w-4" />
+                        </button>
+                      </th>
                       <th className="p-4">Invoice No</th>
                       <th className="p-4">Flat Number</th>
                       <th className="p-4">Period</th>
@@ -563,13 +561,12 @@ export default function MaintenanceDashboardPage() {
                       return (
                         <tr
                           key={bill.id}
-                          className={`text-slate-300 transition-colors ${
-                            isChecked
+                          className={`text-slate-300 transition-colors ${isChecked
                               ? 'bg-indigo-950/30'
                               : isFlatDisabled
-                              ? 'opacity-40 bg-slate-950/40'
-                              : 'hover:bg-slate-900/10'
-                          }`}
+                                ? 'opacity-40 bg-slate-950/40'
+                                : 'hover:bg-slate-900/10'
+                            }`}
                         >
                           <td className="p-4">
                             {bill.status !== 'PAID' ? (
@@ -583,9 +580,8 @@ export default function MaintenanceDashboardPage() {
                                     ? `Multi-invoice payment restricted to Flat ${selectedFlatNumber}`
                                     : `Select invoice for Flat ${bill.flatNumber}`
                                 }
-                                className={`h-4 w-4 rounded border-slate-700 bg-slate-900 text-indigo-600 focus:ring-indigo-500 ${
-                                  isFlatDisabled ? 'cursor-not-allowed opacity-30' : 'cursor-pointer'
-                                }`}
+                                className={`h-4 w-4 rounded border-slate-700 bg-slate-900 text-indigo-600 focus:ring-indigo-500 ${isFlatDisabled ? 'cursor-not-allowed opacity-30' : 'cursor-pointer'
+                                  }`}
                               />
                             ) : (
                               <CheckCircle className="h-4 w-4 text-emerald-500 opacity-60" />
@@ -612,13 +608,12 @@ export default function MaintenanceDashboardPage() {
                           </td>
                           <td className="p-4">
                             <span
-                              className={`text-[10px] font-bold border rounded-full px-2.5 py-1 uppercase tracking-wider ${
-                                bill.status === 'PAID'
+                              className={`text-[10px] font-bold border rounded-full px-2.5 py-1 uppercase tracking-wider ${bill.status === 'PAID'
                                   ? 'bg-emerald-950/30 border-emerald-900/50 text-emerald-400'
                                   : bill.status === 'PARTIAL'
-                                  ? 'bg-amber-950/30 border-amber-900/50 text-amber-400'
-                                  : 'bg-red-950/30 border-red-900/50 text-red-400'
-                              }`}
+                                    ? 'bg-amber-950/30 border-amber-900/50 text-amber-400'
+                                    : 'bg-red-950/30 border-red-900/50 text-red-400'
+                                }`}
                             >
                               {bill.status}
                             </span>
@@ -656,7 +651,7 @@ export default function MaintenanceDashboardPage() {
           <form onSubmit={handleGenerateInvoices} className="space-y-6 max-w-xl bg-slate-950/20 border border-slate-800 p-6 rounded-xl">
             <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Generate Invoices Sweep</h3>
             <p className="text-xs text-slate-500">Run a batch sweep operation. This automatically computes maintenance variables for all flats and logs double-entry receivables postings.</p>
-            
+
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <label className="text-xs text-slate-500 dark:text-slate-400 font-medium">Billing Period Start</label>
@@ -697,22 +692,22 @@ export default function MaintenanceDashboardPage() {
                 <label className="text-xs text-slate-600 dark:text-slate-400 font-medium">Generation Type</label>
                 <div className="flex gap-4 mt-2">
                   <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
-                    <input 
-                      type="radio" 
-                      name="generationType" 
-                      value="SINGLE" 
-                      checked={generationType === 'SINGLE'} 
+                    <input
+                      type="radio"
+                      name="generationType"
+                      value="SINGLE"
+                      checked={generationType === 'SINGLE'}
                       onChange={() => setGenerationType('SINGLE')}
                       className="accent-indigo-500"
                     />
                     <span>Single Combined Invoice</span>
                   </label>
                   <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
-                    <input 
-                      type="radio" 
-                      name="generationType" 
-                      value="PER_MONTH" 
-                      checked={generationType === 'PER_MONTH'} 
+                    <input
+                      type="radio"
+                      name="generationType"
+                      value="PER_MONTH"
+                      checked={generationType === 'PER_MONTH'}
                       onChange={() => setGenerationType('PER_MONTH')}
                       className="accent-indigo-500"
                     />
@@ -747,13 +742,12 @@ export default function MaintenanceDashboardPage() {
             {/* Mode Selectors */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               {/* Option 1: PER_SQ_FT */}
-              <div 
+              <div
                 onClick={() => setCalculationType('PER_SQ_FT')}
-                className={`p-4 rounded-xl border-2 cursor-pointer transition-all space-y-2 relative ${
-                  calculationType === 'PER_SQ_FT'
+                className={`p-4 rounded-xl border-2 cursor-pointer transition-all space-y-2 relative ${calculationType === 'PER_SQ_FT'
                     ? 'bg-indigo-50 border-indigo-600 text-slate-900 shadow-lg ring-2 ring-indigo-600 dark:bg-indigo-950/50 dark:border-indigo-500 dark:text-slate-100 dark:ring-indigo-500'
                     : 'bg-white dark:bg-slate-950/60 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700'
-                }`}
+                  }`}
               >
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Mode 1</span>
@@ -769,13 +763,12 @@ export default function MaintenanceDashboardPage() {
               </div>
 
               {/* Option 2: PER_FLAT_TYPE */}
-              <div 
+              <div
                 onClick={() => setCalculationType('PER_FLAT_TYPE')}
-                className={`p-4 rounded-xl border-2 cursor-pointer transition-all space-y-2 relative ${
-                  calculationType === 'PER_FLAT_TYPE'
+                className={`p-4 rounded-xl border-2 cursor-pointer transition-all space-y-2 relative ${calculationType === 'PER_FLAT_TYPE'
                     ? 'bg-indigo-50 border-indigo-600 text-slate-900 shadow-lg ring-2 ring-indigo-600 dark:bg-indigo-950/50 dark:border-indigo-500 dark:text-slate-100 dark:ring-indigo-500'
                     : 'bg-white dark:bg-slate-950/60 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700'
-                }`}
+                  }`}
               >
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Mode 2</span>
@@ -791,13 +784,12 @@ export default function MaintenanceDashboardPage() {
               </div>
 
               {/* Option 3: FLAT_RATE_SAME_FOR_ALL */}
-              <div 
+              <div
                 onClick={() => setCalculationType('FLAT_RATE_SAME_FOR_ALL')}
-                className={`p-4 rounded-xl border-2 cursor-pointer transition-all space-y-2 relative ${
-                  calculationType === 'FLAT_RATE_SAME_FOR_ALL'
+                className={`p-4 rounded-xl border-2 cursor-pointer transition-all space-y-2 relative ${calculationType === 'FLAT_RATE_SAME_FOR_ALL'
                     ? 'bg-indigo-50 border-indigo-600 text-slate-900 shadow-lg ring-2 ring-indigo-600 dark:bg-indigo-950/50 dark:border-indigo-500 dark:text-slate-100 dark:ring-indigo-500'
                     : 'bg-white dark:bg-slate-950/60 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700'
-                }`}
+                  }`}
               >
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Mode 3</span>
@@ -945,7 +937,7 @@ export default function MaintenanceDashboardPage() {
                     .replace(/\bparking\b/g, '500')
                     .replace(/\bwater\b/g, '250')
                     .replace(/\bsinking\b/g, '150');
-                  
+
                   if (/^[0-9+\-*/().\s]+$/.test(expr)) {
                     sampleCalculated = Number(new Function(`return (${expr})`)());
                   } else {
@@ -987,46 +979,46 @@ export default function MaintenanceDashboardPage() {
         )}
       </div>
 
-        {/* Single Invoice Manual Payment Entry Modal Dialog with Last Payment Details */}
-        {selectedBillForPayment && (() => {
-          const billAmount = Number(selectedBillForPayment.amount || 0);
-          const totalPaidSoFar = Number(selectedBillForPayment.totalPaid || 0);
-          const curRemainingBalance = Number(selectedBillForPayment.remainingBalance ?? Math.max(0, billAmount - totalPaidSoFar));
-          const paidPercentage = billAmount > 0 ? Math.min(100, Math.round((totalPaidSoFar / billAmount) * 100)) : 0;
-          const enteredAmount = Number(paymentAmount || 0);
-          const newTotalPaid = totalPaidSoFar + enteredAmount;
-          const newRemainingBalance = Math.max(0, billAmount - newTotalPaid);
-          const isPartPayment = newRemainingBalance > 0;
+      {/* Single Invoice Manual Payment Entry Modal Dialog with Last Payment Details */}
+      {selectedBillForPayment && (() => {
+        const billAmount = Number(selectedBillForPayment.amount || 0);
+        const totalPaidSoFar = Number(selectedBillForPayment.totalPaid || 0);
+        const curRemainingBalance = Number(selectedBillForPayment.remainingBalance ?? Math.max(0, billAmount - totalPaidSoFar));
+        const paidPercentage = billAmount > 0 ? Math.min(100, Math.round((totalPaidSoFar / billAmount) * 100)) : 0;
+        const enteredAmount = Number(paymentAmount || 0);
+        const newTotalPaid = totalPaidSoFar + enteredAmount;
+        const newRemainingBalance = Math.max(0, billAmount - newTotalPaid);
+        const isPartPayment = newRemainingBalance > 0;
 
-          return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-              {/* Backdrop */}
-              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedBillForPayment(null)} />
-              
-              {/* Modal Panel */}
-              <div className="relative w-full max-w-lg bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedBillForPayment(null)} />
 
-                {/* Header */}
-                <div className="flex-shrink-0 flex items-center justify-between p-6 border-b border-slate-800 bg-slate-950/90 backdrop-blur-sm">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-emerald-600/20 border border-emerald-500/20">
-                      <Receipt className="h-5 w-5 text-emerald-400" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-slate-100">Record Single / Part Payment</h3>
-                      <p className="text-[11px] text-slate-500">Invoice <span className="font-mono text-indigo-400 font-semibold">{selectedBillForPayment.billNumber}</span> for <span className="font-bold text-slate-200">Flat {selectedBillForPayment.flatNumber}</span></p>
-                    </div>
+            {/* Modal Panel */}
+            <div className="relative w-full max-w-lg bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+
+              {/* Header */}
+              <div className="flex-shrink-0 flex items-center justify-between p-6 border-b border-slate-800 bg-slate-950/90 backdrop-blur-sm">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-emerald-600/20 border border-emerald-500/20">
+                    <Receipt className="h-5 w-5 text-emerald-400" />
                   </div>
-                  <button
-                    onClick={() => setSelectedBillForPayment(null)}
-                    className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-500 hover:text-slate-300 transition-all"
-                  >
-                    <X className="h-5 w-5" />
-                  </button>
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-100">Record Single / Part Payment</h3>
+                    <p className="text-[11px] text-slate-500">Invoice <span className="font-mono text-indigo-400 font-semibold">{selectedBillForPayment.billNumber}</span> for <span className="font-bold text-slate-200">Flat {selectedBillForPayment.flatNumber}</span></p>
+                  </div>
                 </div>
+                <button
+                  onClick={() => setSelectedBillForPayment(null)}
+                  className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-500 hover:text-slate-300 transition-all"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
 
-                {/* Body */}
-                <div className="p-6 overflow-y-auto space-y-5">
+              {/* Body */}
+              <div className="p-6 overflow-y-auto space-y-5">
 
                 {/* Outstanding & Part Payment Summary Box */}
                 <div className="modal-summary-box bg-slate-950/70 border border-slate-800 p-4 rounded-xl space-y-3">
@@ -1052,8 +1044,8 @@ export default function MaintenanceDashboardPage() {
                       <span className="text-emerald-400 font-bold">{paidPercentage}% Paid ({`₹ ${totalPaidSoFar.toLocaleString('en-IN')} / ₹ ${billAmount.toLocaleString('en-IN')}`})</span>
                     </div>
                     <div className="w-full bg-slate-200 dark:bg-slate-950 h-2 rounded-full overflow-hidden border border-slate-300 dark:border-slate-800 flex">
-                      <div 
-                        className="bg-emerald-500 h-full transition-all duration-300 rounded-full" 
+                      <div
+                        className="bg-emerald-500 h-full transition-all duration-300 rounded-full"
                         style={{ width: `${paidPercentage}%` }}
                       />
                     </div>
@@ -1067,11 +1059,10 @@ export default function MaintenanceDashboardPage() {
                       <History className="h-4 w-4 text-indigo-500 dark:text-indigo-400" /> Past Payment Details
                     </div>
                     {selectedBillForPayment.lastPayment && (
-                      <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full border uppercase tracking-wider ${
-                        selectedBillForPayment.lastPayment.paymentType === 'FULL'
+                      <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full border uppercase tracking-wider ${selectedBillForPayment.lastPayment.paymentType === 'FULL'
                           ? 'bg-emerald-100 dark:bg-emerald-950/50 border-emerald-800 text-emerald-700 dark:text-emerald-400'
                           : 'bg-amber-100 dark:bg-amber-950/50 border-amber-800 text-amber-700 dark:text-amber-400'
-                      }`}>
+                        }`}>
                         {selectedBillForPayment.lastPayment.paymentType === 'FULL' ? 'FULL PAYMENT' : 'PART PAYMENT'}
                       </span>
                     )}
@@ -1152,11 +1143,10 @@ export default function MaintenanceDashboardPage() {
                   <div className="bg-indigo-950/20 border border-indigo-200 dark:border-indigo-800/50 p-3 rounded-lg space-y-1.5 text-xs shadow-sm">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs text-indigo-800 dark:text-indigo-300 font-bold uppercase tracking-wide">Payment Impact Preview</span>
-                      <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border uppercase tracking-wider ${
-                        isPartPayment
+                      <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border uppercase tracking-wider ${isPartPayment
                           ? 'bg-amber-100 dark:bg-amber-950/60 border-amber-800/80 text-amber-700 dark:text-amber-400'
                           : 'bg-emerald-100 dark:bg-emerald-950/60 border-emerald-800/80 text-emerald-700 dark:text-emerald-400'
-                      }`}>
+                        }`}>
                         {isPartPayment ? 'PARTIAL PAYMENT' : 'FULL PAYMENT'}
                       </span>
                     </div>
@@ -1172,7 +1162,7 @@ export default function MaintenanceDashboardPage() {
                     </div>
                   </div>
 
-                  
+
                   {paymentMode !== 'CASH' && bankAccounts.length > 0 && (
                     <div>
                       <label className="text-xs text-slate-600 dark:text-slate-400 font-medium">Deposit Bank Account</label>
@@ -1225,61 +1215,61 @@ export default function MaintenanceDashboardPage() {
                     ></textarea>
                   </div>
                 </form>
-                </div>
-
-                {/* Footer */}
-                <div className="p-6 border-t border-slate-800 bg-slate-950 flex justify-end gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedBillForPayment(null)}
-                    className="rounded-lg border border-slate-800 bg-slate-950/60 py-2 px-4 text-xs font-semibold text-slate-500 hover:bg-slate-900 transition-all shadow-sm"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    form="single-payment-form"
-                    disabled={isProcessing}
-                    className="rounded-lg bg-emerald-600 hover:bg-emerald-500 text-slate-100 py-2 px-6 text-xs font-semibold disabled:opacity-55 transition-all flex items-center gap-2 shadow-lg shadow-emerald-600/20"
-                  >
-                    {isProcessing ? <><Loader2 className="h-4 w-4 animate-spin" /> Processing...</> : 'Confirm & Post Receipt'}
-                  </button>
-                </div>
               </div>
-            </div>
-          );
-        })()}
 
-        {/* Multi-Invoice Bulk Payment Recording Modal Dialog */}
-        {isBulkPaymentModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            {/* Backdrop */}
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsBulkPaymentModalOpen(false)} />
-            
-            {/* Modal Panel */}
-            <div className="relative w-full max-w-lg bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-
-              {/* Header */}
-              <div className="flex-shrink-0 flex items-center justify-between p-6 border-b border-slate-800 bg-slate-950/90 backdrop-blur-sm">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-indigo-600/20 border border-indigo-500/20">
-                    <Receipt className="h-5 w-5 text-indigo-400" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-slate-100">Multi-Invoice Lump-Sum Payment</h3>
-                    <p className="text-[11px] text-slate-500">Log a single lump-sum payment received across <span className="font-bold text-indigo-300">{selectedBillsData.length} selected invoices</span>.</p>
-                  </div>
-                </div>
+              {/* Footer */}
+              <div className="p-6 border-t border-slate-800 bg-slate-950 flex justify-end gap-2">
                 <button
-                  onClick={() => setIsBulkPaymentModalOpen(false)}
-                  className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-500 hover:text-slate-300 transition-all"
+                  type="button"
+                  onClick={() => setSelectedBillForPayment(null)}
+                  className="rounded-lg border border-slate-800 bg-slate-950/60 py-2 px-4 text-xs font-semibold text-slate-500 hover:bg-slate-900 transition-all shadow-sm"
                 >
-                  <X className="h-5 w-5" />
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  form="single-payment-form"
+                  disabled={isProcessing}
+                  className="rounded-lg bg-emerald-600 hover:bg-emerald-500 text-slate-100 py-2 px-6 text-xs font-semibold disabled:opacity-55 transition-all flex items-center gap-2 shadow-lg shadow-emerald-600/20"
+                >
+                  {isProcessing ? <><Loader2 className="h-4 w-4 animate-spin" /> Processing...</> : 'Confirm & Post Receipt'}
                 </button>
               </div>
+            </div>
+          </div>
+        );
+      })()}
 
-              {/* Body */}
-              <div className="p-6 overflow-y-auto space-y-5">
+      {/* Multi-Invoice Bulk Payment Recording Modal Dialog */}
+      {isBulkPaymentModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsBulkPaymentModalOpen(false)} />
+
+          {/* Modal Panel */}
+          <div className="relative w-full max-w-lg bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+
+            {/* Header */}
+            <div className="flex-shrink-0 flex items-center justify-between p-6 border-b border-slate-800 bg-slate-950/90 backdrop-blur-sm">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-indigo-600/20 border border-indigo-500/20">
+                  <Receipt className="h-5 w-5 text-indigo-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-slate-100">Multi-Invoice Lump-Sum Payment</h3>
+                  <p className="text-[11px] text-slate-500">Log a single lump-sum payment received across <span className="font-bold text-indigo-300">{selectedBillsData.length} selected invoices</span>.</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsBulkPaymentModalOpen(false)}
+                className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-500 hover:text-slate-300 transition-all"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 overflow-y-auto space-y-5">
 
               {/* Selected Invoices Breakdown */}
               <div className="modal-summary-box bg-slate-950/60 border border-slate-800 p-3.5 rounded-xl space-y-2 max-h-40 overflow-y-auto">
@@ -1387,29 +1377,29 @@ export default function MaintenanceDashboardPage() {
                   ></textarea>
                 </div>
               </form>
-              </div>
+            </div>
 
-              {/* Footer */}
-              <div className="p-6 border-t border-slate-800 bg-slate-950 flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsBulkPaymentModalOpen(false)}
-                  className="rounded-lg border border-slate-800 bg-slate-950/60 py-2 px-4 text-xs font-semibold text-slate-500 hover:bg-slate-900 transition-all shadow-sm"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  form="bulk-payment-form"
-                  disabled={isProcessing}
-                  className="rounded-lg bg-indigo-600 hover:bg-indigo-500 text-slate-100 py-2 px-6 text-xs font-semibold disabled:opacity-55 transition-all flex items-center gap-2 shadow-lg shadow-indigo-600/20"
-                >
-                  {isProcessing ? <><Loader2 className="h-4 w-4 animate-spin" /> Processing...</> : 'Confirm & Post Bulk Receipts'}
-                </button>
-              </div>
+            {/* Footer */}
+            <div className="p-6 border-t border-slate-800 bg-slate-950 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setIsBulkPaymentModalOpen(false)}
+                className="rounded-lg border border-slate-800 bg-slate-950/60 py-2 px-4 text-xs font-semibold text-slate-500 hover:bg-slate-900 transition-all shadow-sm"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="bulk-payment-form"
+                disabled={isProcessing}
+                className="rounded-lg bg-indigo-600 hover:bg-indigo-500 text-slate-100 py-2 px-6 text-xs font-semibold disabled:opacity-55 transition-all flex items-center gap-2 shadow-lg shadow-indigo-600/20"
+              >
+                {isProcessing ? <><Loader2 className="h-4 w-4 animate-spin" /> Processing...</> : 'Confirm & Post Bulk Receipts'}
+              </button>
             </div>
           </div>
-        )}
+        </div>
+      )}
     </main>
   );
 }

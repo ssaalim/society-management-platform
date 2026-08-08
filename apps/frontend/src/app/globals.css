@@ -48,13 +48,24 @@
    DAY / LIGHT THEME OVERRIDES (Comprehensive System-Wide Design Overhaul)
    ========================================================================== */
 
-/* 1. Global Page Canvas & Main Area */
-html.light,
-html.light body,
-html.light main,
+/* 1. Global Page Canvas & Main Area Height / Width Expansion */
+html, body {
+  min-height: 100vh;
+}
+
+main {
+  min-height: calc(100vh - 4rem) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  width: 100% !important;
+}
+
+html.light, 
+html.light body, 
+html.light main, 
 html.light .bg-\[\#030712\] {
   background-color: #f8fafc !important;
-  /* Slate-50 soft canvas */
   color: #0f172a !important;
 }
 

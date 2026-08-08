@@ -64,6 +64,9 @@ function DevLoginPage() {
   const [loading, setLoading] = useState(true);
   const [loginLoading, setLoginLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [customEmail, setCustomEmail] = useState<string>('');
+  const [customPassword, setCustomPassword] = useState<string>('');
+  const [isSubmittingCustom, setIsSubmittingCustom] = useState<boolean>(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -77,7 +80,7 @@ function DevLoginPage() {
       if (data.success) {
         setUsers(data.data);
       } else {
-        setError('Failed to load test users. Make sure backend is running and db:seed has been executed.');
+        setError('Failed to load test users. Make sure backend is running.');
       }
     } catch (e) {
       setError('Cannot connect to backend at ' + API_URL + '. Make sure the backend server is running.');
@@ -86,33 +89,29 @@ function DevLoginPage() {
     }
   };
 
-  const handleDevLogin = async (user: DevUser) => {
-    setLoginLoading(user.id);
+  const executeDevLogin = async (email: string, password?: string) => {
     setError(null);
 
     try {
       const res = await fetch(`${API_URL}/auth/dev-login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: user.email, password: 'password123' }),
+        body: JSON.stringify({ email: email.trim(), password: password || 'password123' }),
       });
 
       const data = await res.json();
 
       if (data.success) {
-        // Store dev session
         localStorage.setItem('dev_token', data.data.devToken);
         localStorage.setItem('dev_session', JSON.stringify({
           user: data.data.user,
           memberships: data.data.memberships,
         }));
 
-        // Set active society to first membership
         if (data.data.memberships.length > 0) {
           localStorage.setItem('active_society_id', data.data.memberships[0].societyId);
         }
 
-        // Navigate and reload implicitly by using window.location.href
         const firstSlug = data.data.memberships[0]?.societySlug;
         window.location.href = firstSlug ? `/${firstSlug}/dashboard` : '/';
       } else {
@@ -120,9 +119,24 @@ function DevLoginPage() {
       }
     } catch (e: any) {
       setError(e.message || 'Login request failed.');
-    } finally {
-      setLoginLoading(null);
     }
+  };
+
+  const handleDevLogin = async (user: DevUser) => {
+    setLoginLoading(user.id);
+    await executeDevLogin(user.email);
+    setLoginLoading(null);
+  };
+
+  const handleCustomLoginSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!customEmail.trim()) {
+      setError('Please enter your Username or Email address.');
+      return;
+    }
+    setIsSubmittingCustom(true);
+    await executeDevLogin(customEmail, customPassword);
+    setIsSubmittingCustom(false);
   };
 
   const getRoleForUser = (email: string) => {
@@ -136,18 +150,18 @@ function DevLoginPage() {
       <div className="absolute top-1/4 left-1/4 h-[300px] w-[300px] rounded-full bg-violet-600/5 blur-[120px]" />
       <div className="absolute bottom-1/4 right-1/4 h-[250px] w-[250px] rounded-full bg-indigo-500/5 blur-[100px]" />
 
-      <div className="w-full max-w-2xl z-10 space-y-6">
+      <div className="w-full max-w-xl z-10 space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
           <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-950/30 px-4 py-1.5 text-xs text-amber-400 backdrop-blur-md">
             <span className="flex h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-            Development Mode
+            Society Portal Login
           </div>
           <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-slate-100 to-slate-400 bg-clip-text text-transparent">
-            Dev Login
+            Sign In to System
           </h2>
           <p className="text-sm text-slate-400">
-            Select a test user to login as. No Supabase required.
+            Enter your Username/Email and password to log in.
           </p>
         </div>
 
@@ -158,66 +172,94 @@ function DevLoginPage() {
           </div>
         )}
 
-        {/* User Cards */}
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 text-indigo-500 animate-spin" />
-          </div>
-        ) : users.length === 0 ? (
-          <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-8 text-center backdrop-blur-md">
-            <p className="text-slate-400 text-sm">No test users found.</p>
-            <p className="text-slate-500 text-xs mt-2">
-              Run <code className="bg-slate-800 px-2 py-0.5 rounded text-slate-300">npm run db:seed --workspace=apps/backend</code> to create test users.
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-3">
-            {users.map((user) => {
-              const role = getRoleForUser(user.email);
-              const colorClass = ROLE_COLORS[role] || ROLE_COLORS['OWNER'];
-              const icon = ROLE_ICONS[role] || ROLE_ICONS['OWNER'];
-              const isLoggingIn = loginLoading === user.id;
+        {/* Direct Username / Email & Password Login Form */}
+        <div className="bg-slate-900/60 border border-slate-800 p-6 rounded-2xl backdrop-blur-xl shadow-2xl space-y-4">
+          <form onSubmit={handleCustomLoginSubmit} className="space-y-4">
+            <div>
+              <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5 mb-1">
+                <Mail className="h-3.5 w-3.5 text-indigo-400" /> Username / Email Address
+              </label>
+              <input
+                type="text"
+                value={customEmail}
+                onChange={(e) => setCustomEmail(e.target.value)}
+                placeholder="e.g. resident@society.dev or john@example.com"
+                className="w-full rounded-lg border border-slate-800 bg-slate-950/80 py-2.5 px-3.5 text-sm text-slate-200 placeholder-slate-600 focus:border-indigo-600/50 focus:outline-none transition-all font-mono"
+              />
+            </div>
 
-              return (
-                <button
-                  key={user.id}
-                  onClick={() => handleDevLogin(user)}
-                  disabled={!!loginLoading}
-                  className={`group relative flex items-center gap-4 rounded-xl border bg-gradient-to-r ${colorClass} p-4 text-left transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-slate-950/50 disabled:opacity-50 disabled:hover:scale-100 backdrop-blur-md`}
-                >
-                  {/* Role Icon */}
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-slate-950/50 border border-slate-700/50">
-                    {isLoggingIn ? <Loader2 className="h-5 w-5 animate-spin" /> : icon}
-                  </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5 mb-1">
+                <Lock className="h-3.5 w-3.5 text-indigo-400" /> Password
+              </label>
+              <input
+                type="password"
+                value={customPassword}
+                onChange={(e) => setCustomPassword(e.target.value)}
+                placeholder="Enter your system password"
+                className="w-full rounded-lg border border-slate-800 bg-slate-950/80 py-2.5 px-3.5 text-sm text-slate-200 placeholder-slate-600 focus:border-indigo-600/50 focus:outline-none transition-all font-mono"
+              />
+            </div>
 
-                  {/* User Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-slate-200 truncate">{user.name}</h3>
-                      <span className="shrink-0 rounded-full bg-slate-950/50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider">
-                        {role.replace('_', ' ')}
-                      </span>
+            <button
+              type="submit"
+              disabled={isSubmittingCustom || !customEmail.trim()}
+              className="w-full py-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-sm font-semibold text-white transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20"
+            >
+              {isSubmittingCustom ? (
+                <><Loader2 className="h-4 w-4 animate-spin" /> Authenticating...</>
+              ) : (
+                'Sign In'
+              )}
+            </button>
+          </form>
+        </div>
+
+        {/* Quick Dev User Selector Section */}
+        <div className="space-y-3 pt-2">
+          <div className="flex items-center justify-between text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+            <span>Or Quick Select Pre-seeded Member Accounts</span>
+            <span className="font-mono text-[10px]">Development Directory</span>
+          </div>
+
+          {loading ? (
+            <div className="flex items-center justify-center py-6">
+              <Loader2 className="h-6 w-6 text-indigo-500 animate-spin" />
+            </div>
+          ) : users.length === 0 ? null : (
+            <div className="grid grid-cols-1 gap-2.5 max-h-[260px] overflow-y-auto pr-1">
+              {users.map((user) => {
+                const role = getRoleForUser(user.email);
+                const colorClass = ROLE_COLORS[role] || ROLE_COLORS['OWNER'];
+                const icon = ROLE_ICONS[role] || ROLE_ICONS['OWNER'];
+                const isLoggingIn = loginLoading === user.id;
+
+                return (
+                  <button
+                    key={user.id}
+                    onClick={() => handleDevLogin(user)}
+                    disabled={!!loginLoading}
+                    className={`group relative flex items-center gap-3 rounded-xl border bg-gradient-to-r ${colorClass} p-3 text-left transition-all hover:scale-[1.01] hover:shadow-lg disabled:opacity-50 backdrop-blur-md`}
+                  >
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-950/50 border border-slate-700/50">
+                      {isLoggingIn ? <Loader2 className="h-4 w-4 animate-spin" /> : icon}
                     </div>
-                    <p className="text-xs text-slate-400 mt-0.5">{user.email}</p>
-                    {user.mobile && <p className="text-xs text-slate-500">{user.mobile}</p>}
-                  </div>
 
-                  {/* Arrow */}
-                  <div className="shrink-0 text-slate-500 group-hover:text-slate-300 transition-colors">
-                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
-                    </svg>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Footer */}
-        <p className="text-center text-xs text-slate-600">
-          Password for all users: <code className="text-slate-400">password123</code>
-        </p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-xs font-semibold text-slate-200 truncate">{user.name}</h3>
+                        <span className="shrink-0 rounded-full bg-slate-950/50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider">
+                          {role.replace('_', ' ')}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-400 font-mono truncate">{user.email}</p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
     </main>
   );
