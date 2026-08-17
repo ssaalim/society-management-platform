@@ -73,16 +73,27 @@ html.light .bg-\[linear-gradient\(to_right\,\#0f172a_1px\,transparent_1px\)\,\li
   background-image: linear-gradient(to right, #e2e8f0 1px, transparent 1px), linear-gradient(to bottom, #e2e8f0 1px, transparent 1px) !important;
 }
 
-/* 2. Top Header Navigation Bar */
-html.light header {
+/* 2. Top Header Navigation Bar & Left Sidebar */
+html.light header,
+html.light aside {
   background-color: #ffffff !important;
   border-bottom-color: #e2e8f0 !important;
+  border-right-color: #e2e8f0 !important;
+}
+
+html.light header {
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05) !important;
 }
 
-html.light header .border-t {
-  border-top-color: #e2e8f0 !important;
-  background-color: #f8fafc !important;
+html.light aside {
+  box-shadow: 1px 0 3px 0 rgba(0, 0, 0, 0.03) !important;
+}
+
+html.light header .border-t,
+html.light aside .border-t,
+html.light aside .border-b {
+  border-color: #e2e8f0 !important;
+  background-color: #ffffff !important;
 }
 
 /* Selected Active Menu Tab */
@@ -505,4 +516,21 @@ html.light .modal-history-box {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.6);
 }

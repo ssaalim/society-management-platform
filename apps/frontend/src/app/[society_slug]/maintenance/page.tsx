@@ -445,8 +445,11 @@ export default function MaintenanceDashboardPage() {
   );
 
   return (
-    <main className="min-h-screen w-full bg-slate-950 text-slate-100 p-4 sm:p-6 md:p-8 lg:p-10">
-      <div className="w-full max-w-[1450px] mx-auto space-y-8">
+    <main className="relative flex min-h-screen flex-col items-center justify-start overflow-x-hidden w-full py-8 px-4 sm:px-6 md:px-8 lg:px-10">
+      {/* Background Grids */}
+      <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
+
+      <div className="w-full max-w-[1450px] mx-auto space-y-8 z-10">
 
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -459,15 +462,16 @@ export default function MaintenanceDashboardPage() {
           </div>
 
           {/* Action Tabs for Management and Residents */}
-          <div className="flex items-center gap-1.5 sm:gap-2 bg-slate-900 border border-slate-800 p-1 rounded-xl overflow-x-auto">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => setActiveView('bills')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+              className={`rounded-lg border py-2 px-3 text-xs font-semibold transition-all flex items-center gap-1.5 ${
                 activeView === 'bills'
-                  ? 'bg-indigo-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-indigo-600 border-indigo-500 text-slate-100 shadow-sm'
+                  : 'border-slate-800 bg-slate-950/60 text-slate-300 hover:bg-slate-900'
               }`}
             >
+              <CreditCard className="h-3.5 w-3.5" />
               {isManagementRole ? 'Invoices & Receipts' : 'My Invoices'}
             </button>
             <button
@@ -475,10 +479,10 @@ export default function MaintenanceDashboardPage() {
                 setActiveView('society_dues');
                 fetchSocietyDues();
               }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1 ${
+              className={`rounded-lg border py-2 px-3 text-xs font-semibold transition-all flex items-center gap-1.5 ${
                 activeView === 'society_dues'
-                  ? 'bg-indigo-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-indigo-600 border-indigo-500 text-slate-100 shadow-sm'
+                  : 'border-slate-800 bg-slate-950/60 text-slate-300 hover:bg-slate-900'
               }`}
             >
               <Building className="h-3.5 w-3.5" /> Society Outstanding Dues
@@ -487,23 +491,23 @@ export default function MaintenanceDashboardPage() {
               <>
                 <button
                   onClick={() => setActiveView('generate')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+                  className={`rounded-lg border py-2 px-3 text-xs font-semibold transition-all flex items-center gap-1.5 ${
                     activeView === 'generate'
-                      ? 'bg-indigo-600 text-white shadow-md'
-                      : 'text-slate-400 hover:text-slate-200'
+                      ? 'bg-indigo-600 border-indigo-500 text-slate-100 shadow-sm'
+                      : 'border-slate-800 bg-slate-950/60 text-slate-300 hover:bg-slate-900'
                   }`}
                 >
-                  <Calculator className="h-3.5 w-3.5 inline mr-1" /> Batch Billing Sweep
+                  <Calculator className="h-3.5 w-3.5" /> Batch Billing Sweep
                 </button>
                 <button
                   onClick={() => setActiveView('settings')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+                  className={`rounded-lg border py-2 px-3 text-xs font-semibold transition-all flex items-center gap-1.5 ${
                     activeView === 'settings'
-                      ? 'bg-indigo-600 text-white shadow-md'
-                      : 'text-slate-400 hover:text-slate-200'
+                      ? 'bg-indigo-600 border-indigo-500 text-slate-100 shadow-sm'
+                      : 'border-slate-800 bg-slate-950/60 text-slate-300 hover:bg-slate-900'
                   }`}
                 >
-                  <Settings className="h-3.5 w-3.5 inline mr-1" /> Formula & Late Fees
+                  <Settings className="h-3.5 w-3.5" /> Formula & Late Fees
                 </button>
               </>
             )}

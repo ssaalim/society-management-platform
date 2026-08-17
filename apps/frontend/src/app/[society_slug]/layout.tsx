@@ -11,10 +11,7 @@ export default function SocietySlugLayout({
 }) {
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-[#030712] text-slate-100 flex flex-col">
-        <Navbar />
-        <div className="flex-1">{children}</div>
-      </div>
+      <Navbar>{children}</Navbar>
     </ProtectedRoute>
   );
 }

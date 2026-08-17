@@ -33,6 +33,8 @@ import {
   RefreshCw,
   X,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Key,
   Lock,
   Eye,
@@ -40,7 +42,10 @@ import {
   AlertCircle,
   CheckCircle,
   Mail,
-  Phone
+  Phone,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Sparkles
 } from 'lucide-react';
 import { useTheme } from '../../app/providers/theme-context';
 
@@ -61,7 +66,11 @@ interface NotificationItem {
   createdAt: string;
 }
 
-export const Navbar: React.FC = () => {
+interface AppLayoutProps {
+  children?: React.ReactNode;
+}
+
+export const Navbar: React.FC<AppLayoutProps> = ({ children }) => {
   const { user, activeSociety, memberships, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const params = useParams();
@@ -75,12 +84,19 @@ export const Navbar: React.FC = () => {
 
   const [mounted, setMounted] = useState<boolean>(false);
 
+  // Left Sidebar Collapsed state (persisted in localStorage)
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
+
+  // Tooltip hover states for collapsed sidebar
+  const [hoveredNavItem, setHoveredNavItem] = useState<{ label: string; top: number } | null>(null);
+  const [hoveredSociety, setHoveredSociety] = useState<{ name: string; role: string; top: number } | null>(null);
+
   // Notification state
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState<number>(0);
   const [isNotifOpen, setIsNotifOpen] = useState<boolean>(false);
   const [isSweeping, setIsSweeping] = useState<boolean>(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
 
   // User Profile Menu & Dialog States
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState<boolean>(false);
@@ -88,6 +104,7 @@ export const Navbar: React.FC = () => {
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState<boolean>(false);
   
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const notifMenuRef = useRef<HTMLDivElement>(null);
 
   // Profile Form State
   const [profileName, setProfileName] = useState<string>((user as any)?.name || '');
@@ -104,7 +121,26 @@ export const Navbar: React.FC = () => {
 
   useEffect(() => {
     setMounted(true);
+    // Load persisted collapse state
+    try {
+      const savedState = localStorage.getItem('housive_sidebar_collapsed');
+      if (savedState !== null) {
+        setIsCollapsed(savedState === 'true');
+      }
+    } catch (e) {
+      // localStorage may not be available
+    }
   }, []);
+
+  const toggleSidebar = () => {
+    setIsCollapsed(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem('housive_sidebar_collapsed', String(next));
+      } catch (e) {}
+      return next;
+    });
+  };
 
   // Update profile form state on user change
   useEffect(() => {
@@ -120,6 +156,9 @@ export const Navbar: React.FC = () => {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
         setIsProfileMenuOpen(false);
       }
+      if (notifMenuRef.current && !notifMenuRef.current.contains(event.target as Node)) {
+        setIsNotifOpen(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -130,8 +169,8 @@ export const Navbar: React.FC = () => {
     try {
       const res = await apiClient.get('/notifications/my-notifications');
       if (res.data?.success) {
-        setNotifications(res.data.data.list || []);
-        setUnreadCount(res.data.data.unreadCount || 0);
+        setNotifications(res.data.list || res.data.data?.list || []);
+        setUnreadCount(res.data.unreadCount || res.data.data?.unreadCount || 0);
       }
     } catch (err) {
       console.error('Failed to fetch notifications:', err);
@@ -167,7 +206,7 @@ export const Navbar: React.FC = () => {
     try {
       const res = await apiClient.post('/notifications/sweep');
       if (res.data?.success) {
-        alert(`Dues reminder sweep dispatched to ${res.data.data.count} resident accounts!`);
+        alert(`Dues reminder sweep dispatched to ${res.data.data?.count || res.data.count || 0} resident accounts!`);
         fetchNotifications();
       }
     } catch (err) {
@@ -250,76 +289,76 @@ export const Navbar: React.FC = () => {
     {
       label: 'Dashboard',
       href: (slug) => `/${slug}/dashboard`,
-      icon: <LayoutDashboard className="h-4 w-4" />,
+      icon: <LayoutDashboard className="h-4 w-4 shrink-0" />,
     },
     {
       label: 'Flats',
       href: (slug) => `/${slug}/flats`,
-      icon: <Building className="h-4 w-4" />,
+      icon: <Building className="h-4 w-4 shrink-0" />,
       permission: 'flat:read',
     },
     {
       label: 'Members',
       href: (slug) => `/${slug}/members`,
-      icon: <Users className="h-4 w-4" />,
+      icon: <Users className="h-4 w-4 shrink-0" />,
       permission: 'member:read',
     },
     {
       label: 'Maintenance',
       href: (slug) => `/${slug}/maintenance`,
-      icon: <CreditCard className="h-4 w-4" />,
+      icon: <CreditCard className="h-4 w-4 shrink-0" />,
       permission: 'billing:read',
     },
     {
       label: 'Payments',
       href: (slug) => `/${slug}/payments`,
-      icon: <Receipt className="h-4 w-4" />,
+      icon: <Receipt className="h-4 w-4 shrink-0" />,
       permission: 'billing:read',
     },
     {
       label: 'Accounting',
       href: (slug) => `/${slug}/accounting`,
-      icon: <BookOpen className="h-4 w-4" />,
+      icon: <BookOpen className="h-4 w-4 shrink-0" />,
       permission: 'accounting:read',
     },
     {
       label: 'Resident Portal',
       href: (slug) => `/${slug}/resident`,
-      icon: <Home className="h-4 w-4" />,
+      icon: <Home className="h-4 w-4 shrink-0" />,
       permission: 'resident:read',
     },
     {
       label: 'Complaints',
       href: (slug) => `/${slug}/complaints`,
-      icon: <MessageSquare className="h-4 w-4" />,
+      icon: <MessageSquare className="h-4 w-4 shrink-0" />,
     },
     {
       label: 'Assets',
       href: (slug) => `/${slug}/assets`,
-      icon: <Box className="h-4 w-4" />,
+      icon: <Box className="h-4 w-4 shrink-0" />,
       permission: 'society:read',
     },
     {
       label: 'Reports',
       href: (slug) => `/${slug}/reports`,
-      icon: <BarChart2 className="h-4 w-4" />,
+      icon: <BarChart2 className="h-4 w-4 shrink-0" />,
       permission: 'accounting:read',
     },
     {
       label: 'AI Assistant',
       href: (slug) => `/${slug}/ai-assistant`,
-      icon: <Bot className="h-4 w-4" />,
+      icon: <Bot className="h-4 w-4 shrink-0" />,
     },
     {
       label: 'Society Settings',
       href: (slug) => `/${slug}/profile`,
-      icon: <Settings className="h-4 w-4" />,
+      icon: <Settings className="h-4 w-4 shrink-0" />,
       permission: 'society:write',
     },
     {
       label: 'Platform Admin',
       href: () => '/admin',
-      icon: <ShieldCheck className="h-4 w-4" />,
+      icon: <ShieldCheck className="h-4 w-4 shrink-0" />,
       superAdminOnly: true,
     },
   ];
@@ -370,241 +409,208 @@ export const Navbar: React.FC = () => {
   const displayName = (user as any)?.name || user?.email?.split('@')[0] || 'User';
   const displayInitial = (displayName[0] || 'U').toUpperCase();
 
-  return (
-    <>
-      <header className="sticky top-0 z-40 w-full border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-950/80 backdrop-blur-xl transition-colors">
-        {/* Top Header Row */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex h-16 items-center justify-between gap-4">
-          
-          {/* Brand & Society Switcher */}
-          <div className="flex items-center gap-3 sm:gap-6">
-            <Link href="/" className="flex items-center gap-2 font-bold text-slate-900 dark:text-slate-100 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
-              <div className="h-8 w-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-extrabold text-sm shrink-0">
-                H
-              </div>
-              <span className="hidden lg:inline-block text-base tracking-tight">Housive</span>
-            </Link>
+  // Find active nav item title for top bar display
+  const activeNavItem = visibleNavItems.find((item) => {
+    const targetHref = item.href(societySlug);
+    return pathname === targetHref || (targetHref !== `/${societySlug}` && pathname?.startsWith(targetHref + '/'));
+  });
 
-            {/* Tenant Scope Dropdown */}
-            <SocietySwitcher />
+  const sidebarContent = (
+    <div className="flex flex-col h-full select-none">
+      {/* Sidebar Header: Brand & Collapse Toggle */}
+      <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} h-16 px-4 border-b border-slate-200 dark:border-slate-800/80 shrink-0 transition-all`}>
+        <Link 
+          href={societySlug ? `/${societySlug}/dashboard` : '/'} 
+          className="flex items-center gap-3 overflow-hidden group focus:outline-none"
+          title="Housive Home"
+        >
+          <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-700 text-white font-black text-base flex items-center justify-center shrink-0 shadow-md group-hover:scale-105 transition-transform">
+            H
           </div>
+          {!isCollapsed && (
+            <div className="flex flex-col min-w-0">
+              <span className="text-base font-extrabold tracking-tight text-slate-900 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate">
+                Housive
+              </span>
+              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium truncate -mt-0.5">
+                Society Platform
+              </span>
+            </div>
+          )}
+        </Link>
 
-          {/* User Info & Actions */}
-          <div className="flex items-center gap-3">
-            {/* Day / Night Theme Toggle Button */}
-            <button
-              onClick={toggleTheme}
-              title={theme === 'dark' ? 'Switch to Day Mode' : 'Switch to Night Mode'}
-              className="flex items-center justify-center p-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-amber-500 dark:text-amber-400 transition-all"
-            >
-              {theme === 'dark' ? (
-                <Sun className="h-4 w-4 text-amber-400" />
-              ) : (
-                <Moon className="h-4 w-4 text-indigo-600" />
-              )}
-            </button>
+        {!isCollapsed && (
+          <button
+            onClick={toggleSidebar}
+            title="Collapse sidebar to icons"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors focus:outline-none"
+          >
+            <PanelLeftClose className="h-4 w-4" />
+          </button>
+        )}
+      </div>
 
-            {/* Real-time Notification Bell */}
-            {user && (
-              <div className="relative">
-                <button
-                  onClick={() => setIsNotifOpen(!isNotifOpen)}
-                  className="relative flex items-center justify-center p-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-all"
-                  title="Notifications"
-                >
-                  <Bell className="h-4 w-4" />
-                  {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[9px] font-black text-white">
-                      {unreadCount}
-                    </span>
-                  )}
-                </button>
-
-                {/* Notification Popover Drawer */}
-                {isNotifOpen && (
-                  <div className="notif-popover absolute right-0 mt-2 w-80 sm:w-96 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl p-4 z-50 space-y-3">
-                    <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
-                      <div className="flex items-center gap-2">
-                        <Bell className="h-4 w-4 text-indigo-400" />
-                        <span className="font-bold text-sm text-slate-900 dark:text-slate-100">Notifications</span>
-                        {unreadCount > 0 && (
-                          <span className="bg-red-500/20 border border-red-500/30 text-red-400 text-[10px] font-bold px-1.5 py-0.2 rounded-full">
-                            {unreadCount} new
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex items-center gap-1">
-                        {isManagementRole && (
-                          <button
-                            onClick={handleRunSweep}
-                            disabled={isSweeping}
-                            title="Run Dues Reminder Sweep"
-                            className="p-1 rounded text-slate-400 hover:text-indigo-400 transition-colors"
-                          >
-                            <RefreshCw className={`h-3.5 w-3.5 ${isSweeping ? 'animate-spin' : ''}`} />
-                          </button>
-                        )}
-                        <button
-                          onClick={handleMarkAllRead}
-                          title="Mark all as read"
-                          className="p-1 rounded text-slate-400 hover:text-emerald-400 transition-colors"
-                        >
-                          <CheckCheck className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="max-h-72 overflow-y-auto space-y-2 pr-1">
-                      {notifications.length === 0 ? (
-                        <p className="text-xs text-slate-500 dark:text-slate-400 text-center py-6">No notifications</p>
-                      ) : (
-                        notifications.map((n) => (
-                          <div
-                            key={n.id}
-                            className={`p-3 rounded-lg border text-xs space-y-1 transition-all flex items-start justify-between gap-2 ${
-                              n.status === 'READ'
-                                ? 'border-slate-800/40 bg-slate-950/20 text-slate-400'
-                                : 'border-indigo-500/30 bg-indigo-950/20 text-slate-200'
-                            }`}
-                          >
-                            <div>
-                              <p className="font-semibold text-slate-100">{n.title}</p>
-                              <p className="text-[11px] text-slate-400 leading-relaxed">{n.body}</p>
-                              <span className="notif-time text-[9px] text-slate-500 mt-1 block">
-                                {n.createdAt ? new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
-                              </span>
-                            </div>
-                            {n.status !== 'READ' && (
-                              <button
-                                onClick={() => handleMarkAsRead(n.id)}
-                                title="Mark read"
-                                className="text-slate-500 hover:text-emerald-400 p-1 shrink-0"
-                              >
-                                <Check className="h-3.5 w-3.5" />
-                              </button>
-                            )}
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                )}
+      {/* Society Mini Info (When expanded) */}
+      {!isCollapsed && activeSociety && (
+        <div className="px-3 pt-3 pb-1 shrink-0">
+          <div className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800/80 bg-slate-50/70 dark:bg-slate-900/40">
+            <div className="flex items-center gap-2">
+              <div className="h-6 w-6 rounded-lg bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                <Building className="h-3.5 w-3.5" />
               </div>
-            )}
-
-            {/* ========================================== */}
-            {/* USER PROFILE DROPDOWN MENU TRIGGER         */}
-            {/* ========================================== */}
-            {user && (
-              <div className="relative" ref={userMenuRef}>
-                <button
-                  onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-                  className="flex items-center gap-2 p-1.5 sm:px-3 sm:py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-left group"
-                >
-                  {/* Avatar Badge */}
-                  <div className="h-7 w-7 rounded-lg bg-indigo-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-sm">
-                    {displayInitial}
-                  </div>
-
-                  {/* Name & Role Text */}
-                  <div className="hidden md:flex flex-col pr-1">
-                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate max-w-[130px]">
-                      {displayName}
-                    </span>
-                    <span className="text-[10px] text-indigo-500 dark:text-indigo-400 font-bold uppercase tracking-wider">
-                      {userRole.replace('_', ' ') || 'Resident'}
-                    </span>
-                  </div>
-
-                  <ChevronDown className={`h-3.5 w-3.5 text-slate-400 transition-transform ${isProfileMenuOpen ? 'rotate-180' : ''}`} />
-                </button>
-
-                {/* Profile Submenu Dropdown */}
-                {isProfileMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-64 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-2xl p-2 z-50 space-y-1 animate-in fade-in slide-in-from-top-2 duration-150">
-                    
-                    {/* User Profile Header Card */}
-                    <div className="px-3 py-2.5 bg-slate-50 dark:bg-slate-900/70 border border-slate-100 dark:border-slate-800/80 rounded-xl mb-1 space-y-1">
-                      <div className="flex items-center gap-2.5">
-                        <div className="h-8 w-8 rounded-lg bg-indigo-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
-                          {displayInitial}
-                        </div>
-                        <div className="overflow-hidden">
-                          <p className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">{displayName}</p>
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{user.email}</p>
-                        </div>
-                      </div>
-                      <div className="pt-1 flex items-center gap-1.5">
-                        <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 uppercase">
-                          {userRole.replace('_', ' ') || 'Resident'}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Option 1: Profile Option */}
-                    <button
-                      onClick={() => {
-                        setIsProfileMenuOpen(false);
-                        setIsProfileModalOpen(true);
-                      }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-300 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg transition-colors text-left"
-                    >
-                      <UserIcon className="h-4 w-4 text-indigo-400" />
-                      <span>My Profile</span>
-                    </button>
-
-                    {/* Option 2: Change Password Option */}
-                    <button
-                      onClick={() => {
-                        setIsProfileMenuOpen(false);
-                        setIsPasswordModalOpen(true);
-                      }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-300 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg transition-colors text-left"
-                    >
-                      <Key className="h-4 w-4 text-amber-400" />
-                      <span>Change Password</span>
-                    </button>
-
-                    <div className="border-t border-slate-100 dark:border-slate-800 my-1" />
-
-                    {/* Option 3: Logout Button */}
-                    <button
-                      onClick={() => {
-                        setIsProfileMenuOpen(false);
-                        signOut();
-                      }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors text-left"
-                    >
-                      <LogOut className="h-4 w-4 text-red-500" />
-                      <span>Sign Out / Log Out</span>
-                    </button>
-                  </div>
-                )}
+              <div className="overflow-hidden min-w-0">
+                <p className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">
+                  {activeSociety.societyName}
+                </p>
+                <p className="text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold uppercase tracking-wider truncate">
+                  {userRole.replace('_', ' ') || 'Resident'}
+                </p>
               </div>
-            )}
+            </div>
           </div>
         </div>
+      )}
 
-        {/* Navigation Menu Bar */}
-        {societySlug && (
-          <div className="border-t border-slate-200 dark:border-slate-800/60 bg-slate-50 dark:bg-slate-950/40 transition-colors">
-            
-            {/* Mobile Menu Toggle */}
-            <div className="sm:hidden px-4 py-2.5 flex items-center justify-between border-b border-slate-200 dark:border-slate-800/60">
-              <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">
-                Welcome, {displayName}
-              </span>
-              <button 
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="p-1.5 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+      {/* Collapsed Society Icon */}
+      {isCollapsed && activeSociety && (
+        <div className="py-2.5 px-2 flex justify-center shrink-0">
+          <div 
+            onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              setHoveredSociety({ 
+                name: activeSociety.societyName, 
+                role: userRole.replace('_', ' ') || 'Resident', 
+                top: rect.top + rect.height / 2 
+              });
+            }}
+            onMouseLeave={() => setHoveredSociety(null)}
+            className="h-9 w-9 rounded-xl border border-slate-200 dark:border-slate-800/80 bg-slate-50/70 dark:bg-slate-900/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          >
+            <Building className="h-4 w-4" />
+          </div>
+        </div>
+      )}
+
+      {/* Navigation Items - Scrollable List */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden py-3 px-2 space-y-1.5 custom-scrollbar">
+        {visibleNavItems.map((item) => {
+          const targetHref = item.href(societySlug);
+          const isActive = pathname === targetHref || pathname?.startsWith(targetHref + '/');
+
+          return (
+            <div key={item.label} className="relative">
+              <Link
+                href={targetHref}
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  setHoveredNavItem(null);
+                }}
+                onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => {
+                  if (isCollapsed) {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    setHoveredNavItem({ label: item.label, top: rect.top + rect.height / 2 });
+                  }
+                }}
+                onMouseLeave={() => setHoveredNavItem(null)}
+                className={`flex items-center ${isCollapsed ? 'justify-center h-10 w-10 mx-auto' : 'px-3 py-2.5 gap-3 w-full'} rounded-xl text-xs font-semibold transition-all ${
+                  isActive
+                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20 dark:bg-indigo-600 dark:text-white'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-900/70 border border-transparent'
+                }`}
               >
-                {isMobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+                <div className={`${isActive ? 'text-white' : 'text-slate-500 dark:text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400'} transition-colors`}>
+                  {item.icon}
+                </div>
+
+                {!isCollapsed && (
+                  <span className="truncate flex-1 tracking-tight text-left">
+                    {item.label}
+                  </span>
+                )}
+              </Link>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Sidebar Footer: Expand button (when collapsed) or collapse toggle footer */}
+      <div className="p-3 border-t border-slate-200 dark:border-slate-800/80 shrink-0">
+        {isCollapsed ? (
+          <button
+            onClick={toggleSidebar}
+            title="Expand sidebar"
+            className="h-10 w-10 mx-auto flex items-center justify-center rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/80 border border-slate-200 dark:border-slate-800 transition-colors focus:outline-none"
+          >
+            <PanelLeftOpen className="h-4 w-4" />
+          </button>
+        ) : (
+          <button
+            onClick={toggleSidebar}
+            className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-900/60 border border-transparent transition-colors focus:outline-none"
+          >
+            <span className="flex items-center gap-2">
+              <PanelLeftClose className="h-4 w-4 text-slate-400" />
+              <span>Collapse Menu</span>
+            </span>
+            <span className="text-[10px] bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-1.5 py-0.5 rounded font-mono">
+              Icons
+            </span>
+          </button>
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-[#030712] text-slate-100 flex flex-row">
+      {/* ========================================================================= */}
+      {/* 1. DESKTOP LEFT SIDEBAR (STICKY, COLLAPSIBLE TO ICONS ONLY)              */}
+      {/* ========================================================================= */}
+      <aside 
+        className={`hidden lg:flex flex-col sticky top-0 h-screen z-30 shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-[#030712] backdrop-blur-xl transition-all duration-300 ease-in-out ${
+          isCollapsed ? 'w-[72px]' : 'w-64'
+        }`}
+      >
+        {sidebarContent}
+      </aside>
+
+      {/* ========================================================================= */}
+      {/* 2. MOBILE DRAWER OVERLAY (SLIDE-OUT FROM LEFT)                           */}
+      {/* ========================================================================= */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden flex">
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm transition-opacity animate-in fade-in"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+
+          {/* Drawer Content */}
+          <div className="relative w-72 max-w-[80vw] h-full bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 z-10 flex flex-col shadow-2xl animate-in slide-in-from-left duration-200">
+            {/* Header with Close button */}
+            <div className="flex items-center justify-between h-16 px-4 border-b border-slate-200 dark:border-slate-800">
+              <Link 
+                href={societySlug ? `/${societySlug}/dashboard` : '/'} 
+                className="flex items-center gap-3 overflow-hidden"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <div className="h-9 w-9 rounded-xl bg-indigo-600 text-white font-black text-base flex items-center justify-center shrink-0">
+                  H
+                </div>
+                <span className="text-base font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
+                  Housive
+                </span>
+              </Link>
+              <button
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900"
+              >
+                <X className="h-5 w-5" />
               </button>
             </div>
 
-            {/* Nav Items (Vertical on Mobile, Horizontal on Desktop) */}
-            <div className={`${isMobileMenuOpen ? 'flex' : 'hidden'} sm:flex flex-col sm:flex-row sm:items-center sm:flex-wrap sm:gap-1 max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-2 sm:py-1`}>
+            {/* Mobile Nav Links */}
+            <div className="flex-1 overflow-y-auto py-3 px-3 space-y-1">
               {visibleNavItems.map((item) => {
                 const targetHref = item.href(societySlug);
                 const isActive = pathname === targetHref || pathname?.startsWith(targetHref + '/');
@@ -613,25 +619,283 @@ export const Navbar: React.FC = () => {
                   <Link
                     key={item.label}
                     href={targetHref}
-                    className={`flex items-center gap-3 sm:gap-2 px-4 sm:px-3 py-3 sm:py-2 rounded-lg text-sm sm:text-xs font-medium transition-all w-full sm:w-auto ${
-                      isActive
-                        ? 'bg-indigo-50 dark:bg-indigo-600/20 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/30'
-                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900/60 border border-transparent'
-                    }`}
                     onClick={() => setIsMobileMenuOpen(false)}
+                    className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                      isActive
+                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-900'
+                    }`}
                   >
-                    {item.icon}
-                    {item.label}
+                    <div className={isActive ? 'text-white' : 'text-slate-400'}>
+                      {item.icon}
+                    </div>
+                    <span>{item.label}</span>
                   </Link>
                 );
               })}
             </div>
-          </div>
-        )}
 
-        {/* Default Society Selection Prompt Modal for multi-society users */}
-        <DefaultSocietyModal />
-      </header>
+            {/* Mobile Footer */}
+            <div className="p-3 border-t border-slate-200 dark:border-slate-800">
+              <div className="flex items-center gap-3 p-2 rounded-xl bg-slate-50 dark:bg-slate-900">
+                <div className="h-8 w-8 rounded-lg bg-indigo-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                  {displayInitial}
+                </div>
+                <div className="overflow-hidden min-w-0 flex-1">
+                  <p className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">{displayName}</p>
+                  <p className="text-[10px] text-indigo-500 uppercase font-semibold">{userRole.replace('_', ' ') || 'Resident'}</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    signOut();
+                  }}
+                  title="Sign out"
+                  className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg"
+                >
+                  <LogOut className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 3. MAIN AREA: STICKY TOP HEADER BAR + PAGE CONTENT                       */}
+      {/* ========================================================================= */}
+      <div className="flex-1 flex flex-col min-w-0 min-h-screen">
+        {/* Top Header Bar */}
+        <header className="sticky top-0 z-20 w-full border-b border-slate-200 dark:border-slate-800/80 bg-white/90 dark:bg-[#030712]/90 backdrop-blur-xl transition-colors">
+          <div className="w-full px-4 sm:px-6 lg:px-8 flex h-16 items-center justify-between gap-4">
+            
+            {/* Left: Mobile Toggle & Society Switcher & Active Section */}
+            <div className="flex items-center gap-3">
+              {/* Mobile Drawer Trigger (visible < lg) */}
+              <button
+                onClick={() => setIsMobileMenuOpen(true)}
+                className="lg:hidden p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-all focus:outline-none"
+                title="Open navigation menu"
+              >
+                <Menu className="h-5 w-5" />
+              </button>
+
+              {/* Society Switcher Dropdown */}
+              <SocietySwitcher />
+
+              {/* Breadcrumb / Active Page Title */}
+              {activeNavItem && (
+                <div className="hidden sm:flex items-center gap-2 pl-2 border-l border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                  <span>/</span>
+                  <span className="text-slate-800 dark:text-slate-200 font-bold">{activeNavItem.label}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Right: Theme Toggle, Notifications, User Profile Menu */}
+            <div className="flex items-center gap-2.5 sm:gap-3">
+              {/* Day / Night Theme Toggle Button */}
+              <button
+                onClick={toggleTheme}
+                title={theme === 'dark' ? 'Switch to Day Mode' : 'Switch to Night Mode'}
+                className="flex items-center justify-center p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-amber-500 dark:text-amber-400 transition-all focus:outline-none"
+              >
+                {theme === 'dark' ? (
+                  <Sun className="h-4 w-4 text-amber-400" />
+                ) : (
+                  <Moon className="h-4 w-4 text-indigo-600" />
+                )}
+              </button>
+
+              {/* Real-time Notification Bell */}
+              {user && (
+                <div className="relative" ref={notifMenuRef}>
+                  <button
+                    onClick={() => setIsNotifOpen(!isNotifOpen)}
+                    className="relative flex items-center justify-center p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-all focus:outline-none"
+                    title="Notifications"
+                  >
+                    <Bell className="h-4 w-4" />
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[9px] font-black text-white shadow-sm">
+                        {unreadCount}
+                      </span>
+                    )}
+                  </button>
+
+                  {/* Notification Popover Drawer */}
+                  {isNotifOpen && (
+                    <div className="notif-popover absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-2xl p-4 z-50 space-y-3 animate-in fade-in slide-in-from-top-2 duration-150">
+                      <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
+                        <div className="flex items-center gap-2">
+                          <Bell className="h-4 w-4 text-indigo-400" />
+                          <span className="font-bold text-sm text-slate-900 dark:text-slate-100">Notifications</span>
+                          {unreadCount > 0 && (
+                            <span className="bg-red-500/20 border border-red-500/30 text-red-400 text-[10px] font-bold px-1.5 py-0.2 rounded-full">
+                              {unreadCount} new
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                          {isManagementRole && (
+                            <button
+                              onClick={handleRunSweep}
+                              disabled={isSweeping}
+                              title="Run Dues Reminder Sweep"
+                              className="p-1 rounded text-slate-400 hover:text-indigo-400 transition-colors"
+                            >
+                              <RefreshCw className={`h-3.5 w-3.5 ${isSweeping ? 'animate-spin' : ''}`} />
+                            </button>
+                          )}
+                          <button
+                            onClick={handleMarkAllRead}
+                            title="Mark all as read"
+                            className="p-1 rounded text-slate-400 hover:text-emerald-400 transition-colors"
+                          >
+                            <CheckCheck className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="max-h-72 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                        {notifications.length === 0 ? (
+                          <p className="text-xs text-slate-500 dark:text-slate-400 text-center py-6">No notifications</p>
+                        ) : (
+                          notifications.map((n) => (
+                            <div
+                              key={n.id}
+                              className={`p-3 rounded-xl border text-xs space-y-1 transition-all flex items-start justify-between gap-2 ${
+                                n.status === 'READ'
+                                  ? 'border-slate-200 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-900/30 text-slate-400'
+                                  : 'border-indigo-500/30 bg-indigo-50/40 dark:bg-indigo-950/20 text-slate-800 dark:text-slate-200'
+                              }`}
+                            >
+                              <div>
+                                <p className="font-semibold text-slate-900 dark:text-slate-100">{n.title}</p>
+                                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">{n.body}</p>
+                                <span className="notif-time text-[9px] text-slate-400 mt-1 block">
+                                  {n.createdAt ? new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                                </span>
+                              </div>
+                              {n.status !== 'READ' && (
+                                <button
+                                  onClick={() => handleMarkAsRead(n.id)}
+                                  title="Mark read"
+                                  className="text-slate-400 hover:text-emerald-500 p-1 shrink-0"
+                                >
+                                  <Check className="h-3.5 w-3.5" />
+                                </button>
+                              )}
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* User Profile Dropdown Menu Trigger */}
+              {user && (
+                <div className="relative" ref={userMenuRef}>
+                  <button
+                    onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                    className="flex items-center gap-2 p-1.5 sm:px-3 sm:py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-left group focus:outline-none"
+                  >
+                    {/* Avatar Badge */}
+                    <div className="h-7 w-7 rounded-lg bg-indigo-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-sm">
+                      {displayInitial}
+                    </div>
+
+                    {/* Name & Role Text */}
+                    <div className="hidden md:flex flex-col pr-1">
+                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate max-w-[130px]">
+                        {displayName}
+                      </span>
+                      <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold uppercase tracking-wider">
+                        {userRole.replace('_', ' ') || 'Resident'}
+                      </span>
+                    </div>
+
+                    <ChevronDown className={`h-3.5 w-3.5 text-slate-400 transition-transform ${isProfileMenuOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {/* Profile Submenu Dropdown */}
+                  {isProfileMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-64 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-2xl p-2 z-50 space-y-1 animate-in fade-in slide-in-from-top-2 duration-150">
+                      
+                      {/* User Profile Header Card */}
+                      <div className="px-3 py-2.5 bg-slate-50 dark:bg-slate-900/70 border border-slate-100 dark:border-slate-800/80 rounded-xl mb-1 space-y-1">
+                        <div className="flex items-center gap-2.5">
+                          <div className="h-8 w-8 rounded-lg bg-indigo-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                            {displayInitial}
+                          </div>
+                          <div className="overflow-hidden">
+                            <p className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">{displayName}</p>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{user.email}</p>
+                          </div>
+                        </div>
+                        <div className="pt-1 flex items-center gap-1.5">
+                          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 uppercase">
+                            {userRole.replace('_', ' ') || 'Resident'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Option 1: Profile Option */}
+                      <button
+                        onClick={() => {
+                          setIsProfileMenuOpen(false);
+                          setIsProfileModalOpen(true);
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-300 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg transition-colors text-left"
+                      >
+                        <UserIcon className="h-4 w-4 text-indigo-400" />
+                        <span>My Profile</span>
+                      </button>
+
+                      {/* Option 2: Change Password Option */}
+                      <button
+                        onClick={() => {
+                          setIsProfileMenuOpen(false);
+                          setIsPasswordModalOpen(true);
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-300 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg transition-colors text-left"
+                      >
+                        <Key className="h-4 w-4 text-amber-400" />
+                        <span>Change Password</span>
+                      </button>
+
+                      <div className="border-t border-slate-100 dark:border-slate-800 my-1" />
+
+                      {/* Option 3: Logout Button */}
+                      <button
+                        onClick={() => {
+                          setIsProfileMenuOpen(false);
+                          signOut();
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors text-left"
+                      >
+                        <LogOut className="h-4 w-4 text-red-500" />
+                        <span>Sign Out / Log Out</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Default Society Selection Prompt Modal for multi-society users */}
+          <DefaultSocietyModal />
+        </header>
+
+        {/* Children (Page Content Area) */}
+        <div className="flex-1 w-full">
+          {children}
+        </div>
+      </div>
 
       {/* ========================================================================= */}
       {/* PORTALED MODAL 1: MY PROFILE DIALOG (MOUNTED DIRECTLY TO DOCUMENT.BODY)  */}
@@ -862,6 +1126,41 @@ export const Navbar: React.FC = () => {
         </div>,
         document.body
       )}
-    </>
+      {/* ========================================================================= */}
+      {/* PORTALED TOOLTIPS FOR COLLAPSED SIDEBAR (NEVER CLIPPED BY SCROLLBARS)   */}
+      {/* ========================================================================= */}
+      {mounted && isCollapsed && hoveredNavItem && createPortal(
+        <div 
+          className="fixed z-[99999] pointer-events-none px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-bold shadow-2xl border border-slate-700/80 whitespace-nowrap flex items-center gap-1.5 animate-in fade-in zoom-in-95 duration-75"
+          style={{
+            left: '84px',
+            top: `${hoveredNavItem.top}px`,
+            transform: 'translateY(-50%)'
+          }}
+        >
+          <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-slate-900 border-l border-b border-slate-700/80 rotate-45" />
+          <span>{hoveredNavItem.label}</span>
+        </div>,
+        document.body
+      )}
+
+      {mounted && isCollapsed && hoveredSociety && createPortal(
+        <div 
+          className="fixed z-[99999] pointer-events-none px-3.5 py-2 rounded-xl bg-slate-900 text-white text-xs shadow-2xl border border-slate-700/80 whitespace-nowrap space-y-0.5 animate-in fade-in zoom-in-95 duration-75"
+          style={{
+            left: '84px',
+            top: `${hoveredSociety.top}px`,
+            transform: 'translateY(-50%)'
+          }}
+        >
+          <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-slate-900 border-l border-b border-slate-700/80 rotate-45" />
+          <p className="font-bold text-slate-100">{hoveredSociety.name}</p>
+          <p className="text-[10px] text-indigo-400 font-semibold uppercase">{hoveredSociety.role}</p>
+        </div>,
+        document.body
+      )}
+    </div>
   );
 };
+
+export const AppLayout = Navbar;
