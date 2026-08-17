@@ -3,7 +3,6 @@ import {
   Get, 
   UseGuards, 
   Query, 
-  Header, 
   Res 
 } from '@nestjs/common';
 import { ReportService } from './report.service';
@@ -21,15 +20,12 @@ export class ReportController {
 
   @ApiBearerAuth()
   @UseGuards(SupabaseAuthGuard, TenantGuard, RolesGuard)
-  @ApiOperation({ summary: 'Get payment collection reports summary' })
+  @ApiOperation({ summary: 'Get payment collection reports summary by payment mode' })
   @RequirePermissions('accounting:read')
   @Get('collection')
   async getCollectionReport() {
     const result = await this.reportService.getCollectionReport();
-    return {
-      success: true,
-      data: result,
-    };
+    return { success: true, data: result };
   }
 
   @ApiBearerAuth()
@@ -39,10 +35,7 @@ export class ReportController {
   @Get('defaulter')
   async getDefaultersReport() {
     const result = await this.reportService.getDefaultersReport();
-    return {
-      success: true,
-      data: result,
-    };
+    return { success: true, data: result };
   }
 
   @ApiBearerAuth()
@@ -52,10 +45,57 @@ export class ReportController {
   @Get('occupancy')
   async getOccupancyReport() {
     const result = await this.reportService.getOccupancyReport();
-    return {
-      success: true,
-      data: result,
-    };
+    return { success: true, data: result };
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(SupabaseAuthGuard, TenantGuard, RolesGuard)
+  @ApiOperation({ summary: 'Get monthly collection trend for last 12 months' })
+  @RequirePermissions('accounting:read')
+  @Get('monthly-trend')
+  async getMonthlyCollectionTrend() {
+    const result = await this.reportService.getMonthlyCollectionTrend();
+    return { success: true, data: result };
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(SupabaseAuthGuard, TenantGuard, RolesGuard)
+  @ApiOperation({ summary: 'Get maintenance invoice status breakdown with collection efficiency' })
+  @RequirePermissions('maintenance:read')
+  @Get('maintenance-status')
+  async getMaintenanceStatusBreakdown() {
+    const result = await this.reportService.getMaintenanceStatusBreakdown();
+    return { success: true, data: result };
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(SupabaseAuthGuard, TenantGuard, RolesGuard)
+  @ApiOperation({ summary: 'Get complaints analytics by status and priority' })
+  @RequirePermissions('complaint:read')
+  @Get('complaints-analytics')
+  async getComplaintsAnalytics() {
+    const result = await this.reportService.getComplaintsAnalytics();
+    return { success: true, data: result };
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(SupabaseAuthGuard, TenantGuard, RolesGuard)
+  @ApiOperation({ summary: 'Get asset register summary by category' })
+  @RequirePermissions('asset:read')
+  @Get('asset-summary')
+  async getAssetSummary() {
+    const result = await this.reportService.getAssetSummary();
+    return { success: true, data: result };
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(SupabaseAuthGuard, TenantGuard, RolesGuard)
+  @ApiOperation({ summary: 'Get late fee and discount/waiver analytics' })
+  @RequirePermissions('accounting:read')
+  @Get('late-fee')
+  async getLateFeeReport() {
+    const result = await this.reportService.getLateFeeReport();
+    return { success: true, data: result };
   }
 
   @ApiOperation({ summary: 'Export data reports dynamically to CSV sheet files' })

@@ -65,7 +65,8 @@ export default function MemberDetailPage() {
             email: profile.email || '',
             mobile: profile.mobile || '',
             membershipNumber: profile.membershipNumber,
-            memberType: profile.role || profile.memberType || 'OWNER',
+            memberType: profile.memberType || 'OWNER',
+            committeeDesignation: profile.committeeDesignation || 'NONE',
             photoUrl: profile.photoUrl || '',
             aadhaarUrl: profile.aadhaarUrl || '',
             panUrl: profile.panUrl || '',
@@ -75,7 +76,7 @@ export default function MemberDetailPage() {
             emergencyContactPhone: profile.emergencyContactPhone || '',
             status: profile.status || 'ACTIVE',
             canLogin: profile.canLogin ?? true,
-            role: profile.role || profile.memberType || 'OWNER',
+            role: profile.role || profile.committeeDesignation || profile.memberType || 'OWNER',
             password: '',
             familyMembers: profile.familyMembers || [],
             nominees: profile.nominees || [],
@@ -198,10 +199,15 @@ export default function MemberDetailPage() {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-semibold px-3 py-1 bg-indigo-950/40 border border-indigo-900/50 text-indigo-400 rounded-full w-fit">
-                {memberData?.memberType}
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold px-3 py-1 bg-emerald-950/40 border border-emerald-900/50 text-emerald-300 rounded-full">
+                {memberData?.memberType || 'OWNER'}
               </span>
+              {memberData?.committeeDesignation && memberData.committeeDesignation !== 'NONE' && (
+                <span className="text-xs font-semibold px-3 py-1 bg-amber-950/40 border border-amber-900/50 text-amber-300 rounded-full">
+                  ★ {memberData.committeeDesignation.replace('_', ' ')}
+                </span>
+              )}
               {isManagementRole && activeTab !== 'idcard' && activeTab !== 'flats' && (
                 <button
                   type="submit"
@@ -295,7 +301,7 @@ export default function MemberDetailPage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                     <div>
                       <label className="text-xs text-slate-400 font-medium">Membership Number</label>
                       <input
@@ -306,21 +312,41 @@ export default function MemberDetailPage() {
                     </div>
 
                     <div>
-                      <label className="text-xs text-slate-400 font-medium">Member Role & Designation</label>
+                      <label className="text-xs text-slate-300 font-semibold">Occupancy Type *</label>
                       <select
                         {...register('memberType')}
                         className="w-full rounded-lg border border-slate-800 bg-slate-900/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-indigo-600/50 focus:outline-none appearance-none mt-1"
                       >
-                        <option value="OWNER">Owner</option>
-                        <option value="CO_OWNER">Co-owner</option>
-                        <option value="TENANT">Tenant</option>
-                        <option value="ADMIN">Admin</option>
-                        <option value="ACCOUNTANT">Accountant</option>
-                        <option value="PRESIDENT">President</option>
-                        <option value="SECRETARY">Secretary</option>
-                        <option value="TREASURER">Treasurer</option>
-                        <option value="COMMITTEE_MEMBER">Committee Member</option>
+                        <option value="OWNER">Owner (Primary)</option>
+                        <option value="CO_OWNER">Co-owner (Joint)</option>
+                        <option value="TENANT">Tenant (Renter)</option>
+                        <option value="FAMILY_MEMBER">Family / Associate Member</option>
                       </select>
+                      <span className="text-[10px] text-slate-500">Unit relation</span>
+                    </div>
+
+                    <div>
+                      <label className="text-xs text-slate-300 font-semibold">Committee Designation</label>
+                      <select
+                        {...register('committeeDesignation')}
+                        className="w-full rounded-lg border border-slate-800 bg-slate-900/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-indigo-600/50 focus:outline-none appearance-none mt-1"
+                      >
+                        <option value="NONE">— None (Regular Member)</option>
+                        <option value="PRESIDENT">President / Chairman</option>
+                        <option value="VICE_PRESIDENT">Vice President</option>
+                        <option value="SECRETARY">Secretary / General Secretary</option>
+                        <option value="JOINT_SECRETARY">Joint Secretary</option>
+                        <option value="TREASURER">Treasurer</option>
+                        <option value="ACCOUNTANT">Accountant / Accounts Manager</option>
+                        <option value="AUDITOR">Internal Auditor</option>
+                        <option value="COMMITTEE_MEMBER">Executive Committee Member</option>
+                        <option value="ESTATE_MANAGER">Estate / Facility Manager</option>
+                        <option value="MAINTENANCE_INCHARGE">Maintenance Incharge</option>
+                        <option value="SECURITY_SUPERVISOR">Security Supervisor / Head</option>
+                        <option value="CULTURAL_SECRETARY">Cultural & Events Secretary</option>
+                        <option value="LEGAL_ADVISOR">Legal & Compliance Advisor</option>
+                      </select>
+                      <span className="text-[10px] text-slate-500">Optional board role</span>
                     </div>
                   </div>
                 </div>

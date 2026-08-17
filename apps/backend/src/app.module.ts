@@ -24,6 +24,7 @@ import { HealthModule } from './modules/health/health.module';
 import { QueueModule } from './modules/queue/queue.module';
 import { WorkerModule } from './modules/worker/worker.module';
 import { AuditModule } from './core/audit/audit.module';
+import { StaffModule } from './modules/staff/staff.module';
 
 @Module({
   imports: [
@@ -68,6 +69,7 @@ import { AuditModule } from './core/audit/audit.module';
     AccountingModule,
     ResidentModule,
     ComplaintModule,
+    StaffModule,
     AssetModule,
     ReportModule,
     NotificationModule,

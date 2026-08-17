@@ -81,6 +81,52 @@ export class SuperAdminService {
     return planRecord[0];
   }
 
+  async getSocieties() {
+    return this.superAdminRepository.getSocietiesWithSubscriptions();
+  }
+
+  async getPlans() {
+    return this.superAdminRepository.getPlans();
+  }
+
+  async assignSubscription(dto: {
+    societyId: string;
+    planId: string;
+    startDate: string;
+    endDate: string;
+    status?: string;
+  }, executorId?: string) {
+    const plan = await this.db.query.plans.findFirst({
+      where: eq(plans.id, dto.planId),
+    });
+    if (!plan) {
+      throw new NotFoundException('Selected subscription plan does not exist.');
+    }
+
+    const subscription = await this.superAdminRepository.assignOrRenewSubscription(dto);
+
+    await this.logAction({
+      userId: executorId,
+      action: 'SUBSCRIPTION_ASSIGN',
+      entityName: 'subscriptions',
+      entityId: subscription.id,
+      newValues: {
+        ...subscription,
+        planName: plan.name,
+      },
+    });
+
+    return subscription;
+  }
+
+  async getExpiringSoon(days: number = 30) {
+    return this.superAdminRepository.getExpiringSoon(days);
+  }
+
+  async getSocietySubscriptionStatus(societyId: string) {
+    return this.superAdminRepository.getSocietySubscriptionStatus(societyId);
+  }
+
   async toggleFeatureFlag(flagId: string, isEnabled: boolean, executorId?: string) {
     const flag = await this.db.query.featureFlags.findFirst({
       where: eq(featureFlags.id, flagId),

@@ -108,12 +108,26 @@ function DevLoginPage() {
           memberships: data.data.memberships,
         }));
 
-        if (data.data.memberships.length > 0) {
-          localStorage.setItem('active_society_id', data.data.memberships[0].societyId);
+        const memberships = data.data.memberships || [];
+        const activeMemberships = memberships.filter((m: any) => !m.isExpired);
+        const storedDefaultId = localStorage.getItem('default_society_id') || data.data.user?.defaultSocietyId;
+        
+        // Find active default, or fallback to first active membership, or first membership
+        const activeDefault = activeMemberships.find((m: any) => m.societyId === storedDefaultId);
+        const target = activeDefault || activeMemberships[0] || memberships[0];
+
+        if (target) {
+          localStorage.setItem('active_society_id', target.societyId);
+          if (activeDefault) {
+            localStorage.setItem('default_society_id', target.societyId);
+          } else if (activeMemberships.length > 0 && storedDefaultId && !activeDefault) {
+            // Previous default society was expired: auto-switch default to active society
+            localStorage.setItem('default_society_id', target.societyId);
+          }
         }
 
-        const firstSlug = data.data.memberships[0]?.societySlug;
-        window.location.href = firstSlug ? `/${firstSlug}/dashboard` : '/';
+        const targetSlug = target?.societySlug;
+        window.location.href = targetSlug ? `/${targetSlug}/dashboard` : '/';
       } else {
         setError(data.message || 'Login failed.');
       }

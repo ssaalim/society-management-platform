@@ -82,6 +82,17 @@ export class MaintenanceController {
     };
   }
 
+  @ApiOperation({ summary: 'Statutory Transparency: Get outstanding maintenance dues by flat across the entire society' })
+  @RequirePermissions('billing:read')
+  @Get('society-dues')
+  async getSocietyDues() {
+    const list = await this.maintenanceService.getSocietyDuesTransparency();
+    return {
+      success: true,
+      data: list,
+    };
+  }
+
   @ApiOperation({ summary: 'List and filter invoices/bills' })
   @RequirePermissions('billing:read')
   @Get()

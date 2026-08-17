@@ -5,7 +5,7 @@ import {
   assets, 
   assetLogs 
 } from '../../../database/schema';
-import { eq, and, sql } from 'drizzle-orm';
+import { eq, and, sql, desc } from 'drizzle-orm';
 import { ClsService } from 'nestjs-cls';
 import { CreateAssetLogDto } from './dto/create-asset-log.dto';
 
@@ -24,7 +24,107 @@ export class AssetService {
     return this.db
       .select()
       .from(assets)
-      .where(eq(assets.societyId, this.activeTenantId));
+      .where(eq(assets.societyId, this.activeTenantId))
+      .orderBy(assets.createdAt);
+  }
+
+  async createAsset(dto: {
+    name: string;
+    type: string;
+    purchaseDate?: string;
+    cost?: number;
+    warrantyExpiry?: string;
+    amcProvider?: string;
+    amcCost?: number;
+    nextServiceDate?: string;
+  }, executorId?: string) {
+    const newAsset = await this.db.insert(assets).values({
+      id: require('crypto').randomUUID(),
+      societyId: this.activeTenantId,
+      name: dto.name,
+      type: dto.type,
+      purchaseDate: dto.purchaseDate || null,
+      cost: dto.cost != null ? dto.cost.toFixed(2) : null,
+      warrantyExpiry: dto.warrantyExpiry || null,
+      amcProvider: dto.amcProvider || null,
+      amcCost: dto.amcCost != null ? dto.amcCost.toFixed(2) : null,
+      nextServiceDate: dto.nextServiceDate || null,
+    }).returning();
+
+    await this.logAction({
+      societyId: this.activeTenantId,
+      userId: executorId,
+      action: 'ASSET_CREATE',
+      entityName: 'assets',
+      entityId: newAsset[0].id,
+      newValues: newAsset[0],
+    });
+
+    return newAsset[0];
+  }
+
+  async updateAsset(assetId: string, dto: {
+    name?: string;
+    type?: string;
+    purchaseDate?: string;
+    cost?: number;
+    warrantyExpiry?: string;
+    amcProvider?: string;
+    amcCost?: number;
+    nextServiceDate?: string;
+  }, executorId?: string) {
+    const existing = await this.db.query.assets.findFirst({
+      where: and(eq(assets.id, assetId), eq(assets.societyId, this.activeTenantId)),
+    });
+    if (!existing) throw new NotFoundException('Asset not found.');
+
+    const updated = await this.db.update(assets)
+      .set({
+        name: dto.name ?? existing.name,
+        type: dto.type ?? existing.type,
+        purchaseDate: dto.purchaseDate ?? existing.purchaseDate,
+        cost: dto.cost != null ? dto.cost.toFixed(2) : existing.cost,
+        warrantyExpiry: dto.warrantyExpiry ?? existing.warrantyExpiry,
+        amcProvider: dto.amcProvider ?? existing.amcProvider,
+        amcCost: dto.amcCost != null ? dto.amcCost.toFixed(2) : existing.amcCost,
+        nextServiceDate: dto.nextServiceDate ?? existing.nextServiceDate,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(assets.id, assetId), eq(assets.societyId, this.activeTenantId)))
+      .returning();
+
+    await this.logAction({
+      societyId: this.activeTenantId,
+      userId: executorId,
+      action: 'ASSET_UPDATE',
+      entityName: 'assets',
+      entityId: assetId,
+      oldValues: existing,
+      newValues: updated[0],
+    });
+
+    return updated[0];
+  }
+
+  async deleteAsset(assetId: string, executorId?: string) {
+    const existing = await this.db.query.assets.findFirst({
+      where: and(eq(assets.id, assetId), eq(assets.societyId, this.activeTenantId)),
+    });
+    if (!existing) throw new NotFoundException('Asset not found.');
+
+    await this.db.delete(assets)
+      .where(and(eq(assets.id, assetId), eq(assets.societyId, this.activeTenantId)));
+
+    await this.logAction({
+      societyId: this.activeTenantId,
+      userId: executorId,
+      action: 'ASSET_DELETE',
+      entityName: 'assets',
+      entityId: assetId,
+      oldValues: existing,
+    });
+
+    return { success: true };
   }
 
   async createAssetLog(assetId: string, dto: CreateAssetLogDto, executorId?: string) {

@@ -8,11 +8,11 @@ import {
   roles,
   flatOwners,
   flatTenants,
-  flats
+  flats,
+  users
 } from '../../../database/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, desc } from 'drizzle-orm';
 import { ClsService } from 'nestjs-cls';
-
 import { NotificationService } from '../notification/notification.service';
 
 @Injectable()
@@ -27,24 +27,28 @@ export class ComplaintService {
     return this.cls.get<string>('tenantId');
   }
 
-  async createComplaint(dto: { title: string; description: string; priority?: string; category?: string }, executorId: string) {
+  async createComplaint(dto: { title: string; description: string; priority?: string; category?: string; flatId?: string }, executorId: string) {
     const activeTenantId = this.activeTenantId;
     const ticketId = require('crypto').randomUUID();
 
-    // Resolve user flat
-    const userFlatOwner = await this.db.query.flatOwners.findFirst({
-      where: eq(flatOwners.ownerId, executorId),
-    });
-    const userFlatTenant = await this.db.query.flatTenants.findFirst({
-      where: eq(flatTenants.tenantId, executorId),
-    });
-    let targetFlatId = userFlatOwner?.flatId || userFlatTenant?.flatId;
+    let targetFlatId = dto.flatId;
 
     if (!targetFlatId) {
-      const anyFlat = await this.db.query.flats.findFirst({
-        where: eq(flats.societyId, activeTenantId),
+      // Resolve user flat
+      const userFlatOwner = await this.db.query.flatOwners.findFirst({
+        where: eq(flatOwners.ownerId, executorId),
       });
-      targetFlatId = anyFlat?.id || '';
+      const userFlatTenant = await this.db.query.flatTenants.findFirst({
+        where: eq(flatTenants.tenantId, executorId),
+      });
+      targetFlatId = userFlatOwner?.flatId || userFlatTenant?.flatId;
+
+      if (!targetFlatId) {
+        const anyFlat = await this.db.query.flats.findFirst({
+          where: eq(flats.societyId, activeTenantId),
+        });
+        targetFlatId = anyFlat?.id || '';
+      }
     }
 
     const newTicket = await this.db.insert(complaints).values({
@@ -52,8 +56,8 @@ export class ComplaintService {
       societyId: activeTenantId,
       flatId: targetFlatId,
       raisedByUserId: executorId,
-      title: dto.title,
-      description: dto.description,
+      title: dto.title.trim(),
+      description: dto.description.trim(),
       priority: (dto.priority as any) || 'MEDIUM',
       status: 'OPEN',
       escalationLevel: 0,
@@ -68,9 +72,9 @@ export class ComplaintService {
       newValues: newTicket[0],
     });
 
-    // Notify Board, Committee Members & Accountant
+    // Notify Board, Committee Members & Estate Incharge
     await this.notificationService.notifyRoles(
-      ['PRESIDENT', 'SECRETARY', 'TREASURER', 'ACCOUNTANT', 'COMMITTEE_MEMBER'],
+      ['PRESIDENT', 'SECRETARY', 'TREASURER', 'ACCOUNTANT', 'COMMITTEE_MEMBER', 'ESTATE_MANAGER', 'MAINTENANCE_INCHARGE'],
       `⚠️ New Complaint Raised: ${dto.title}`,
       `A new ${dto.priority || 'MEDIUM'} priority complaint "${dto.title}" has been logged by resident.`
     );
@@ -104,18 +108,69 @@ export class ComplaintService {
       whereClauses.push(eq(complaints.priority, filters.priority));
     }
 
-    // Role-based scoping: OWNER / TENANT / ACCOUNTANT only sees their own complaints
-    if (['OWNER', 'TENANT', 'ACCOUNTANT'].includes(userRoleName) && executorId) {
+    // Role-based scoping: Standard residents only see their own complaints
+    if (['OWNER', 'TENANT'].includes(userRoleName) && executorId) {
       whereClauses.push(eq(complaints.raisedByUserId, executorId));
     }
 
-    return this.db
-      .select()
+    const rows = await this.db
+      .select({
+        id: complaints.id,
+        societyId: complaints.societyId,
+        flatId: complaints.flatId,
+        flatNumber: flats.number,
+        raisedByUserId: complaints.raisedByUserId,
+        raisedByName: users.name,
+        raisedByEmail: users.email,
+        assignedStaffId: complaints.assignedStaffId,
+        assignedStaffName: complaints.assignedStaffName,
+        staffDatabaseName: staff.name,
+        staffRole: staff.role,
+        title: complaints.title,
+        description: complaints.description,
+        status: complaints.status,
+        priority: complaints.priority,
+        resolutionComment: complaints.resolutionComment,
+        resolvedAt: complaints.resolvedAt,
+        residentFeedback: complaints.residentFeedback,
+        rating: complaints.rating,
+        escalationLevel: complaints.escalationLevel,
+        escalatedAt: complaints.escalatedAt,
+        createdAt: complaints.createdAt,
+        updatedAt: complaints.updatedAt,
+      })
       .from(complaints)
-      .where(and(...whereClauses));
+      .leftJoin(flats, eq(complaints.flatId, flats.id))
+      .leftJoin(users, eq(complaints.raisedByUserId, users.id))
+      .leftJoin(staff, eq(complaints.assignedStaffId, staff.id))
+      .where(and(...whereClauses))
+      .orderBy(desc(complaints.createdAt));
+
+    return rows.map((r) => ({
+      ...r,
+      assignedStaffName: r.assignedStaffName || r.staffDatabaseName || null,
+    }));
   }
 
-  async assignStaff(id: string, staffId: string | null, executorId?: string) {
+  async getStaffList() {
+    return this.db
+      .select({
+        id: staff.id,
+        name: staff.name,
+        role: staff.role,
+        phone: staff.mobile,
+        isAvailable: staff.isAvailable,
+      })
+      .from(staff)
+      .where(
+        and(
+          eq(staff.societyId, this.activeTenantId),
+          eq(staff.isAvailable, true)
+        )
+      );
+  }
+
+  async assignStaff(id: string, dto: { staffId?: string; staffName?: string }, executorId?: string) {
     const ticket = await this.db.query.complaints.findFirst({
       where: and(
         eq(complaints.id, id),
@@ -127,11 +182,21 @@ export class ComplaintService {
       throw new NotFoundException('Complaint ticket not found.');
     }
 
+    let resolvedStaffName = dto.staffName || null;
+    if (dto.staffId && !resolvedStaffName) {
+      const staffMember = await this.db.query.staff.findFirst({
+        where: eq(staff.id, dto.staffId),
+      });
+      resolvedStaffName = staffMember ? `${staffMember.name} (${staffMember.role})` : null;
+    }
+
     await this.db
       .update(complaints)
       .set({ 
-        assignedStaffId: staffId || null,
-        status: staffId ? 'ASSIGNED' : 'OPEN'
+        assignedStaffId: dto.staffId || null,
+        assignedStaffName: resolvedStaffName,
+        status: (dto.staffId || resolvedStaffName) ? 'ASSIGNED' : 'OPEN',
+        updatedAt: new Date(),
       })
       .where(eq(complaints.id, id));
 
@@ -141,10 +206,49 @@ export class ComplaintService {
       action: 'COMPLAINT_ASSIGN_STAFF',
       entityName: 'complaints',
       entityId: id,
-      newValues: { assignedStaffId: staffId },
+      newValues: { assignedStaffId: dto.staffId, assignedStaffName: resolvedStaffName },
     });
 
-    return { success: true };
+    return { 
+      success: true, 
+      assignedStaffId: dto.staffId || null, 
+      assignedStaffName: resolvedStaffName 
+    };
+  }
+
+  async resolveComplaint(id: string, dto: { resolutionComment: string }, executorId?: string) {
+    const ticket = await this.db.query.complaints.findFirst({
+      where: and(
+        eq(complaints.id, id),
+        eq(complaints.societyId, this.activeTenantId)
+      ),
+    });
+
+    if (!ticket) {
+      throw new NotFoundException('Complaint ticket not found.');
+    }
+
+    const resolvedAt = new Date();
+    await this.db
+      .update(complaints)
+      .set({ 
+        resolutionComment: dto.resolutionComment.trim(),
+        resolvedAt,
+        status: 'RESOLVED',
+        updatedAt: resolvedAt,
+      })
+      .where(eq(complaints.id, id));
+
+    await this.logAction({
+      societyId: this.activeTenantId,
+      userId: executorId,
+      action: 'COMPLAINT_RESOLVE',
+      entityName: 'complaints',
+      entityId: id,
+      newValues: { resolutionComment: dto.resolutionComment, resolvedAt, status: 'RESOLVED' },
+    });
+
+    return { success: true, status: 'RESOLVED' };
   }
 
   async escalateTicket(id: string, executorId?: string) {
@@ -166,7 +270,8 @@ export class ComplaintService {
       .set({ 
         escalationLevel: nextLevel,
         escalatedAt: new Date(),
-        status: 'OPEN' // Reset to open/attention status
+        status: 'OPEN',
+        updatedAt: new Date(),
       })
       .where(eq(complaints.id, id));
 
@@ -182,7 +287,7 @@ export class ComplaintService {
     return { success: true, escalationLevel: nextLevel };
   }
 
-  async submitFeedback(id: string, feedback: string, executorId?: string) {
+  async submitFeedback(id: string, dto: { feedback: string; rating?: number }, executorId?: string) {
     const ticket = await this.db.query.complaints.findFirst({
       where: and(
         eq(complaints.id, id),
@@ -197,8 +302,10 @@ export class ComplaintService {
     await this.db
       .update(complaints)
       .set({ 
-        residentFeedback: feedback,
-        status: 'CLOSED'
+        residentFeedback: dto.feedback.trim(),
+        rating: dto.rating || 5,
+        status: 'CLOSED',
+        updatedAt: new Date(),
       })
       .where(eq(complaints.id, id));
 
@@ -208,7 +315,7 @@ export class ComplaintService {
       action: 'COMPLAINT_FEEDBACK_SUBMIT',
       entityName: 'complaints',
       entityId: id,
-      newValues: { residentFeedback: feedback, status: 'CLOSED' },
+      newValues: { residentFeedback: dto.feedback, rating: dto.rating || 5, status: 'CLOSED' },
     });
 
     return { success: true };

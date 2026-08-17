@@ -3,6 +3,10 @@ import { z } from 'zod';
 export const createReceiptSchema = z.object({
   billId: z.string().uuid(),
   amountPaid: z.number().positive(),
+  lateFeeApplied: z.number().nonnegative().optional().default(0),
+  lateFeeWaived: z.number().nonnegative().optional().default(0),
+  discountAmount: z.number().nonnegative().optional().default(0),
+  discountReason: z.string().max(255).optional().nullable(),
   paymentMode: z.enum(['CASH', 'UPI', 'NEFT', 'CHEQUE', 'CARD']).default('UPI'),
   transactionId: z.string().max(100).optional().nullable(),
   depositAccountId: z.string().uuid().optional().nullable(),

@@ -9,7 +9,6 @@ import {
   Query 
 } from '@nestjs/common';
 import { ComplaintService } from './complaint.service';
-import { AssignStaffDto, assignStaffSchema } from './dto/assign-staff.dto';
 import { SupabaseAuthGuard } from '@core/auth/supabase.guard';
 import { TenantGuard } from '@core/tenant/tenant.guard';
 import { RolesGuard } from '@core/auth/roles.guard';
@@ -38,6 +37,17 @@ export class ComplaintController {
     };
   }
 
+  @ApiOperation({ summary: 'List active society staff for assignment' })
+  @RequirePermissions('resident:read')
+  @Get('staff-list')
+  async getStaffList() {
+    const list = await this.complaintService.getStaffList();
+    return {
+      success: true,
+      data: list,
+    };
+  }
+
   @ApiOperation({ summary: 'Raise a new complaint ticket' })
   @RequirePermissions('resident:write')
   @Post()
@@ -54,11 +64,25 @@ export class ComplaintController {
   @Post(':id/assign')
   async assignStaff(
     @Param('id') id: string,
-    @Body() body: any,
+    @Body() body: { staffId?: string; staffName?: string },
     @Req() req: any
   ) {
-    const validatedDto = assignStaffSchema.parse(body);
-    const result = await this.complaintService.assignStaff(id, validatedDto.staffId || null, req.user.id);
+    const result = await this.complaintService.assignStaff(id, body, req.user.id);
+    return {
+      success: true,
+      data: result,
+    };
+  }
+
+  @ApiOperation({ summary: 'Record resolution comment and mark complaint resolved' })
+  @RequirePermissions('member:write')
+  @Post(':id/resolve')
+  async resolveComplaint(
+    @Param('id') id: string,
+    @Body() body: { resolutionComment: string },
+    @Req() req: any
+  ) {
+    const result = await this.complaintService.resolveComplaint(id, body, req.user.id);
     return {
       success: true,
       data: result,
@@ -76,15 +100,15 @@ export class ComplaintController {
     };
   }
 
-  @ApiOperation({ summary: 'Submit feedback review comments to close complaints' })
+  @ApiOperation({ summary: 'Submit feedback review comments & rating to close complaints' })
   @RequirePermissions('resident:write')
   @Post(':id/feedback')
   async submitFeedback(
     @Param('id') id: string,
-    @Body('feedback') feedback: string,
+    @Body() body: { feedback: string; rating?: number },
     @Req() req: any
   ) {
-    const result = await this.complaintService.submitFeedback(id, feedback, req.user.id);
+    const result = await this.complaintService.submitFeedback(id, body, req.user.id);
     return {
       success: true,
       data: result,

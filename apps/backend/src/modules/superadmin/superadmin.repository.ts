@@ -128,4 +128,148 @@ export class SuperAdminRepository {
       return newSociety[0];
     });
   }
+
+  /**
+   * Returns all societies joined with their subscription and plan details.
+   */
+  async getSocietiesWithSubscriptions() {
+    return this.db
+      .select({
+        id: societies.id,
+        name: societies.name,
+        slug: societies.slug,
+        address: societies.address,
+        registrationNumber: societies.registrationNumber,
+        pan: societies.pan,
+        gstin: societies.gstin,
+        createdAt: societies.createdAt,
+        subscriptionId: subscriptions.id,
+        subscriptionStatus: subscriptions.status,
+        startDate: subscriptions.startDate,
+        endDate: subscriptions.endDate,
+        planId: plans.id,
+        planName: plans.name,
+        planPrice: plans.price,
+        maxFlats: plans.maxFlats,
+        maxStorageGb: plans.maxStorageGb,
+        daysLeft: sql<number>`case 
+          when ${subscriptions.endDate} is not null then (${subscriptions.endDate}::date - CURRENT_DATE)
+          else null 
+        end::integer`,
+      })
+      .from(societies)
+      .leftJoin(subscriptions, eq(societies.id, subscriptions.societyId))
+      .leftJoin(plans, eq(subscriptions.planId, plans.id))
+      .orderBy(societies.name);
+  }
+
+  /**
+   * Returns all available pricing plans.
+   */
+  async getPlans() {
+    return this.db
+      .select()
+      .from(plans)
+      .orderBy(plans.price);
+  }
+
+  /**
+   * Assigns or updates a subscription plan for a society.
+   */
+  async assignOrRenewSubscription(data: {
+    societyId: string;
+    planId: string;
+    startDate: string;
+    endDate: string;
+    status?: string;
+  }) {
+    // Check if an existing subscription exists for this society
+    const existing = await this.db
+      .select()
+      .from(subscriptions)
+      .where(eq(subscriptions.societyId, data.societyId))
+      .limit(1);
+
+    const isExpired = new Date(data.endDate) < new Date(new Date().setHours(0, 0, 0, 0));
+    const status = data.status || (isExpired ? 'EXPIRED' : 'ACTIVE');
+
+    if (existing.length > 0) {
+      const [updated] = await this.db
+        .update(subscriptions)
+        .set({
+          planId: data.planId,
+          startDate: data.startDate,
+          endDate: data.endDate,
+          status,
+        })
+        .where(eq(subscriptions.id, existing[0].id))
+        .returning();
+      return updated;
+    }
+
+    const [created] = await this.db
+      .insert(subscriptions)
+      .values({
+        id: require('crypto').randomUUID(),
+        societyId: data.societyId,
+        planId: data.planId,
+        startDate: data.startDate,
+        endDate: data.endDate,
+        status,
+      })
+      .returning();
+    return created;
+  }
+
+  /**
+   * Fetches active subscriptions expiring within the given number of days.
+   */
+  async getExpiringSoon(days: number = 30) {
+    return this.db
+      .select({
+        societyId: societies.id,
+        societyName: societies.name,
+        societySlug: societies.slug,
+        subscriptionId: subscriptions.id,
+        planName: plans.name,
+        endDate: subscriptions.endDate,
+        daysLeft: sql<number>`(${subscriptions.endDate}::date - CURRENT_DATE)::integer`,
+        status: subscriptions.status,
+      })
+      .from(subscriptions)
+      .innerJoin(societies, eq(subscriptions.societyId, societies.id))
+      .innerJoin(plans, eq(subscriptions.planId, plans.id))
+      .where(
+        sql`${subscriptions.endDate}::date - CURRENT_DATE <= ${days} AND ${subscriptions.endDate}::date - CURRENT_DATE >= 0`
+      );
+  }
+
+  /**
+   * Fetches subscription status for a specific society.
+   */
+  async getSocietySubscriptionStatus(societyId: string) {
+    const rows = await this.db
+      .select({
+        societyId: societies.id,
+        societyName: societies.name,
+        subscriptionId: subscriptions.id,
+        status: subscriptions.status,
+        startDate: subscriptions.startDate,
+        endDate: subscriptions.endDate,
+        planName: plans.name,
+        planPrice: plans.price,
+        daysLeft: sql<number>`case 
+          when ${subscriptions.endDate} is not null then (${subscriptions.endDate}::date - CURRENT_DATE)
+          else null 
+        end::integer`,
+      })
+      .from(societies)
+      .leftJoin(subscriptions, eq(societies.id, subscriptions.societyId))
+      .leftJoin(plans, eq(subscriptions.planId, plans.id))
+      .where(eq(societies.id, societyId))
+      .limit(1);
+
+    return rows[0] || null;
+  }
 }
+

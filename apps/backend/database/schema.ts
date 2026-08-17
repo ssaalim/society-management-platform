@@ -51,6 +51,7 @@ export const users = pgTable('users', {
   name: varchar('name', { length: 255 }),
   mobile: varchar('mobile', { length: 15 }),
   avatarUrl: text('avatar_url'),
+  defaultSocietyId: uuid('default_society_id'),
   isActive: boolean('is_active').default(true).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
@@ -225,7 +226,8 @@ export const members = pgTable('members', {
   societyId: uuid('society_id').references(() => societies.id, { onDelete: 'cascade' }).notNull(),
   userId: uuid('user_id').references(() => users.id, { onDelete: 'restrict' }).notNull(),
   membershipNumber: varchar('membership_number', { length: 50 }).notNull(),
-  memberType: varchar('member_type', { length: 50 }).default('OWNER').notNull(), // OWNER, CO_OWNER, TENANT
+  memberType: varchar('member_type', { length: 50 }).default('OWNER').notNull(), // Occupancy: OWNER, CO_OWNER, TENANT, FAMILY_MEMBER
+  committeeDesignation: varchar('committee_designation', { length: 100 }), // Committee: PRESIDENT, VICE_PRESIDENT, SECRETARY, JOINT_SECRETARY, TREASURER, COMMITTEE_MEMBER, AUDITOR, or null
   photoUrl: text('photo_url'),
   aadhaarUrl: text('aadhaar_url'),
   panUrl: text('pan_url'),
@@ -380,6 +382,10 @@ export const receipts = pgTable('receipts', {
   razorpayPaymentId: varchar('razorpay_payment_id', { length: 100 }),
   razorpaySignature: varchar('razorpay_signature', { length: 255 }),
   refundedAmount: numeric('refunded_amount', { precision: 12, scale: 2 }),
+  lateFeeApplied: numeric('late_fee_applied', { precision: 12, scale: 2 }).default('0.00').notNull(),
+  lateFeeWaived: numeric('late_fee_waived', { precision: 12, scale: 2 }).default('0.00').notNull(),
+  discountAmount: numeric('discount_amount', { precision: 12, scale: 2 }).default('0.00').notNull(),
+  discountReason: text('discount_reason'),
   cancellationReason: text('cancellation_reason'),
   approvedBy: uuid('approved_by').references(() => users.id, { onDelete: 'set null' }),
   rejectionReason: text('rejection_reason'),
@@ -474,7 +480,7 @@ export const vehicles = pgTable('vehicles', {
   flatId: uuid('flat_id').references(() => flats.id, { onDelete: 'cascade' }).notNull(),
   parkingSlotId: uuid('parking_slot_id').references(() => parkingSlots.id, { onDelete: 'set null' }),
   number: varchar('number', { length: 50 }).notNull(), // e.g. MH-12-XX-XXXX
-  type: varchar('type', { length: 20 }).default('FOUR_WHEELER').notNull(), // TWO_WHEELER, FOUR_WHEELER
+  type: varchar('type', { length: 50 }).default('FOUR_WHEELER').notNull(), // FOUR_WHEELER, TWO_WHEELER, EV_CAR, EV_TWO_WHEELER, COMMERCIAL, BICYCLE
   make: varchar('make', { length: 100 }), // e.g. Honda
   model: varchar('model', { length: 100 }), // e.g. Civic
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
@@ -570,11 +576,15 @@ export const complaints = pgTable('complaints', {
   flatId: uuid('flat_id').references(() => flats.id, { onDelete: 'cascade' }).notNull(), // Raised from flat
   raisedByUserId: uuid('raised_by_user_id').references(() => users.id, { onDelete: 'restrict' }).notNull(),
   assignedStaffId: uuid('assigned_staff_id').references(() => staff.id, { onDelete: 'set null' }),
+  assignedStaffName: varchar('assigned_staff_name', { length: 150 }),
   title: varchar('title', { length: 255 }).notNull(),
   description: text('description').notNull(),
   status: varchar('status', { length: 50 }).default('OPEN').notNull(), // OPEN, ASSIGNED, RESOLVED, CLOSED
   priority: varchar('priority', { length: 20 }).default('MEDIUM').notNull(), // LOW, MEDIUM, HIGH, URGENT
+  resolutionComment: text('resolution_comment'),
+  resolvedAt: timestamp('resolved_at', { withTimezone: true }),
   residentFeedback: text('resident_feedback'),
+  rating: integer('rating'),
   escalationLevel: integer('escalation_level').default(0).notNull(),
   escalatedAt: timestamp('escalated_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
@@ -702,13 +712,18 @@ export const settings = pgTable('settings', {
   societyId: uuid('society_id').references(() => societies.id, { onDelete: 'cascade' }).notNull().unique(),
   financialYearStart: date('financial_year_start').default('2026-04-01').notNull(), // Standard Indian FY (April 1st)
   billingFrequency: varchar('billing_frequency', { length: 50 }).default('MONTHLY').notNull(), // MONTHLY, QUARTERLY, YEARLY
+  penaltyType: varchar('penalty_type', { length: 50 }).default('PERCENTAGE').notNull(), // PERCENTAGE, FIXED_PER_MONTH, FIXED_ONE_TIME, NONE
   penaltyInterestRate: numeric('penalty_interest_rate', { precision: 5, scale: 2 }).default('12.00').notNull(), // Annual interest e.g. 12%
+  penaltyFlatAmount: numeric('penalty_flat_amount', { precision: 10, scale: 2 }).default('200.00').notNull(), // Fixed penalty e.g. ₹200
+  penaltyGracePeriodDays: integer('penalty_grace_period_days').default(0).notNull(), // Days after due date before penalty applies
   invoiceDueDays: integer('invoice_due_days').default(15).notNull(),
   maintenanceFormula: text('maintenance_formula').default('(area * rate) + parking + water').notNull(),
   calculationType: varchar('calculation_type', { length: 50 }).default('PER_SQ_FT').notNull(), // PER_SQ_FT, PER_FLAT_TYPE, FLAT_RATE_SAME_FOR_ALL
   perSqFtRate: numeric('per_sqft_rate', { precision: 10, scale: 2 }).default('3.50').notNull(),
+  sqftAreaType: varchar('sqft_area_type', { length: 50 }).default('SUPER_BUILTUP').notNull(), // SUPER_BUILTUP, CARPET_AREA
   flatRateSameForAll: numeric('flat_rate_same_for_all', { precision: 10, scale: 2 }).default('2500.00').notNull(),
   perFlatTypeRates: text('per_flat_type_rates').default('{"1BHK":1500,"2BHK":2500,"3BHK":3500,"Shop":4000}').notNull(),
+  flatTypes: text('flat_types').default('["1BHK","2BHK","3BHK","4BHK","Penthouse","Shop"]').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });

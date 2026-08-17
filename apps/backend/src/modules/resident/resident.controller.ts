@@ -2,6 +2,7 @@ import {
   Controller, 
   Get, 
   Post, 
+  Delete,
   Body, 
   Param, 
   UseGuards, 
@@ -31,14 +32,102 @@ export class ResidentController {
     };
   }
 
-  @ApiOperation({ summary: 'Approve visitor checkin gate access pre-authorizations' })
-  @Post('visitors/:id/approve')
-  async approveVisitor(
-    @Param('id') id: string,
-    @Body('approve') approve: boolean,
-    @Req() req: any
-  ) {
-    const result = await this.residentService.approveVisitor(req.user.id, id, approve, req.user.id);
+  // ==========================================
+  // VEHICLES
+  // ==========================================
+
+  @ApiOperation({ summary: 'List vehicles registered for flat/society' })
+  @Get('vehicles')
+  async getVehicles(@Req() req: any) {
+    const list = await this.residentService.getVehicles(req.user.id);
+    return {
+      success: true,
+      data: list,
+    };
+  }
+
+  @ApiOperation({ summary: 'Register a vehicle' })
+  @Post('vehicles')
+  async addVehicle(@Body() body: any, @Req() req: any) {
+    const result = await this.residentService.addVehicle(req.user.id, body);
+    return {
+      success: true,
+      data: result,
+    };
+  }
+
+  @ApiOperation({ summary: 'Remove a registered vehicle' })
+  @Delete('vehicles/:id')
+  async deleteVehicle(@Param('id') id: string, @Req() req: any) {
+    const result = await this.residentService.deleteVehicle(req.user.id, id);
+    return {
+      success: true,
+      data: result,
+    };
+  }
+
+  // ==========================================
+  // CIRCULARS & DOCUMENTS
+  // ==========================================
+
+  @ApiOperation({ summary: 'List published society circulars and shared documents' })
+  @Get('documents')
+  async getDocuments() {
+    const list = await this.residentService.getDocuments();
+    return {
+      success: true,
+      data: list,
+    };
+  }
+
+  @ApiOperation({ summary: 'Publish a circular or upload a shared document' })
+  @Post('documents')
+  async addDocument(@Body() body: any, @Req() req: any) {
+    const result = await this.residentService.addDocument(req.user.id, body);
+    return {
+      success: true,
+      data: result,
+    };
+  }
+
+  @ApiOperation({ summary: 'Delete a published document' })
+  @Delete('documents/:id')
+  async deleteDocument(@Param('id') id: string, @Req() req: any) {
+    const result = await this.residentService.deleteDocument(req.user.id, id);
+    return {
+      success: true,
+      data: result,
+    };
+  }
+
+  // ==========================================
+  // GENERAL BODY PROPOSALS & POLLS
+  // ==========================================
+
+  @ApiOperation({ summary: 'List active general body proposals & voting polls' })
+  @Get('polls')
+  async getPolls(@Req() req: any) {
+    const list = await this.residentService.getPolls(req.user.id);
+    return {
+      success: true,
+      data: list,
+    };
+  }
+
+  @ApiOperation({ summary: 'Create a new general body proposal poll' })
+  @Post('polls')
+  async createPoll(@Body() body: any, @Req() req: any) {
+    const result = await this.residentService.createPoll(req.user.id, body);
+    return {
+      success: true,
+      data: result,
+    };
+  }
+
+  @ApiOperation({ summary: 'Delete a proposal poll' })
+  @Delete('polls/:id')
+  async deletePoll(@Param('id') id: string, @Req() req: any) {
+    const result = await this.residentService.deletePoll(req.user.id, id);
     return {
       success: true,
       data: result,
@@ -54,6 +143,24 @@ export class ResidentController {
   ) {
     const validatedDto = votePollSchema.parse(body);
     const result = await this.residentService.votePoll(req.user.id, id, validatedDto, req.user.id);
+    return {
+      success: true,
+      data: result,
+    };
+  }
+
+  // ==========================================
+  // VISITOR CLEARANCE
+  // ==========================================
+
+  @ApiOperation({ summary: 'Approve visitor checkin gate access pre-authorizations' })
+  @Post('visitors/:id/approve')
+  async approveVisitor(
+    @Param('id') id: string,
+    @Body('approve') approve: boolean,
+    @Req() req: any
+  ) {
+    const result = await this.residentService.approveVisitor(req.user.id, id, approve, req.user.id);
     return {
       success: true,
       data: result,

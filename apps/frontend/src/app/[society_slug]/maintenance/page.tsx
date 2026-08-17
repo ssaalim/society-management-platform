@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../providers/auth-context';
 import { apiClient } from '../../../lib/api/client';
-import { Building, Search, Filter, ShieldAlert, Plus, Calculator, Settings, Receipt, Loader2, CheckCircle, AlertCircle, Calendar, History, CheckSquare, Square, Layers, X, ArrowRight, CreditCard } from 'lucide-react';
+import { Building, Search, Filter, ShieldAlert, Plus, Calculator, Settings, Receipt, Loader2, CheckCircle, AlertCircle, Calendar, History, CheckSquare, Square, Layers, X, ArrowRight, CreditCard, Clock } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
 
@@ -59,7 +59,10 @@ export default function MaintenanceDashboardPage() {
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  const [activeView, setActiveView] = useState<'bills' | 'generate' | 'settings'>('bills');
+  const [activeView, setActiveView] = useState<'bills' | 'society_dues' | 'generate' | 'settings'>('bills');
+  const [societyDuesList, setSocietyDuesList] = useState<any[]>([]);
+  const [isDuesLoading, setIsDuesLoading] = useState<boolean>(false);
+  const [duesSearchTerm, setDuesSearchTerm] = useState<string>('');
 
   // Multi-invoice selection state
   const [selectedBillIds, setSelectedBillIds] = useState<string[]>([]);
@@ -137,10 +140,28 @@ export default function MaintenanceDashboardPage() {
     }
   };
 
+  const fetchSocietyDues = async () => {
+    if (!society_slug) return;
+    try {
+      setIsDuesLoading(true);
+      const res = await apiClient.get('/maintenance/society-dues');
+      if (res.data?.success) {
+        setSocietyDuesList(res.data.data || []);
+      }
+    } catch (err) {
+      console.error('Failed to load society dues transparency:', err);
+    } finally {
+      setIsDuesLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchBills();
     fetchBankAccounts();
-  }, [society_slug, searchTerm, statusFilter, showMyInvoices, activeSociety?.societyId]);
+    if (activeView === 'society_dues') {
+      fetchSocietyDues();
+    }
+  }, [society_slug, searchTerm, statusFilter, showMyInvoices, activeSociety?.societyId, activeView]);
 
   // Resolved active selected flat number if any invoice is checked
   const firstSelectedBill = billsList.find((b) => selectedBillIds.includes(b.id));
@@ -307,13 +328,51 @@ export default function MaintenanceDashboardPage() {
   // Maintenance Calculation Mode Config State
   const [calculationType, setCalculationType] = useState<string>('PER_SQ_FT');
   const [perSqFtRate, setPerSqFtRate] = useState<string>('3.50');
+  const [sqftAreaType, setSqftAreaType] = useState<'SUPER_BUILTUP' | 'CARPET_AREA'>('SUPER_BUILTUP');
   const [flatRateSameForAll, setFlatRateSameForAll] = useState<string>('2500.00');
+  const [flatTypes, setFlatTypes] = useState<string[]>(['1BHK', '2BHK', '3BHK', '4BHK', 'Penthouse', 'Shop']);
+  const [newTypeName, setNewTypeName] = useState<string>('');
+  const [newTypeRate, setNewTypeRate] = useState<string>('3000');
   const [perFlatTypeRates, setPerFlatTypeRates] = useState<{ [key: string]: number }>({
     '1BHK': 1500,
     '2BHK': 2500,
     '3BHK': 3500,
+    '4BHK': 4500,
+    'Penthouse': 5500,
     'Shop': 4000,
   });
+
+  // Late Fees & Penalty Policy State
+  const [penaltyType, setPenaltyType] = useState<string>('PERCENTAGE');
+  const [penaltyInterestRate, setPenaltyInterestRate] = useState<string>('12.00');
+  const [penaltyFlatAmount, setPenaltyFlatAmount] = useState<string>('200.00');
+  const [penaltyGracePeriodDays, setPenaltyGracePeriodDays] = useState<number>(0);
+
+  const handleAddFlatType = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = newTypeName.trim();
+    if (!trimmed) return;
+    if (!flatTypes.includes(trimmed)) {
+      setFlatTypes([...flatTypes, trimmed]);
+      setPerFlatTypeRates({
+        ...perFlatTypeRates,
+        [trimmed]: Number(newTypeRate) || 0,
+      });
+    }
+    setNewTypeName('');
+    setNewTypeRate('3000');
+  };
+
+  const handleRemoveFlatType = (fType: string) => {
+    if (flatTypes.length <= 1) {
+      alert('Society must have at least one unit type.');
+      return;
+    }
+    setFlatTypes(flatTypes.filter((t) => t !== fType));
+    const copy = { ...perFlatTypeRates };
+    delete copy[fType];
+    setPerFlatTypeRates(copy);
+  };
 
   useEffect(() => {
     const fetchConfig = async () => {
@@ -323,9 +382,15 @@ export default function MaintenanceDashboardPage() {
           const cfg = res.data.data;
           if (cfg.calculationType) setCalculationType(cfg.calculationType);
           if (cfg.perSqFtRate) setPerSqFtRate(String(cfg.perSqFtRate));
+          if (cfg.sqftAreaType) setSqftAreaType(cfg.sqftAreaType);
           if (cfg.flatRateSameForAll) setFlatRateSameForAll(String(cfg.flatRateSameForAll));
+          if (cfg.flatTypes && Array.isArray(cfg.flatTypes)) setFlatTypes(cfg.flatTypes);
           if (cfg.perFlatTypeRates) setPerFlatTypeRates(cfg.perFlatTypeRates);
           if (cfg.maintenanceFormula) setFormulaString(cfg.maintenanceFormula);
+          if (cfg.penaltyType) setPenaltyType(cfg.penaltyType);
+          if (cfg.penaltyInterestRate) setPenaltyInterestRate(String(cfg.penaltyInterestRate));
+          if (cfg.penaltyFlatAmount) setPenaltyFlatAmount(String(cfg.penaltyFlatAmount));
+          if (cfg.penaltyGracePeriodDays !== undefined) setPenaltyGracePeriodDays(Number(cfg.penaltyGracePeriodDays));
         }
       } catch (e) {
         console.error('Failed to load maintenance config', e);
@@ -342,12 +407,18 @@ export default function MaintenanceDashboardPage() {
       const res = await apiClient.post('/maintenance/config', {
         calculationType,
         perSqFtRate,
+        sqftAreaType,
         flatRateSameForAll,
+        flatTypes,
         perFlatTypeRates,
         maintenanceFormula: formulaString,
+        penaltyType,
+        penaltyInterestRate,
+        penaltyFlatAmount,
+        penaltyGracePeriodDays,
       });
       if (res.data?.success) {
-        setMessage({ type: 'success', text: 'Maintenance calculation mode and formula builder updated successfully!' });
+        setMessage({ type: 'success', text: 'Maintenance calculation mode, formula builder & late fee policy updated successfully!' });
       }
     } catch (err: any) {
       setMessage({ type: 'error', text: 'Failed to update maintenance calculation configuration.' });
@@ -387,41 +458,56 @@ export default function MaintenanceDashboardPage() {
             </div>
           </div>
 
-          {/* Action Tabs for Management */}
-          {isManagementRole && (
-            <div className="flex items-center gap-2 bg-slate-900 border border-slate-800 p-1 rounded-xl">
-              <button
-                onClick={() => setActiveView('bills')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                  activeView === 'bills'
-                    ? 'bg-indigo-600 text-white shadow-md'
-                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                Invoices & Receipts
-              </button>
-              <button
-                onClick={() => setActiveView('generate')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                  activeView === 'generate'
-                    ? 'bg-indigo-600 text-white shadow-md'
-                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                <Calculator className="h-3.5 w-3.5 inline mr-1" /> Batch Billing Sweep
-              </button>
-              <button
-                onClick={() => setActiveView('settings')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                  activeView === 'settings'
-                    ? 'bg-indigo-600 text-white shadow-md'
-                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                <Settings className="h-3.5 w-3.5 inline mr-1" /> Formula Builder
-              </button>
-            </div>
-          )}
+          {/* Action Tabs for Management and Residents */}
+          <div className="flex items-center gap-1.5 sm:gap-2 bg-slate-900 border border-slate-800 p-1 rounded-xl overflow-x-auto">
+            <button
+              onClick={() => setActiveView('bills')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+                activeView === 'bills'
+                  ? 'bg-indigo-600 text-white shadow-md'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              {isManagementRole ? 'Invoices & Receipts' : 'My Invoices'}
+            </button>
+            <button
+              onClick={() => {
+                setActiveView('society_dues');
+                fetchSocietyDues();
+              }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1 ${
+                activeView === 'society_dues'
+                  ? 'bg-indigo-600 text-white shadow-md'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Building className="h-3.5 w-3.5" /> Society Outstanding Dues
+            </button>
+            {isManagementRole && (
+              <>
+                <button
+                  onClick={() => setActiveView('generate')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+                    activeView === 'generate'
+                      ? 'bg-indigo-600 text-white shadow-md'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <Calculator className="h-3.5 w-3.5 inline mr-1" /> Batch Billing Sweep
+                </button>
+                <button
+                  onClick={() => setActiveView('settings')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+                    activeView === 'settings'
+                      ? 'bg-indigo-600 text-white shadow-md'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <Settings className="h-3.5 w-3.5 inline mr-1" /> Formula & Late Fees
+                </button>
+              </>
+            )}
+          </div>
         </div>
 
         {/* Global Feedback Banner */}
@@ -646,6 +732,138 @@ export default function MaintenanceDashboardPage() {
           </div>
         )}
 
+        {/* Society Outstanding Dues (Statutory Transparency View for all members) */}
+        {activeView === 'society_dues' && (
+          <div className="space-y-6 animate-in fade-in duration-150">
+            {/* Legal Notice Banner */}
+            <div className="p-4 rounded-xl border border-indigo-900/60 bg-indigo-950/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-indigo-600/20 border border-indigo-500/30 text-indigo-400">
+                  <ShieldAlert className="h-5 w-5" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-100 flex items-center gap-2">
+                    Statutory Transparency Roster
+                    <span className="text-[10px] bg-indigo-900/80 text-indigo-300 px-2 py-0.2 rounded-full font-bold">
+                      MCS & RWA Compliant
+                    </span>
+                  </h4>
+                  <p className="text-slate-400 text-[11px] mt-0.5">
+                    As mandated by housing society regulations, all members have the right to view the society-wide pending maintenance dues roster by flat.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 font-mono text-[11px] bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800 text-slate-300">
+                <span>Total Flats with Dues:</span>
+                <strong className="text-amber-400">{societyDuesList.length}</strong>
+              </div>
+            </div>
+
+            {/* Filter Search */}
+            <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-slate-950/40 p-3 border border-slate-800 rounded-xl">
+              <div className="relative w-full sm:w-80">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
+                <input
+                  type="text"
+                  placeholder="Search flat number or tower..."
+                  value={duesSearchTerm}
+                  onChange={(e) => setDuesSearchTerm(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-800 bg-slate-900/60 text-xs text-slate-200 focus:outline-none focus:border-slate-700"
+                />
+              </div>
+
+              <div className="text-xs text-slate-400">
+                Showing {
+                  societyDuesList.filter((d) =>
+                    !duesSearchTerm ||
+                    d.flatNumber.toLowerCase().includes(duesSearchTerm.toLowerCase()) ||
+                    d.buildingName.toLowerCase().includes(duesSearchTerm.toLowerCase())
+                  ).length
+                } units
+              </div>
+            </div>
+
+            {/* Dues Transparency Table */}
+            {isDuesLoading ? (
+              <div className="flex justify-center items-center py-16 text-slate-500">
+                <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+              </div>
+            ) : societyDuesList.length === 0 ? (
+              <div className="text-center py-16 border border-dashed border-slate-800 rounded-xl space-y-2">
+                <CheckCircle className="h-10 w-10 text-emerald-400 mx-auto" />
+                <h3 className="text-sm font-bold text-slate-200">Zero Outstanding Dues!</h3>
+                <p className="text-xs text-slate-500">All flats in the society currently have their maintenance accounts cleared.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/20 shadow-sm">
+                <table className="w-full text-left text-xs border-collapse whitespace-nowrap">
+                  <thead>
+                    <tr className="bg-black/60 text-slate-400 font-semibold border-b border-slate-800">
+                      <th className="p-4">Flat & Location</th>
+                      <th className="p-4">Unit Type</th>
+                      <th className="p-4">Occupancy</th>
+                      <th className="p-4">Unpaid Invoices</th>
+                      <th className="p-4">Oldest Due Date</th>
+                      <th className="p-4">Total Pending Dues (₹)</th>
+                      <th className="p-4">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/40">
+                    {societyDuesList
+                      .filter((d) =>
+                        !duesSearchTerm ||
+                        d.flatNumber.toLowerCase().includes(duesSearchTerm.toLowerCase()) ||
+                        d.buildingName.toLowerCase().includes(duesSearchTerm.toLowerCase())
+                      )
+                      .map((item) => (
+                        <tr key={item.flatId} className="text-slate-300 hover:bg-slate-900/20 transition-colors">
+                          <td className="p-4 font-bold text-slate-200">
+                            <span className="text-sm">Flat {item.flatNumber}</span>
+                            <div className="text-[10px] font-normal text-slate-500 mt-0.5">
+                              {item.buildingName} • {item.wingName} • Floor {item.floorNumber}
+                            </div>
+                          </td>
+                          <td className="p-4">
+                            <span className="px-2 py-0.5 rounded-md bg-slate-900 border border-slate-800 text-slate-300 font-semibold text-[10px]">
+                              {item.flatType} ({item.sqftArea} sq ft)
+                            </span>
+                          </td>
+                          <td className="p-4">
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                              item.occupancyStatus === 'OCCUPIED'
+                                ? 'bg-emerald-950/40 border-emerald-900/60 text-emerald-300'
+                                : 'bg-slate-900 border-slate-800 text-slate-400'
+                            }`}>
+                              {item.occupancyStatus}
+                            </span>
+                          </td>
+                          <td className="p-4 font-mono font-semibold text-slate-300">
+                            {item.unpaidInvoicesCount} invoice{item.unpaidInvoicesCount > 1 ? 's' : ''}
+                          </td>
+                          <td className="p-4 font-mono text-slate-400 text-[11px]">
+                            {item.oldestDueDate || '—'}
+                          </td>
+                          <td className="p-4 font-bold font-mono text-amber-300 text-sm">
+                            ₹ {Number(item.totalPendingAmount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                          </td>
+                          <td className="p-4">
+                            <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border uppercase tracking-wider ${
+                              item.status === 'OVERDUE'
+                                ? 'bg-red-950/50 border-red-800 text-red-400'
+                                : 'bg-amber-950/50 border-amber-800 text-amber-400'
+                            }`}>
+                              {item.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Generate Sweep Form */}
         {activeView === 'generate' && (
           <form onSubmit={handleGenerateInvoices} className="space-y-6 max-w-xl bg-slate-950/20 border border-slate-800 p-6 rounded-xl">
@@ -808,45 +1026,132 @@ export default function MaintenanceDashboardPage() {
             {/* Dynamic Inputs Based on Selected Mode */}
             <div className="bg-slate-950/60 border border-slate-800/80 p-5 rounded-xl space-y-4">
               {calculationType === 'PER_SQ_FT' && (
-                <div className="space-y-2">
-                  <label className="text-xs font-semibold text-slate-300">Rate Per Sq. Ft. (₹)</label>
-                  <div className="relative max-w-xs">
-                    <span className="absolute left-3.5 top-2.5 text-sm font-bold text-slate-500">₹</span>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={perSqFtRate}
-                      onChange={(e) => setPerSqFtRate(e.target.value)}
-                      className="w-full rounded-lg border border-slate-800 bg-slate-950 py-2 pl-8 pr-4 text-sm text-slate-100 font-bold focus:border-slate-700 focus:outline-none"
-                    />
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold text-slate-300">Rate Per Sq. Ft. (₹)</label>
+                    <div className="relative max-w-xs">
+                      <span className="absolute left-3.5 top-2.5 text-sm font-bold text-slate-500">₹</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={perSqFtRate}
+                        onChange={(e) => setPerSqFtRate(e.target.value)}
+                        className="w-full rounded-lg border border-slate-800 bg-slate-950 py-2 pl-8 pr-4 text-sm text-slate-100 font-bold focus:border-slate-700 focus:outline-none"
+                      />
+                    </div>
                   </div>
-                  <p className="text-[11px] text-slate-500">
-                    Example: A 1,000 Sq. Ft. flat will be charged 1,000 × ₹{perSqFtRate || '3.50'} = ₹{(1000 * Number(perSqFtRate || 3.5)).toLocaleString()} base maintenance.
+
+                  {/* Option to calculate by Super Built-up vs Carpet Area */}
+                  <div className="space-y-2 pt-2 border-t border-slate-800/60">
+                    <label className="text-xs font-semibold text-slate-300">Area Basis For Calculation</label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-md">
+                      <button
+                        type="button"
+                        onClick={() => setSqftAreaType('SUPER_BUILTUP')}
+                        className={`p-3 rounded-lg border text-left transition-all ${
+                          sqftAreaType === 'SUPER_BUILTUP'
+                            ? 'bg-indigo-950/60 border-indigo-500 text-slate-100 ring-1 ring-indigo-500'
+                            : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700'
+                        }`}
+                      >
+                        <div className="text-xs font-bold flex items-center justify-between">
+                          Super Built-up Area
+                          {sqftAreaType === 'SUPER_BUILTUP' && <CheckCircle className="h-3.5 w-3.5 text-indigo-400" />}
+                        </div>
+                        <p className="text-[11px] text-slate-400 mt-0.5">Calculates using flat's Super Built-up Sq. Ft.</p>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setSqftAreaType('CARPET_AREA')}
+                        className={`p-3 rounded-lg border text-left transition-all ${
+                          sqftAreaType === 'CARPET_AREA'
+                            ? 'bg-indigo-950/60 border-indigo-500 text-slate-100 ring-1 ring-indigo-500'
+                            : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700'
+                        }`}
+                      >
+                        <div className="text-xs font-bold flex items-center justify-between">
+                          RERA Carpet Area
+                          {sqftAreaType === 'CARPET_AREA' && <CheckCircle className="h-3.5 w-3.5 text-indigo-400" />}
+                        </div>
+                        <p className="text-[11px] text-slate-400 mt-0.5">Calculates using flat's Net Carpet Area</p>
+                      </button>
+                    </div>
+                  </div>
+
+                  <p className="text-[11px] text-slate-400">
+                    Example: A 1,000 Sq. Ft. flat will be charged 1,000 × ₹{perSqFtRate || '3.50'} = ₹{(1000 * Number(perSqFtRate || 3.5)).toLocaleString()} base maintenance on {sqftAreaType === 'CARPET_AREA' ? 'Carpet Area' : 'Super Built-up Area'}.
                   </p>
                 </div>
               )}
 
               {calculationType === 'PER_FLAT_TYPE' && (
-                <div className="space-y-3">
-                  <label className="text-xs font-semibold text-slate-300">Fixed Rate Per Flat Type (₹)</label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {['1BHK', '2BHK', '3BHK', '4BHK', 'Shop'].map((fType) => (
-                      <div key={fType} className="flex items-center gap-3 bg-slate-900 border border-slate-800 p-2.5 rounded-lg">
-                        <span className="text-xs font-bold text-slate-500 dark:text-slate-400 w-16">{fType}</span>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="text-xs font-semibold text-slate-300">Configured Society Flat Unit Types & Fixed Rates (₹)</label>
+                      <p className="text-[11px] text-slate-400">Add or manage unit types used across flat creation and maintenance billing.</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {flatTypes.map((fType) => (
+                      <div key={fType} className="flex items-center gap-2 bg-slate-900 border border-slate-800 p-2.5 rounded-lg group">
+                        <span className="text-xs font-bold text-indigo-400 w-24 truncate" title={fType}>{fType}</span>
                         <div className="relative flex-1">
                           <span className="absolute left-2.5 top-2 text-xs font-bold text-slate-500">₹</span>
                           <input
                             type="number"
-                            value={perFlatTypeRates[fType] || 0}
+                            value={perFlatTypeRates[fType] ?? 0}
                             onChange={(e) => setPerFlatTypeRates({
                               ...perFlatTypeRates,
                               [fType]: Number(e.target.value),
                             })}
-                            className="w-full rounded-md border border-slate-800 bg-slate-950 py-1.5 pl-6 pr-3 text-xs text-slate-100 font-bold focus:border-slate-700 focus:outline-none"
+                            className="w-full rounded-md border border-slate-800 bg-slate-950 py-1.5 pl-6 pr-2 text-xs text-slate-100 font-bold focus:border-indigo-500 focus:outline-none"
                           />
                         </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveFlatType(fType)}
+                          title="Remove unit type"
+                          className="text-slate-500 hover:text-rose-400 p-1.5 rounded transition-colors"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
                       </div>
                     ))}
+                  </div>
+
+                  {/* Add New Unit Type Row */}
+                  <div className="bg-slate-900/60 border border-dashed border-slate-700/80 p-3 rounded-lg flex flex-wrap items-center gap-3">
+                    <span className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                      <Plus className="h-3.5 w-3.5 text-indigo-400" /> Add New Unit Type:
+                    </span>
+                    <input
+                      type="text"
+                      placeholder="e.g. Studio, 1.5BHK, Duplex, Villa"
+                      value={newTypeName}
+                      onChange={(e) => setNewTypeName(e.target.value)}
+                      className="rounded-md border border-slate-700 bg-slate-950 py-1.5 px-3 text-xs text-slate-100 placeholder-slate-500 focus:border-indigo-500 focus:outline-none min-w-[160px]"
+                    />
+                    <div className="relative w-32">
+                      <span className="absolute left-2.5 top-1.5 text-xs font-bold text-slate-500">₹</span>
+                      <input
+                        type="number"
+                        placeholder="Rate"
+                        value={newTypeRate}
+                        onChange={(e) => setNewTypeRate(e.target.value)}
+                        className="w-full rounded-md border border-slate-700 bg-slate-950 py-1.5 pl-6 pr-2 text-xs text-slate-100 font-bold focus:border-indigo-500 focus:outline-none"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleAddFlatType}
+                      disabled={!newTypeName.trim()}
+                      className="px-3 py-1.5 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold disabled:opacity-40 transition-all flex items-center gap-1"
+                    >
+                      <Plus className="h-3.5 w-3.5" /> Add Type
+                    </button>
                   </div>
                 </div>
               )}
@@ -899,10 +1204,15 @@ export default function MaintenanceDashboardPage() {
                 <span className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider">Click variables to insert into formula:</span>
                 <div className="flex flex-wrap gap-2">
                   {[
-                    { tag: 'area', label: 'area (SqFt)' },
+                    { tag: 'area', label: 'area (Selected Basis)' },
+                    { tag: 'super_builtup_area', label: 'super_builtup_area (SqFt)' },
+                    { tag: 'carpet_area', label: 'carpet_area (SqFt)' },
                     { tag: 'rate', label: 'rate (Mode Rate)' },
                     { tag: 'base', label: 'base (Base Amount)' },
-                    { tag: 'parking', label: 'parking (₹500)' },
+                    { tag: 'parking', label: 'parking (Total Slot Fees)' },
+                    { tag: 'parking_stilt', label: 'parking_stilt (₹500)' },
+                    { tag: 'parking_open', label: 'parking_open (₹250)' },
+                    { tag: 'parking_slots', label: 'parking_slots (Count)' },
                     { tag: 'water', label: 'water (₹250)' },
                     { tag: 'sinking', label: 'sinking (₹150)' },
                   ].map((v) => (
@@ -925,15 +1235,21 @@ export default function MaintenanceDashboardPage() {
                 else if (calculationType === 'PER_FLAT_TYPE') sampleRate = perFlatTypeRates['2BHK'] || 2500;
                 else if (calculationType === 'FLAT_RATE_SAME_FOR_ALL') sampleRate = Number(flatRateSameForAll) || 2500;
 
-                let sampleBase = calculationType === 'PER_SQ_FT' ? 1000 * sampleRate : sampleRate;
+                let sampleArea = sqftAreaType === 'CARPET_AREA' ? 850 : 1000;
+                let sampleBase = calculationType === 'PER_SQ_FT' ? sampleArea * sampleRate : sampleRate;
                 let sampleCalculated = sampleBase + 500 + 250;
                 let hasEvalError = false;
 
                 try {
                   const expr = formulaString.toLowerCase()
-                    .replace(/\barea\b/g, '1000')
+                    .replace(/\bsuper_builtup_area\b/g, '1000')
+                    .replace(/\bcarpet_area\b/g, '850')
+                    .replace(/\barea\b/g, sampleArea.toString())
                     .replace(/\brate\b/g, sampleRate.toString())
                     .replace(/\bbase\b/g, sampleBase.toString())
+                    .replace(/\bparking_stilt\b/g, '500')
+                    .replace(/\bparking_open\b/g, '250')
+                    .replace(/\bparking_slots\b/g, '1')
                     .replace(/\bparking\b/g, '500')
                     .replace(/\bwater\b/g, '250')
                     .replace(/\bsinking\b/g, '150');
@@ -965,6 +1281,119 @@ export default function MaintenanceDashboardPage() {
               })()}
             </div>
 
+            {/* Section 3: Society Late Fees & Overdue Penalty Policy */}
+            <div className="border-t border-slate-800/80 pt-6 space-y-4">
+              <div>
+                <h4 className="text-sm font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-amber-400" /> Late Fees & Overdue Penalty Policy
+                </h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  Configure the society's late fee rules applied to invoices that remain unpaid after the due date.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {[
+                  {
+                    type: 'PERCENTAGE',
+                    title: 'Annual Interest Rate (% p.a.)',
+                    desc: 'Standard interest calculated proportionally on overdue principal.',
+                  },
+                  {
+                    type: 'FIXED_PER_MONTH',
+                    title: 'Fixed Fee Per Overdue Month',
+                    desc: 'Flat late charge added for every month the invoice is overdue.',
+                  },
+                  {
+                    type: 'FIXED_ONE_TIME',
+                    title: 'Fixed One-Time Late Fee',
+                    desc: 'Single flat penalty once the invoice crosses due date.',
+                  },
+                  {
+                    type: 'NONE',
+                    title: 'No Late Fees / Disabled',
+                    desc: 'Overdue invoices will not accrue any penalty charges.',
+                  },
+                ].map((item) => (
+                  <button
+                    key={item.type}
+                    type="button"
+                    onClick={() => setPenaltyType(item.type)}
+                    className={`p-3.5 rounded-xl border text-left transition-all relative flex flex-col justify-between ${
+                      penaltyType === item.type
+                        ? 'bg-amber-950/40 border-amber-500/80 ring-1 ring-amber-500/50 text-slate-100 shadow-md'
+                        : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700'
+                    }`}
+                  >
+                    <div>
+                      <div className="text-xs font-bold flex items-center justify-between mb-1">
+                        <span className={penaltyType === item.type ? 'text-amber-300' : 'text-slate-300'}>{item.title}</span>
+                        {penaltyType === item.type && <CheckCircle className="h-4 w-4 text-amber-400" />}
+                      </div>
+                      <p className="text-[11px] text-slate-500 leading-relaxed">{item.desc}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              {/* Dynamic Inputs Based on Penalty Type */}
+              {penaltyType !== 'NONE' && (
+                <div className="bg-slate-950/60 border border-slate-800/80 p-5 rounded-xl space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {penaltyType === 'PERCENTAGE' && (
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-semibold text-slate-300">Annual Interest Rate (% p.a.)</label>
+                        <div className="relative">
+                          <input
+                            type="number"
+                            step="0.1"
+                            value={penaltyInterestRate}
+                            onChange={(e) => setPenaltyInterestRate(e.target.value)}
+                            className="w-full rounded-lg border border-slate-800 bg-slate-950 py-2 pl-3 pr-8 text-sm text-slate-100 font-bold focus:border-amber-500 focus:outline-none"
+                          />
+                          <span className="absolute right-3.5 top-2.5 text-xs font-bold text-slate-500">%</span>
+                        </div>
+                        <p className="text-[11px] text-slate-500">e.g. 12% or 18% or 21% per annum (Model Bye-Laws default 21% p.a. max).</p>
+                      </div>
+                    )}
+
+                    {(penaltyType === 'FIXED_PER_MONTH' || penaltyType === 'FIXED_ONE_TIME') && (
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-semibold text-slate-300">Fixed Late Fee Amount (₹)</label>
+                        <div className="relative">
+                          <span className="absolute left-3.5 top-2.5 text-sm font-bold text-slate-500">₹</span>
+                          <input
+                            type="number"
+                            step="1"
+                            value={penaltyFlatAmount}
+                            onChange={(e) => setPenaltyFlatAmount(e.target.value)}
+                            className="w-full rounded-lg border border-slate-800 bg-slate-950 py-2 pl-8 pr-4 text-sm text-slate-100 font-bold focus:border-amber-500 focus:outline-none"
+                          />
+                        </div>
+                        <p className="text-[11px] text-slate-500">e.g. ₹200 or ₹500 flat fee.</p>
+                      </div>
+                    )}
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-slate-300">Grace Period (Days After Due Date)</label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          step="1"
+                          min="0"
+                          max="60"
+                          value={penaltyGracePeriodDays}
+                          onChange={(e) => setPenaltyGracePeriodDays(Number(e.target.value) || 0)}
+                          className="w-full rounded-lg border border-slate-800 bg-slate-950 py-2 px-3 text-sm text-slate-100 font-bold focus:border-amber-500 focus:outline-none"
+                        />
+                      </div>
+                      <p className="text-[11px] text-slate-500">Days allowed past the invoice due date before late fees start calculating.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="flex justify-end pt-2 border-t border-slate-800">
               <button
                 type="submit"
@@ -972,7 +1401,7 @@ export default function MaintenanceDashboardPage() {
                 className="rounded-lg bg-indigo-600 hover:bg-indigo-700 text-slate-100 py-2.5 px-6 text-sm font-semibold transition-all disabled:opacity-55 flex items-center gap-2 shadow-md"
               >
                 {isProcessing && <Loader2 className="h-4 w-4 animate-spin" />}
-                Save Mode & Formula Settings
+                Save Mode, Formula & Late Fee Settings
               </button>
             </div>
           </form>

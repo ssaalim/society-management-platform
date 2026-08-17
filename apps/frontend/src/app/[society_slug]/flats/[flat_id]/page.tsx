@@ -29,6 +29,7 @@ export default function FlatDetailPage() {
   const [newOwnerId, setNewOwnerId] = useState<string>('');
   const [transferDate, setTransferDate] = useState<string>(new Date().toISOString().substring(0, 10));
   const [transferNotes, setTransferNotes] = useState<string>('');
+  const [flatTypesList, setFlatTypesList] = useState<string[]>(['1BHK', '2BHK', '3BHK', '4BHK', 'Penthouse', 'Shop']);
 
   const [uploadsInProgress, setUploadsInProgress] = useState<Record<string, boolean>>({});
 
@@ -45,10 +46,28 @@ export default function FlatDetailPage() {
         if (resMembers.data?.success) {
           setMembersList(resMembers.data.data);
         }
+
+        try {
+          const resConfig = await apiClient.get('/maintenance/config');
+          if (resConfig.data?.success && resConfig.data.data?.flatTypes) {
+            const types = resConfig.data.data.flatTypes;
+            if (Array.isArray(types) && types.length > 0) {
+              setFlatTypesList(types);
+            }
+          }
+        } catch (e) {
+          console.warn('Could not fetch society unit types:', e);
+        }
+
         if (res.data?.success) {
           const profile = res.data.data;
           setFlatData(profile);
           setFlatIdString(profile.id);
+          
+          if (profile.flatType) {
+            setFlatTypesList(prev => prev.includes(profile.flatType) ? prev : [...prev, profile.flatType]);
+          }
+
           reset({
             number: profile.number,
             floorId: profile.floorId,
@@ -305,12 +324,14 @@ export default function FlatDetailPage() {
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
                     <label className="text-xs text-slate-500 dark:text-slate-400 font-medium">Flat Unit Type</label>
-                    <input
+                    <select
                       {...register('flatType')}
-                      type="text"
-                      placeholder="e.g. 2BHK, Penthouse"
                       className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-slate-700 focus:outline-none mt-1 font-semibold"
-                    />
+                    >
+                      {flatTypesList.map((t) => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 

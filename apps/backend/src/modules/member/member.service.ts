@@ -70,10 +70,15 @@ export class MemberService {
     }
 
     // 3. Insert base member profile
-    const memberType = role || memberProps.memberType || 'OWNER';
+    const occupancyType = memberProps.memberType || 'OWNER';
+    const committeeDesignation = memberProps.committeeDesignation && memberProps.committeeDesignation !== 'NONE'
+      ? memberProps.committeeDesignation
+      : null;
+
     const member = await this.memberRepository.insert({
       ...memberProps,
-      memberType,
+      memberType: occupancyType,
+      committeeDesignation,
       status: status || 'ACTIVE',
       canLogin: canLogin !== undefined ? canLogin : true,
       userId: resolvedUserId,
@@ -81,10 +86,14 @@ export class MemberService {
       societyId: activeTenantId,
     });
 
-    // 4. Assign role in user_societies
-    const existingRole = await this.db.query.roles.findFirst({
-      where: eq(roles.name, memberType),
-    });
+    // 4. Assign role in user_societies (Committee designation role if present, else Occupancy role)
+    const targetRoleName = committeeDesignation || role || (occupancyType === 'TENANT' ? 'TENANT' : 'OWNER');
+    const existingRole = (await this.db.query.roles.findFirst({
+      where: eq(roles.name, targetRoleName),
+    })) || (await this.db.query.roles.findFirst({
+      where: eq(roles.name, 'OWNER'),
+    }));
+
     if (existingRole) {
       const userSoc = await this.db.query.userSocieties.findFirst({
         where: and(
@@ -98,6 +107,11 @@ export class MemberService {
           societyId: activeTenantId,
           roleId: existingRole.id,
         });
+      } else {
+        await this.db
+          .update(userSocieties)
+          .set({ roleId: existingRole.id, updatedAt: new Date() })
+          .where(eq(userSocieties.id, userSoc.id));
       }
     }
 
@@ -145,7 +159,7 @@ export class MemberService {
     return member;
   }
 
-  async findAll(filters: { search?: string; memberType?: string; status?: string }, executorId?: string) {
+  async findAll(filters: { search?: string; memberType?: string; committeeDesignation?: string; status?: string }, executorId?: string) {
     const list = await this.memberRepository.searchMembers(filters);
 
     let userRoleName = '';
@@ -265,8 +279,10 @@ export class MemberService {
     const updatePayload: any = { ...memberProps };
     if (canLogin !== undefined) updatePayload.canLogin = canLogin;
     if (status !== undefined) updatePayload.status = status;
-    const targetRoleName = role || dto.memberType;
-    if (targetRoleName !== undefined) updatePayload.memberType = targetRoleName;
+    if (dto.memberType !== undefined) updatePayload.memberType = dto.memberType;
+    if (dto.committeeDesignation !== undefined) {
+      updatePayload.committeeDesignation = dto.committeeDesignation === 'NONE' ? null : dto.committeeDesignation;
+    }
 
     let updated = current;
     if (Object.keys(updatePayload).length > 0) {
@@ -288,11 +304,19 @@ export class MemberService {
         .where(eq(users.id, current.userId));
     }
 
-    // 4. Sync Role in user_societies if role is specified
-    if (targetRoleName && current.userId) {
-      const existingRole = await this.db.query.roles.findFirst({
+    // 4. Sync Role in user_societies (Committee designation role if present, else Occupancy role)
+    const effectiveDesignation = dto.committeeDesignation !== undefined
+      ? (dto.committeeDesignation === 'NONE' ? null : dto.committeeDesignation)
+      : current.committeeDesignation;
+    const effectiveOccupancy = dto.memberType || current.memberType || 'OWNER';
+    const targetRoleName = effectiveDesignation || role || (effectiveOccupancy === 'TENANT' ? 'TENANT' : 'OWNER');
+
+    if (current.userId) {
+      const existingRole = (await this.db.query.roles.findFirst({
         where: eq(roles.name, targetRoleName),
-      });
+      })) || (await this.db.query.roles.findFirst({
+        where: eq(roles.name, 'OWNER'),
+      }));
 
       if (existingRole) {
         const userSoc = await this.db.query.userSocieties.findFirst({

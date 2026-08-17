@@ -32,6 +32,56 @@ export class SuperAdminController {
     };
   }
 
+  @ApiOperation({ summary: 'List all societies along with their active plan and subscription metadata' })
+  @Get('societies')
+  async getSocieties() {
+    const result = await this.superAdminService.getSocieties();
+    return {
+      success: true,
+      data: result,
+    };
+  }
+
+  @ApiOperation({ summary: 'List all available subscription pricing plans' })
+  @Get('plans')
+  async getPlans() {
+    const result = await this.superAdminService.getPlans();
+    return {
+      success: true,
+      data: result,
+    };
+  }
+
+  @ApiOperation({ summary: 'Assign or renew a subscription plan for a society' })
+  @Post('subscriptions')
+  async assignSubscription(@Body() body: any, @Req() req: any) {
+    const result = await this.superAdminService.assignSubscription(body, req.user?.id);
+    return {
+      success: true,
+      data: result,
+    };
+  }
+
+  @ApiOperation({ summary: 'Get list of societies with subscriptions expiring within 30 days' })
+  @Get('expiring-soon')
+  async getExpiringSoon() {
+    const result = await this.superAdminService.getExpiringSoon(30);
+    return {
+      success: true,
+      data: result,
+    };
+  }
+
+  @ApiOperation({ summary: 'Get subscription status for a specific society' })
+  @Get('societies/:id/subscription')
+  async getSocietySubscriptionStatus(@Param('id') id: string) {
+    const result = await this.superAdminService.getSocietySubscriptionStatus(id);
+    return {
+      success: true,
+      data: result,
+    };
+  }
+
   @ApiOperation({ summary: 'Create a new society along with president user and default ledgers' })
   @Post('societies')
   async createSociety(@Body() body: any, @Req() req: any) {

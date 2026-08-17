@@ -16,9 +16,10 @@ import {
   flatOwners,
   owners,
   userSocieties,
-  roles
+  roles,
+  parkingSlots
 } from '../../../database/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, isNull } from 'drizzle-orm';
 
 import { NotificationService } from '../notification/notification.service';
 
@@ -48,7 +49,7 @@ export class MaintenanceService {
       .where(
         and(
           eq(flats.societyId, activeTenantId),
-          eq(flats.deletedAt, null as any)
+          isNull(flats.deletedAt)
         )
       );
 
@@ -102,7 +103,10 @@ export class MaintenanceService {
       // 3. Resolve rate and base amount according to active calculation mode
       let rate = 3.5;
       let baseAmount = 0;
-      const area = Number(flat.sqftArea) || 1000;
+      const sqftAreaType = currentConfig.sqftAreaType || 'SUPER_BUILTUP';
+      const superBuiltupArea = Number(flat.sqftArea) || 1000;
+      const carpetArea = Number(flat.carpetArea) > 0 ? Number(flat.carpetArea) : superBuiltupArea;
+      const area = sqftAreaType === 'CARPET_AREA' ? carpetArea : superBuiltupArea;
 
       if (calcType === 'PER_SQ_FT') {
         rate = Number(currentConfig.perSqFtRate) || 3.5;
@@ -119,15 +123,44 @@ export class MaintenanceService {
         baseAmount = area * rate;
       }
 
-      const parkingCharge = 500;
+      // Fetch parking slots allocated to this flat
+      const flatParkingSlots = await this.db
+        .select()
+        .from(parkingSlots)
+        .where(
+          and(
+            eq(parkingSlots.societyId, activeTenantId),
+            eq(parkingSlots.flatId, flat.id)
+          )
+        );
+
+      let openParkingTotal = 0;
+      let stiltParkingTotal = 0;
+      for (const slot of flatParkingSlots) {
+        const explicitCharge = Number(slot.charges);
+        const slotType = (slot.type || 'OPEN').toUpperCase();
+        if (slotType === 'COVERED' || slotType === 'STILT') {
+          stiltParkingTotal += explicitCharge > 0 ? explicitCharge : 500;
+        } else {
+          openParkingTotal += explicitCharge > 0 ? explicitCharge : 250;
+        }
+      }
+
+      const parkingCharge = openParkingTotal + stiltParkingTotal;
+      const parkingSlotsCount = flatParkingSlots.length;
       const waterCharge = 250;
       const sinkingCharge = 150;
 
       const variables = {
         area,
+        super_builtup_area: superBuiltupArea,
+        carpet_area: carpetArea,
         rate,
         base: baseAmount,
         parking: parkingCharge,
+        parking_open: openParkingTotal,
+        parking_stilt: stiltParkingTotal,
+        parking_slots: parkingSlotsCount,
         water: waterCharge,
         sinking: sinkingCharge,
       };
@@ -168,13 +201,15 @@ export class MaintenanceService {
           amount: baseAmount.toFixed(2),
         });
 
-        await tx.insert(billItems).values({
-          id: require('crypto').randomUUID(),
-          societyId: activeTenantId,
-          billId: bill.id,
-          headId: parkingHead.id,
-          amount: parkingCharge.toFixed(2),
-        });
+        if (parkingCharge > 0) {
+          await tx.insert(billItems).values({
+            id: require('crypto').randomUUID(),
+            societyId: activeTenantId,
+            billId: bill.id,
+            headId: parkingHead.id,
+            amount: parkingCharge.toFixed(2),
+          });
+        }
 
         await tx.insert(billItems).values({
           id: require('crypto').randomUUID(),
@@ -244,16 +279,69 @@ export class MaintenanceService {
     return this.maintenanceRepository.searchBills({ ...filters, userId });
   }
 
+  async getSocietyDuesTransparency() {
+    return this.maintenanceRepository.getSocietyDuesTransparency();
+  }
+
   async findOne(id: string) {
     const details = await this.maintenanceRepository.findBillDetails(id);
     if (!details) {
       throw new NotFoundException('Maintenance bill invoice not found in this society.');
     }
-    return details;
+
+    const config = await this.getConfig();
+    const dueDateStr = details.dueDate ? String(details.dueDate).substring(0, 10) : null;
+    const dueDateObj = dueDateStr ? new Date(dueDateStr) : null;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let overdueDays = 0;
+    let isOverdue = false;
+    let effectiveOverdueDays = 0;
+    let calculatedLateFee = 0;
+
+    if (dueDateObj && today > dueDateObj && details.status !== 'PAID') {
+      isOverdue = true;
+      overdueDays = Math.max(0, Math.floor((today.getTime() - dueDateObj.getTime()) / (1000 * 3600 * 24)));
+      const gracePeriod = Number(config.penaltyGracePeriodDays) || 0;
+      effectiveOverdueDays = Math.max(0, overdueDays - gracePeriod);
+
+      const remainingPrincipal = Number(details.remainingBalance || details.amount || 0);
+
+      if (effectiveOverdueDays > 0 && remainingPrincipal > 0) {
+        if (config.penaltyType === 'PERCENTAGE') {
+          const rate = Number(config.penaltyInterestRate) || 12;
+          calculatedLateFee = Math.round((remainingPrincipal * (rate / 100) * (effectiveOverdueDays / 365)) * 100) / 100;
+        } else if (config.penaltyType === 'FIXED_PER_MONTH') {
+          const flatAmt = Number(config.penaltyFlatAmount) || 200;
+          const months = Math.max(1, Math.ceil(effectiveOverdueDays / 30));
+          calculatedLateFee = flatAmt * months;
+        } else if (config.penaltyType === 'FIXED_ONE_TIME') {
+          calculatedLateFee = Number(config.penaltyFlatAmount) || 200;
+        } else {
+          calculatedLateFee = 0;
+        }
+      }
+    }
+
+    return {
+      ...details,
+      isOverdue,
+      overdueDays,
+      effectiveOverdueDays,
+      calculatedLateFee,
+      totalPayableWithLateFee: (Number(details.remainingBalance || 0) + calculatedLateFee).toFixed(2),
+      penaltySettings: {
+        penaltyType: config.penaltyType,
+        penaltyInterestRate: config.penaltyInterestRate,
+        penaltyFlatAmount: config.penaltyFlatAmount,
+        penaltyGracePeriodDays: config.penaltyGracePeriodDays,
+      },
+    };
   }
 
   /**
-   * Records single or partial receipt payment with automated balance calculations & reminders.
+   * Records single or partial receipt payment with automated balance calculations, late fee settlement, and discounts.
    */
   async recordPayment(dto: CreateReceiptDto, executorId?: string) {
     const activeTenantId = this.maintenanceRepository['activeTenantId'];
@@ -286,6 +374,10 @@ export class MaintenanceService {
 
     const payAmount = Number(dto.amountPaid);
     const invoiceAmount = Number(bill.totalAmount);
+    const lateFeeApplied = Number(dto.lateFeeApplied || 0);
+    const lateFeeWaived = Number(dto.lateFeeWaived || 0);
+    const discountAmount = Number(dto.discountAmount || 0);
+    const discountReason = dto.discountReason || null;
 
     // Fetch existing receipts to compute total paid so far
     const existingReceipts = await this.db
@@ -293,12 +385,15 @@ export class MaintenanceService {
       .from(receipts)
       .where(eq(receipts.billId, dto.billId));
 
-    const totalPaidSoFar = existingReceipts.reduce((sum, r) => sum + Number(r.amountPaid || 0), 0);
-    const newTotalPaid = totalPaidSoFar + payAmount;
-    const remainingBalance = Math.max(0, invoiceAmount - newTotalPaid);
+    const totalPaidSoFar = existingReceipts.reduce((sum, r) => sum + Number(r.amountPaid || 0) - Number(r.lateFeeApplied || 0) + Number(r.discountAmount || 0), 0);
+    
+    // Amount from this payment that goes towards clearing the principal bill
+    const principalClearedThisPayment = Math.max(0, payAmount - lateFeeApplied + discountAmount);
+    const newTotalSettled = totalPaidSoFar + principalClearedThisPayment;
+    const remainingBalance = Math.max(0, invoiceAmount - newTotalSettled);
 
     let nextStatus: 'PAID' | 'PARTIAL' = 'PAID';
-    if (newTotalPaid < invoiceAmount) {
+    if (remainingBalance > 0.01) {
       nextStatus = 'PARTIAL';
     }
 
@@ -318,13 +413,17 @@ export class MaintenanceService {
           .where(eq(maintenanceBills.id, dto.billId));
       }
 
-      // 2. Insert receipt
+      // 2. Insert receipt with late fee and discount audit trail
       const receiptsList = await tx.insert(receipts).values({
         id: require('crypto').randomUUID(),
         societyId: activeTenantId,
         billId: dto.billId,
         receiptNumber: `REC-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`,
         amountPaid: payAmount.toFixed(2),
+        lateFeeApplied: lateFeeApplied.toFixed(2),
+        lateFeeWaived: lateFeeWaived.toFixed(2),
+        discountAmount: discountAmount.toFixed(2),
+        discountReason: discountReason,
         paymentMode: dto.paymentMode,
         referenceNumber: dto.transactionId || null,
         depositAccountId: dto.depositAccountId || null,
@@ -335,35 +434,35 @@ export class MaintenanceService {
       receiptRecord = receiptsList[0];
 
       // 3. Post double-entry payment receipt voucher
-        if (!isResident) {
-          const voucherId = require('crypto').randomUUID();
-      await tx.insert(vouchers).values({
-        id: voucherId,
-        societyId: activeTenantId,
-        voucherNumber: `VOU-${receiptRecord.receiptNumber}`,
-        type: 'RECEIPT',
-        date: dto.paymentDate,
-        narration: `Maintenance Payment Receipt for Flat ID: ${bill.flatId}`,
-      });
+      if (!isResident) {
+        const voucherId = require('crypto').randomUUID();
+        await tx.insert(vouchers).values({
+          id: voucherId,
+          societyId: activeTenantId,
+          voucherNumber: `VOU-${receiptRecord.receiptNumber}`,
+          type: 'RECEIPT',
+          date: dto.paymentDate,
+          narration: `Maintenance Payment Receipt for Flat ID: ${bill.flatId}${discountAmount > 0 ? ` (Discount: ₹${discountAmount})` : ''}${lateFeeApplied > 0 ? ` (Late Fee: ₹${lateFeeApplied})` : ''}`,
+        });
 
-      // Debit Asset Account (Cash in Hand or Bank)
-      await tx.insert(transactions).values({
-        id: require('crypto').randomUUID(),
-        societyId: activeTenantId,
-        voucherId,
-        ledgerId: assetLedger.id,
-        type: 'DEBIT',
-        amount: payAmount.toFixed(2),
-      });
+        // Debit Asset Account (Cash in Hand or Bank) for amount physically received
+        await tx.insert(transactions).values({
+          id: require('crypto').randomUUID(),
+          societyId: activeTenantId,
+          voucherId,
+          ledgerId: assetLedger.id,
+          type: 'DEBIT',
+          amount: payAmount.toFixed(2),
+        });
 
-      // Credit Receivables Account
-      await tx.insert(transactions).values({
-        id: require('crypto').randomUUID(),
-        societyId: activeTenantId,
-        voucherId,
-        ledgerId: receivablesLedger.id,
-        type: 'CREDIT',
-        amount: payAmount.toFixed(2),
+        // Credit Receivables Account for principal portion cleared
+        await tx.insert(transactions).values({
+          id: require('crypto').randomUUID(),
+          societyId: activeTenantId,
+          voucherId,
+          ledgerId: receivablesLedger.id,
+          type: 'CREDIT',
+          amount: principalClearedThisPayment.toFixed(2),
         });
       }
     });
@@ -582,29 +681,53 @@ export class MaintenanceService {
       return {
         calculationType: 'PER_SQ_FT',
         perSqFtRate: '3.50',
+        sqftAreaType: 'SUPER_BUILTUP',
         flatRateSameForAll: '2500.00',
-        perFlatTypeRates: { "1BHK": 1500, "2BHK": 2500, "3BHK": 3500, "Shop": 4000 },
+        flatTypes: ['1BHK', '2BHK', '3BHK', '4BHK', 'Penthouse', 'Shop'],
+        perFlatTypeRates: { '1BHK': 1500, '2BHK': 2500, '3BHK': 3500, '4BHK': 4500, 'Penthouse': 5500, 'Shop': 4000 },
         maintenanceFormula: '(area * rate) + parking + water',
+        penaltyType: 'PERCENTAGE',
+        penaltyInterestRate: '12.00',
+        penaltyFlatAmount: '200.00',
+        penaltyGracePeriodDays: 0,
       };
     }
 
     const s = settingList[0];
-    let parsedFlatTypeRates = {};
+    let parsedFlatTypeRates: Record<string, number> = {};
     try {
       parsedFlatTypeRates = JSON.parse(s.perFlatTypeRates || '{}');
     } catch (e) {
-      parsedFlatTypeRates = { "1BHK": 1500, "2BHK": 2500, "3BHK": 3500, "Shop": 4000 };
+      parsedFlatTypeRates = { '1BHK': 1500, '2BHK': 2500, '3BHK': 3500, '4BHK': 4500, 'Penthouse': 5500, 'Shop': 4000 };
+    }
+
+    let parsedFlatTypes: string[] = [];
+    try {
+      parsedFlatTypes = JSON.parse((s as any).flatTypes || '[]');
+    } catch (e) {
+      parsedFlatTypes = [];
+    }
+
+    if (!parsedFlatTypes || parsedFlatTypes.length === 0) {
+      const keys = Object.keys(parsedFlatTypeRates);
+      parsedFlatTypes = keys.length > 0 ? keys : ['1BHK', '2BHK', '3BHK', '4BHK', 'Penthouse', 'Shop'];
     }
 
     return {
       id: s.id,
       calculationType: s.calculationType || 'PER_SQ_FT',
       perSqFtRate: s.perSqFtRate || '3.50',
+      sqftAreaType: (s as any).sqftAreaType || 'SUPER_BUILTUP',
       flatRateSameForAll: s.flatRateSameForAll || '2500.00',
+      flatTypes: parsedFlatTypes,
       perFlatTypeRates: parsedFlatTypeRates,
       maintenanceFormula: s.maintenanceFormula,
       billingFrequency: s.billingFrequency,
       invoiceDueDays: s.invoiceDueDays,
+      penaltyType: (s as any).penaltyType || 'PERCENTAGE',
+      penaltyInterestRate: (s as any).penaltyInterestRate || '12.00',
+      penaltyFlatAmount: (s as any).penaltyFlatAmount || '200.00',
+      penaltyGracePeriodDays: (s as any).penaltyGracePeriodDays ?? 0,
     };
   }
 
@@ -614,9 +737,15 @@ export class MaintenanceService {
   async updateConfig(dto: {
     calculationType?: string;
     perSqFtRate?: string | number;
+    sqftAreaType?: string;
     flatRateSameForAll?: string | number;
     perFlatTypeRates?: Record<string, number> | string;
+    flatTypes?: string[] | string;
     maintenanceFormula?: string;
+    penaltyType?: string;
+    penaltyInterestRate?: string | number;
+    penaltyFlatAmount?: string | number;
+    penaltyGracePeriodDays?: number;
   }) {
     const activeTenantId = this.maintenanceRepository['activeTenantId'];
     const settingList = await this.db.select().from(settings).where(eq(settings.societyId, activeTenantId));
@@ -625,14 +754,24 @@ export class MaintenanceService {
       ? JSON.stringify(dto.perFlatTypeRates)
       : dto.perFlatTypeRates;
 
+    const flatTypesStr = Array.isArray(dto.flatTypes)
+      ? JSON.stringify(dto.flatTypes)
+      : (typeof dto.flatTypes === 'string' ? dto.flatTypes : undefined);
+
     const payload: any = {
       updatedAt: new Date(),
     };
     if (dto.calculationType) payload.calculationType = dto.calculationType;
     if (dto.perSqFtRate !== undefined) payload.perSqFtRate = String(dto.perSqFtRate);
+    if (dto.sqftAreaType !== undefined) payload.sqftAreaType = dto.sqftAreaType;
     if (dto.flatRateSameForAll !== undefined) payload.flatRateSameForAll = String(dto.flatRateSameForAll);
     if (flatTypeRatesStr !== undefined) payload.perFlatTypeRates = flatTypeRatesStr;
+    if (flatTypesStr !== undefined) payload.flatTypes = flatTypesStr;
     if (dto.maintenanceFormula !== undefined) payload.maintenanceFormula = dto.maintenanceFormula;
+    if (dto.penaltyType !== undefined) payload.penaltyType = dto.penaltyType;
+    if (dto.penaltyInterestRate !== undefined) payload.penaltyInterestRate = String(dto.penaltyInterestRate);
+    if (dto.penaltyFlatAmount !== undefined) payload.penaltyFlatAmount = String(dto.penaltyFlatAmount);
+    if (dto.penaltyGracePeriodDays !== undefined) payload.penaltyGracePeriodDays = Number(dto.penaltyGracePeriodDays);
 
     if (settingList.length === 0) {
       await this.db.insert(settings).values({

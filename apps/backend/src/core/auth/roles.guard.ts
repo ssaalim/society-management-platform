@@ -61,7 +61,23 @@ export class RolesGuard implements CanActivate {
 
     // Super Admin & Society Management Roles bypass explicit permission checks
     const isManagement = roleNames.some((role) => 
-      ['SUPER_ADMIN', 'PRESIDENT', 'SECRETARY', 'TREASURER', 'ACCOUNTANT', 'COMMITTEE_MEMBER', 'SOCIETY_ADMIN'].includes(role)
+      [
+        'SUPER_ADMIN', 
+        'PRESIDENT', 
+        'VICE_PRESIDENT', 
+        'SECRETARY', 
+        'JOINT_SECRETARY', 
+        'TREASURER', 
+        'ACCOUNTANT', 
+        'AUDITOR', 
+        'COMMITTEE_MEMBER', 
+        'ESTATE_MANAGER', 
+        'MAINTENANCE_INCHARGE', 
+        'SECURITY_SUPERVISOR', 
+        'CULTURAL_SECRETARY', 
+        'LEGAL_ADVISOR', 
+        'SOCIETY_ADMIN'
+      ].includes(role)
     );
 
     if (isManagement) {

@@ -13,7 +13,7 @@ interface ReceiptItem {
   paymentMode: string;
   paymentDate: string;
   referenceNumber: string | null;
-  status: 'CLEARED' | 'BOUNCED' | 'REFUNDED' | 'CANCELLED' | 'REVIEW' | 'REJECTED';
+  status: 'PENDING' | 'CLEARED' | 'BOUNCED' | 'REFUNDED' | 'CANCELLED' | 'REVIEW' | 'REJECTED' | string;
   refundedAmount: string | number | null;
   cancellationReason: string | null;
   billNumber: string;

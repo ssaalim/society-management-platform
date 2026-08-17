@@ -1,9 +1,36 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../providers/auth-context';
 import { apiClient } from '../../../lib/api/client';
-import { Users, Search, Filter, ShieldAlert, Download, Upload, ArrowRight, Loader2, Plus, CheckCircle, AlertCircle, X, UserPlus } from 'lucide-react';
+import { 
+  Users, 
+  Search, 
+  Filter, 
+  ShieldAlert, 
+  Download, 
+  Upload, 
+  ArrowRight, 
+  Loader2, 
+  Plus, 
+  CheckCircle, 
+  AlertCircle, 
+  X, 
+  UserPlus,
+  ShieldCheck,
+  Star,
+  Award,
+  Home,
+  UserCheck,
+  Key,
+  Briefcase,
+  UserX,
+  Edit2,
+  Trash2,
+  Building,
+  Mail,
+  Phone
+} from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import BulkUploadModal from '../../../components/bulk-upload-modal';
@@ -11,12 +38,29 @@ import BulkUploadModal from '../../../components/bulk-upload-modal';
 interface MemberListItem {
   id: string;
   membershipNumber: string;
-  memberType: 'OWNER' | 'CO_OWNER' | 'TENANT';
+  memberType: 'OWNER' | 'CO_OWNER' | 'TENANT' | 'FAMILY_MEMBER' | 'ASSOCIATE_MEMBER';
+  committeeDesignation?: string | null;
   status: string;
   name: string;
   email: string;
   mobile: string;
   photoUrl?: string;
+  canLogin?: boolean;
+}
+
+interface SocietyUserItem {
+  id: string;
+  userId: string;
+  name?: string;
+  email: string;
+  mobile?: string;
+  roleId: string;
+  roleName: string;
+  roleDescription?: string;
+  flatNumber?: string | null;
+  isInventoryHolder: boolean;
+  userCategory: 'RESIDENT_MEMBER' | 'STAFF_PROFESSIONAL';
+  createdAt: string;
 }
 
 export default function MembersListingPage() {
@@ -24,14 +68,20 @@ export default function MembersListingPage() {
   const { activeSociety } = useAuth();
   
   const isManagementRole = ['SUPER_ADMIN', 'PRESIDENT', 'SECRETARY', 'COMMITTEE_MEMBER'].includes(activeSociety?.role || '');
+  
+  // Tab state
+  const [activeTab, setActiveTab] = useState<'members' | 'system_users'>('members');
+
+  // Members state
   const [membersList, setMembersList] = useState<MemberListItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isProcessingCsv, setIsProcessingCsv] = useState<boolean>(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  // Filters state
+  // Filters state (Members)
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [memberTypeFilter, setMemberTypeFilter] = useState<string>('');
+  const [committeeFilter, setCommitteeFilter] = useState<string>('');
 
   const [showAddMember, setShowAddMember] = useState(false);
   const [showBulkUpload, setShowBulkUpload] = useState(false);
@@ -40,39 +90,81 @@ export default function MembersListingPage() {
     email: '',
     mobile: '',
     memberType: 'OWNER',
+    committeeDesignation: 'NONE',
     status: 'ACTIVE',
     canLogin: true,
     password: '',
   });
   const [isCreating, setIsCreating] = useState(false);
 
-  useEffect(() => {
-    const fetchMembers = async () => {
-      if (!society_slug) return;
-      try {
-        setIsLoading(true);
-        const urlParams = new URLSearchParams();
-        if (searchTerm) urlParams.append('search', searchTerm);
-        if (memberTypeFilter) urlParams.append('memberType', memberTypeFilter);
+  // System Users state
+  const [societyUsersList, setSocietyUsersList] = useState<SocietyUserItem[]>([]);
+  const [isUsersLoading, setIsUsersLoading] = useState<boolean>(false);
+  const [userSearchTerm, setUserSearchTerm] = useState<string>('');
+  const [userCategoryFilter, setUserCategoryFilter] = useState<string>('');
+  
+  // Modals for System Users
+  const [showGrantAccessModal, setShowGrantAccessModal] = useState<boolean>(false);
+  const [editingUserRole, setEditingUserRole] = useState<SocietyUserItem | null>(null);
+  const [newRoleSelection, setNewRoleSelection] = useState<string>('ACCOUNTANT');
 
-        const res = await apiClient.get(`/members?${urlParams.toString()}`);
-        if (res.data?.success) {
-          setMembersList(res.data.data);
-        }
-      } catch (err) {
-        console.error('Failed to load members roster:', err);
-      } finally {
-        setIsLoading(false);
+  const [grantAccessForm, setGrantAccessForm] = useState({
+    name: '',
+    email: '',
+    mobile: '',
+    roleName: 'ACCOUNTANT',
+    password: '',
+  });
+  const [isGranting, setIsGranting] = useState<boolean>(false);
+
+  // Fetch Members
+  const fetchMembers = async () => {
+    if (!society_slug) return;
+    try {
+      setIsLoading(true);
+      const urlParams = new URLSearchParams();
+      if (searchTerm) urlParams.append('search', searchTerm);
+      if (memberTypeFilter) urlParams.append('memberType', memberTypeFilter);
+      if (committeeFilter) urlParams.append('committeeDesignation', committeeFilter);
+
+      const res = await apiClient.get(`/members?${urlParams.toString()}`);
+      if (res.data?.success) {
+        setMembersList(res.data.data);
       }
-    };
+    } catch (err) {
+      console.error('Failed to load members roster:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    fetchMembers();
-  }, [society_slug, searchTerm, memberTypeFilter]);
+  // Fetch Society Users
+  const fetchSocietyUsers = async () => {
+    if (!society_slug) return;
+    try {
+      setIsUsersLoading(true);
+      const res = await apiClient.get('/users/society-users');
+      if (res.data?.success) {
+        setSocietyUsersList(res.data.data);
+      }
+    } catch (err) {
+      console.error('Failed to load society users:', err);
+    } finally {
+      setIsUsersLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'members') {
+      fetchMembers();
+    } else {
+      fetchSocietyUsers();
+    }
+  }, [society_slug, activeTab, searchTerm, memberTypeFilter, committeeFilter]);
 
   const handleExportCsv = async () => {
     try {
       const res = await apiClient.get('/members/export', { responseType: 'blob' });
-      // Create trigger link download
       const blob = new Blob([res.data], { type: 'text/csv' });
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -98,12 +190,7 @@ export default function MembersListingPage() {
           type: 'success', 
           text: `Successfully imported ${res.data.data.importedCount} members to roster.` 
         });
-        
-        // Refresh roster
-        const refRes = await apiClient.get('/members');
-        if (refRes.data?.success) {
-          setMembersList(refRes.data.data);
-        }
+        fetchMembers();
       }
     } catch (err: any) {
       setMessage({ 
@@ -126,6 +213,7 @@ export default function MembersListingPage() {
         email: newMemberForm.email,
         mobile: newMemberForm.mobile,
         memberType: newMemberForm.memberType,
+        committeeDesignation: newMemberForm.committeeDesignation === 'NONE' ? null : newMemberForm.committeeDesignation,
         status: newMemberForm.status,
         canLogin: newMemberForm.canLogin,
         password: newMemberForm.password || undefined,
@@ -134,13 +222,17 @@ export default function MembersListingPage() {
       if (res.data?.success) {
         setMessage({ type: 'success', text: `Member "${newMemberForm.name}" added successfully.` });
         setShowAddMember(false);
-        setNewMemberForm({ name: '', email: '', mobile: '', memberType: 'OWNER', status: 'ACTIVE', canLogin: true, password: '' });
-        
-        // Refresh list
-        const refRes = await apiClient.get('/members');
-        if (refRes.data?.success) {
-          setMembersList(refRes.data.data);
-        }
+        setNewMemberForm({ 
+          name: '', 
+          email: '', 
+          mobile: '', 
+          memberType: 'OWNER', 
+          committeeDesignation: 'NONE', 
+          status: 'ACTIVE', 
+          canLogin: true, 
+          password: '' 
+        });
+        fetchMembers();
       }
     } catch (err: any) {
       setMessage({ type: 'error', text: err.response?.data?.message || 'Failed to add member.' });
@@ -149,58 +241,272 @@ export default function MembersListingPage() {
     }
   };
 
+  // Grant Access to Staff / Accountant / Auditor
+  const handleGrantAccessSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!grantAccessForm.email.trim()) return;
+
+    setIsGranting(true);
+    setMessage(null);
+
+    try {
+      const res = await apiClient.post('/users/grant-access', grantAccessForm);
+      if (res.data?.success) {
+        setMessage({ 
+          type: 'success', 
+          text: `System access granted to ${grantAccessForm.email} as ${grantAccessForm.roleName} successfully!` 
+        });
+        setShowGrantAccessModal(false);
+        setGrantAccessForm({ name: '', email: '', mobile: '', roleName: 'ACCOUNTANT', password: '' });
+        fetchSocietyUsers();
+      }
+    } catch (err: any) {
+      setMessage({ type: 'error', text: err.response?.data?.message || 'Failed to grant system access.' });
+    } finally {
+      setIsGranting(false);
+    }
+  };
+
+  // Update User Role
+  const handleUpdateUserRoleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUserRole) return;
+
+    setIsGranting(true);
+    setMessage(null);
+
+    try {
+      const res = await apiClient.patch(`/users/${editingUserRole.userId}/role`, {
+        roleName: newRoleSelection,
+      });
+      if (res.data?.success) {
+        setMessage({ type: 'success', text: `Role updated to ${newRoleSelection} successfully.` });
+        setEditingUserRole(null);
+        fetchSocietyUsers();
+      }
+    } catch (err: any) {
+      setMessage({ type: 'error', text: err.response?.data?.message || 'Failed to update user role.' });
+    } finally {
+      setIsGranting(false);
+    }
+  };
+
+  // Revoke User Access
+  const handleRevokeUserAccess = async (userItem: SocietyUserItem) => {
+    if (!confirm(`Are you sure you want to revoke system login access for ${userItem.name || userItem.email} from this society?`)) {
+      return;
+    }
+
+    try {
+      const res = await apiClient.delete(`/users/${userItem.userId}/revoke`);
+      if (res.data?.success) {
+        setMessage({ type: 'success', text: `System access revoked for ${userItem.email}.` });
+        fetchSocietyUsers();
+      }
+    } catch (err: any) {
+      setMessage({ type: 'error', text: err.response?.data?.message || 'Failed to revoke user access.' });
+    }
+  };
+
+  const getOccupancyBadge = (type: string) => {
+    switch (type) {
+      case 'OWNER':
+        return (
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold border border-emerald-900/60 bg-emerald-950/40 text-emerald-300 rounded-full px-2.5 py-0.5 uppercase tracking-wide">
+            <Home className="h-2.5 w-2.5" /> Owner
+          </span>
+        );
+      case 'CO_OWNER':
+        return (
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold border border-teal-900/60 bg-teal-950/40 text-teal-300 rounded-full px-2.5 py-0.5 uppercase tracking-wide">
+            <Home className="h-2.5 w-2.5" /> Co-owner
+          </span>
+        );
+      case 'TENANT':
+        return (
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold border border-amber-900/60 bg-amber-950/40 text-amber-300 rounded-full px-2.5 py-0.5 uppercase tracking-wide">
+            <Key className="h-2.5 w-2.5" /> Tenant
+          </span>
+        );
+      case 'FAMILY_MEMBER':
+        return (
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold border border-slate-700 bg-slate-800 text-slate-300 rounded-full px-2.5 py-0.5 uppercase tracking-wide">
+            <Users className="h-2.5 w-2.5" /> Family
+          </span>
+        );
+      case 'ASSOCIATE_MEMBER':
+        return (
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold border border-purple-900/60 bg-purple-950/40 text-purple-300 rounded-full px-2.5 py-0.5 uppercase tracking-wide">
+            <UserCheck className="h-2.5 w-2.5" /> Associate
+          </span>
+        );
+      default:
+        return (
+          <span className="text-[10px] font-bold border border-slate-800 bg-slate-900 text-slate-400 rounded-full px-2 py-0.5">
+            {type}
+          </span>
+        );
+    }
+  };
+
+  const getCommitteeBadge = (designation?: string | null) => {
+    if (!designation || designation === 'NONE') return null;
+    const isExecutive = ['PRESIDENT', 'SECRETARY', 'TREASURER'].includes(designation);
+    return (
+      <span className={`inline-flex items-center gap-1 text-[10px] font-bold border rounded-full px-2.5 py-0.5 uppercase tracking-wider ${
+        isExecutive
+          ? 'bg-indigo-950/50 border-indigo-700/60 text-indigo-300 shadow-[0_0_8px_rgba(99,102,241,0.25)]'
+          : 'bg-slate-900/60 border-slate-700 text-slate-300'
+      }`}>
+        <Award className="h-2.5 w-2.5 text-amber-400" />
+        {designation.replace('_', ' ')}
+      </span>
+    );
+  };
+
+  const getRoleBadge = (roleName: string) => {
+    switch (roleName) {
+      case 'ACCOUNTANT':
+        return (
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold border border-emerald-800 bg-emerald-950/40 text-emerald-300 rounded-full px-2.5 py-0.5 uppercase">
+            <Briefcase className="h-3 w-3" /> Accountant
+          </span>
+        );
+      case 'AUDITOR':
+        return (
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold border border-teal-800 bg-teal-950/40 text-teal-300 rounded-full px-2.5 py-0.5 uppercase">
+            <ShieldCheck className="h-3 w-3" /> Auditor
+          </span>
+        );
+      case 'ESTATE_MANAGER':
+        return (
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold border border-sky-800 bg-sky-950/40 text-sky-300 rounded-full px-2.5 py-0.5 uppercase">
+            <Building className="h-3 w-3" /> Estate Manager
+          </span>
+        );
+      case 'PRESIDENT':
+      case 'SECRETARY':
+      case 'TREASURER':
+        return (
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold border border-indigo-800 bg-indigo-950/40 text-indigo-300 rounded-full px-2.5 py-0.5 uppercase">
+            <Award className="h-3 w-3 text-amber-400" /> {roleName}
+          </span>
+        );
+      case 'STAFF':
+      case 'SECURITY_SUPERVISOR':
+      case 'MAINTENANCE_INCHARGE':
+        return (
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold border border-slate-700 bg-slate-800 text-slate-200 rounded-full px-2.5 py-0.5 uppercase">
+            <UserCheck className="h-3 w-3" /> {roleName.replace('_', ' ')}
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold border border-slate-800 bg-slate-900 text-slate-300 rounded-full px-2.5 py-0.5 uppercase">
+            {roleName}
+          </span>
+        );
+    }
+  };
+
+  // Filtered system users
+  const filteredSystemUsers = societyUsersList.filter((u) => {
+    if (userSearchTerm) {
+      const q = userSearchTerm.toLowerCase();
+      const match = 
+        u.email?.toLowerCase().includes(q) ||
+        u.name?.toLowerCase().includes(q) ||
+        u.roleName?.toLowerCase().includes(q) ||
+        u.flatNumber?.toLowerCase().includes(q);
+      if (!match) return false;
+    }
+    if (userCategoryFilter) {
+      if (u.userCategory !== userCategoryFilter) return false;
+    }
+    return true;
+  });
+
   return (
     <main className="relative flex min-h-screen flex-col items-center justify-start overflow-x-hidden w-full py-8 px-4 sm:px-6 md:px-8 lg:px-10">
-      {/* Background Grids */}
-      <div className="absolute inset-0 -z-10 block bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
+      {/* Dynamic Background Grids */}
+      <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
 
-      <div className="w-full max-w-[1450px] mx-auto space-y-8 z-10">
+      <div className="w-full max-w-[1450px] mx-auto space-y-6 z-10">
         
-        {/* Header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <Users className="h-8 w-8 text-indigo-400" />
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-2xl font-bold tracking-tight text-slate-100">Member Directory</h2>
-                {!isLoading && (
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-indigo-950/50 border border-indigo-900/50 text-indigo-400">
-                    {membersList.length} members
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-slate-400">View owners, co-owners, family members, nominees, and digital IDs</p>
-            </div>
+        {/* Header & Tabs */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-800/80 pb-5">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight text-slate-100 flex items-center gap-3">
+              <Users className="h-7 w-7 text-indigo-400" /> Society Directory & User Access
+            </h2>
+            <p className="text-xs text-slate-400 mt-1">
+              Manage member records, flat owners, tenants, and configure login access for accountants, auditors, and staff
+            </p>
           </div>
 
-          {isManagementRole && (
-            <div className="flex items-center gap-2">
-              {/* Add Member Button */}
-              <button
-                onClick={() => setShowAddMember(true)}
-                className="flex items-center gap-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 py-2 px-4 text-xs font-semibold text-white transition-all shadow-indigo-600/20"
-              >
-                <UserPlus className="h-3.5 w-3.5" /> Add Member
-              </button>
+          {/* Action Buttons */}
+          <div className="flex flex-wrap items-center gap-2">
+            {activeTab === 'members' ? (
+              <>
+                <button
+                  onClick={handleExportCsv}
+                  className="flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900 hover:bg-slate-800 text-slate-200 py-2 px-3 text-xs font-semibold shadow transition-all"
+                >
+                  <Download className="h-3.5 w-3.5" /> Export CSV
+                </button>
 
-              {/* Import Trigger */}
-              <button
-                onClick={() => setShowBulkUpload(true)}
-                className="flex items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-950/60 py-2 px-4 text-xs font-semibold text-slate-300 hover:bg-slate-900 hover:text-slate-100 cursor-pointer transition-all shadow-sm"
-              >
-                <Upload className="h-3.5 w-3.5" />
-                Import Bulk
-              </button>
+                {isManagementRole && (
+                  <>
+                    <button
+                      onClick={() => setShowBulkUpload(true)}
+                      className="flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900 hover:bg-slate-800 text-slate-200 py-2 px-3 text-xs font-semibold shadow transition-all"
+                    >
+                      <Upload className="h-3.5 w-3.5" /> Bulk Import
+                    </button>
+                    <button
+                      onClick={() => setShowAddMember(true)}
+                      className="flex items-center gap-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-slate-100 py-2 px-3.5 text-xs font-semibold shadow transition-all"
+                    >
+                      <Plus className="h-3.5 w-3.5" /> Add Member
+                    </button>
+                  </>
+                )}
+              </>
+            ) : (
+              isManagementRole && (
+                <button
+                  onClick={() => setShowGrantAccessModal(true)}
+                  className="flex items-center gap-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-slate-100 py-2 px-3.5 text-xs font-semibold shadow transition-all"
+                >
+                  <UserPlus className="h-3.5 w-3.5" /> Grant System Access / Add User
+                </button>
+              )
+            )}
+          </div>
+        </div>
 
-              {/* Export Trigger */}
-              <button
-                onClick={handleExportCsv}
-                className="flex items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-950/60 py-2 px-4 text-xs font-semibold text-slate-300 hover:bg-slate-900 hover:text-slate-100 transition-all shadow-sm"
-              >
-                <Download className="h-3.5 w-3.5" /> Export CSV
-              </button>
-            </div>
-          )}
+        {/* Navigation Tabs */}
+        <div className="flex items-center gap-3 border-b border-slate-800">
+          <button
+            onClick={() => setActiveTab('members')}
+            className={`pb-3 text-xs font-bold transition-all border-b-2 flex items-center gap-2 ${
+              activeTab === 'members'
+                ? 'border-indigo-500 text-indigo-400'
+                : 'border-transparent text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Home className="h-4 w-4" /> Society Members & Residents ({membersList.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('system_users')}
+            className={`pb-3 text-xs font-bold transition-all border-b-2 flex items-center gap-2 ${
+              activeTab === 'system_users'
+                ? 'border-indigo-500 text-indigo-400'
+                : 'border-transparent text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <ShieldCheck className="h-4 w-4" /> System Users & Staff Access ({societyUsersList.length})
+          </button>
         </div>
 
         {message && (
@@ -216,282 +522,579 @@ export default function MembersListingPage() {
           </div>
         )}
 
-        {/* Filters Panel */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 bg-slate-950/40 border border-slate-800 p-4 rounded-xl">
-          {/* Search by Name / No */}
-          <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
-            <input
-              type="text"
-              placeholder="Search Name or Membership No..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2 pl-10 pr-4 text-sm text-slate-200 placeholder-slate-600 focus:border-slate-700 focus:outline-none focus:ring-1 focus:ring-transparent"
-            />
-          </div>
+        {/* ========================================== */}
+        {/* TAB 1: Society Members & Residents         */}
+        {/* ========================================== */}
+        {activeTab === 'members' && (
+          <div className="space-y-6">
+            {/* Search & Filters */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 bg-slate-950/40 border border-slate-800 p-4 rounded-xl">
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
+                <input
+                  type="text"
+                  placeholder="Search by name, email, membership no..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2.5 pl-9 pr-3.5 text-sm text-slate-200 focus:border-indigo-600 focus:outline-none"
+                />
+              </div>
 
-          {/* Filter by Type */}
-          <div className="relative">
-            <select
-              value={memberTypeFilter}
-              onChange={(e) => setMemberTypeFilter(e.target.value)}
-              className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2 px-3.5 text-sm text-slate-500 focus:border-slate-700 focus:outline-none focus:ring-1 focus:ring-transparent appearance-none"
-            >
-              <option value="">All Member Types</option>
-              <option value="OWNER">Owner</option>
-              <option value="CO_OWNER">Co-owner</option>
-              <option value="TENANT">Tenant</option>
-            </select>
-          </div>
-        </div>
+              <div>
+                <select
+                  value={memberTypeFilter}
+                  onChange={(e) => setMemberTypeFilter(e.target.value)}
+                  className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-indigo-600 focus:outline-none"
+                >
+                  <option value="">All Membership Types</option>
+                  <option value="OWNER">Owners Only</option>
+                  <option value="CO_OWNER">Co-owners Only</option>
+                  <option value="TENANT">Tenants Only</option>
+                  <option value="FAMILY_MEMBER">Family Members</option>
+                  <option value="ASSOCIATE_MEMBER">Associate Members</option>
+                </select>
+              </div>
 
-        {isLoading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="h-8 w-8 text-indigo-500 animate-spin" />
-          </div>
-        ) : membersList.length === 0 ? (
-          <div className="text-center py-12 border border-dashed border-slate-800 rounded-xl space-y-3">
-            <ShieldAlert className="h-10 w-10 text-slate-500 mx-auto" />
-            <h3 className="text-md font-semibold text-slate-300">No members found</h3>
-            <p className="text-xs text-slate-500 max-w-xs mx-auto">No records match the current filters or search term parameters.</p>
-          </div>
-        ) : (
-          /* Members Table Listing */
-          <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/20 shadow-sm">
-            <table className="w-full text-left text-xs border-collapse whitespace-nowrap">
-              <thead>
-                <tr className="bg-black/60 text-slate-400 font-semibold border-b border-slate-800">
-                  <th className="p-4">Membership Info</th>
-                  <th className="p-4">Full Name</th>
-                  <th className="p-4">Email Address</th>
-                  <th className="p-4">Mobile Number</th>
-                  <th className="p-4">Type</th>
-                  <th className="p-4">Status</th>
-                  <th className="p-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/40">
-                {membersList.map((member) => (
-                  <tr key={member.id} className="text-slate-300 hover:bg-slate-900/10 transition-colors">
-                    <td className="p-4 font-mono text-slate-400">{member.membershipNumber}</td>
-                    <td className="p-4 font-bold text-slate-200">{member.name || 'Resident'}</td>
-                    <td className="p-4 text-slate-400">{member.email}</td>
-                    <td className="p-4 text-slate-400">{member.mobile || '-'}</td>
-                    <td className="p-4">
-                      <span className="text-[10px] font-semibold border border-indigo-900/50 bg-indigo-950/40 text-indigo-400 rounded-full px-2 py-0.5 uppercase">
-                        {member.memberType}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <span className={`text-[10px] font-bold rounded-full px-2.5 py-1 border uppercase tracking-wider ${
-                        member.status === 'ACTIVE' 
-                          ? 'bg-emerald-950/40 border-emerald-800 text-emerald-400'
-                          : 'bg-amber-950/40 border-amber-800 text-amber-400'
-                      }`}>
-                        {member.status || 'ACTIVE'}
-                      </span>
-                    </td>
-                    <td className="p-4 text-right">
-                      <Link
-                        href={`/${society_slug}/members/${member.id}`}
-                        className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-all"
-                      >
-                        {isManagementRole ? 'Manage Profile' : 'View Profile'} <ArrowRight className="h-3.5 w-3.5" />
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+              <div>
+                <select
+                  value={committeeFilter}
+                  onChange={(e) => setCommitteeFilter(e.target.value)}
+                  className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-indigo-600 focus:outline-none"
+                >
+                  <option value="">All Committee Roles</option>
+                  <option value="COMMITTEE_ONLY">All Committee Members</option>
+                  <option value="PRESIDENT">President</option>
+                  <option value="SECRETARY">Secretary</option>
+                  <option value="TREASURER">Treasurer</option>
+                  <option value="COMMITTEE_MEMBER">Executive Members</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Members Table */}
+            {isLoading ? (
+              <div className="flex justify-center py-16">
+                <Loader2 className="h-8 w-8 text-indigo-500 animate-spin" />
+              </div>
+            ) : membersList.length === 0 ? (
+              <div className="text-center py-16 border border-dashed border-slate-800 rounded-xl space-y-3">
+                <ShieldAlert className="h-10 w-10 text-slate-500 mx-auto" />
+                <h3 className="text-md font-semibold text-slate-300">No members found</h3>
+                <p className="text-xs text-slate-500 max-w-xs mx-auto">No resident records matched your search parameters.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950/40">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-800 bg-slate-900/50 text-slate-400 font-semibold uppercase tracking-wider text-[11px]">
+                      <th className="py-3.5 px-4">Member Info</th>
+                      <th className="py-3.5 px-4">Contact</th>
+                      <th className="py-3.5 px-4">Membership Type</th>
+                      <th className="py-3.5 px-4">Committee Role</th>
+                      <th className="py-3.5 px-4">Login Access</th>
+                      <th className="py-3.5 px-4 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60 text-slate-300">
+                    {membersList.map((m) => (
+                      <tr key={m.id} className="hover:bg-slate-900/30 transition-colors">
+                        <td className="py-3.5 px-4">
+                          <div className="flex items-center gap-3">
+                            <div className="h-9 w-9 rounded-xl bg-slate-800 flex items-center justify-center font-bold text-indigo-400 border border-slate-700">
+                              {m.name[0]?.toUpperCase() || 'M'}
+                            </div>
+                            <div>
+                              <p className="font-bold text-slate-200 text-sm">{m.name}</p>
+                              <span className="text-[10px] text-slate-400 font-mono">
+                                #{m.membershipNumber}
+                              </span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <div className="space-y-0.5">
+                            <p className="text-slate-300">{m.email}</p>
+                            <p className="text-[11px] text-slate-500 font-mono">{m.mobile || 'No Mobile'}</p>
+                          </div>
+                        </td>
+                        <td className="py-3.5 px-4">
+                          {getOccupancyBadge(m.memberType)}
+                        </td>
+                        <td className="py-3.5 px-4">
+                          {getCommitteeBadge(m.committeeDesignation) || <span className="text-slate-600">-</span>}
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            m.canLogin ?? true
+                              ? 'bg-emerald-950/40 text-emerald-400 border border-emerald-900/50'
+                              : 'bg-red-950/40 text-red-400 border border-red-900/50'
+                          }`}>
+                            {m.canLogin ?? true ? 'Login Active' : 'No Login'}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4 text-right">
+                          <Link
+                            href={`/${society_slug}/members/${m.id}`}
+                            className="inline-flex items-center gap-1 font-semibold text-indigo-400 hover:text-indigo-300 bg-indigo-950/40 hover:bg-indigo-900/60 border border-indigo-800/60 px-3 py-1.5 rounded-lg transition-all"
+                          >
+                            Profile <ArrowRight className="h-3.5 w-3.5" />
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
+
+        {/* ========================================== */}
+        {/* TAB 2: System Users & Staff Access         */}
+        {/* ========================================== */}
+        {activeTab === 'system_users' && (
+          <div className="space-y-6">
+            
+            {/* Info Banner */}
+            <div className="rounded-xl border border-sky-900/50 bg-sky-950/20 p-4 text-xs text-sky-300 flex items-start gap-3">
+              <ShieldCheck className="h-5 w-5 text-sky-400 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-bold text-sky-200">System Users & Non-Inventory Access Control</p>
+                <p className="text-sky-300/80 mt-0.5 leading-relaxed">
+                  This center lets you manage all users with active system logins in this society—including external professionals (<strong>Accountants, Auditors, Estate Managers, Facility Staff</strong>) who do not own a flat or hold inventory in the society.
+                </p>
+              </div>
+            </div>
+
+            {/* Search & Filters */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 bg-slate-950/40 border border-slate-800 p-4 rounded-xl">
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
+                <input
+                  type="text"
+                  placeholder="Search by user name, email, or role..."
+                  value={userSearchTerm}
+                  onChange={(e) => setUserSearchTerm(e.target.value)}
+                  className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2.5 pl-9 pr-3.5 text-sm text-slate-200 focus:border-indigo-600 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <select
+                  value={userCategoryFilter}
+                  onChange={(e) => setUserCategoryFilter(e.target.value)}
+                  className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-indigo-600 focus:outline-none"
+                >
+                  <option value="">All User Categories</option>
+                  <option value="STAFF_PROFESSIONAL">Non-Inventory Professionals & Staff (Accountants/Auditors/Staff)</option>
+                  <option value="RESIDENT_MEMBER">Resident Members (Flat Owners/Tenants)</option>
+                </select>
+              </div>
+            </div>
+
+            {/* System Users Table */}
+            {isUsersLoading ? (
+              <div className="flex justify-center py-16">
+                <Loader2 className="h-8 w-8 text-indigo-500 animate-spin" />
+              </div>
+            ) : filteredSystemUsers.length === 0 ? (
+              <div className="text-center py-16 border border-dashed border-slate-800 rounded-xl space-y-3">
+                <Users className="h-10 w-10 text-slate-500 mx-auto" />
+                <h3 className="text-md font-semibold text-slate-300">No system users found</h3>
+                <p className="text-xs text-slate-500 max-w-xs mx-auto">Click "Grant System Access" to invite an accountant, auditor, or staff member.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950/40">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-800 bg-slate-900/50 text-slate-400 font-semibold uppercase tracking-wider text-[11px]">
+                      <th className="py-3.5 px-4">User Details</th>
+                      <th className="py-3.5 px-4">Assigned System Role</th>
+                      <th className="py-3.5 px-4">Society Affiliation</th>
+                      <th className="py-3.5 px-4">Access Granted Date</th>
+                      <th className="py-3.5 px-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60 text-slate-300">
+                    {filteredSystemUsers.map((u) => (
+                      <tr key={u.id} className="hover:bg-slate-900/30 transition-colors">
+                        <td className="py-3.5 px-4">
+                          <div className="flex items-center gap-3">
+                            <div className="h-9 w-9 rounded-xl bg-slate-800 flex items-center justify-center font-bold text-sky-400 border border-slate-700">
+                              {u.name ? u.name[0]?.toUpperCase() : u.email[0]?.toUpperCase()}
+                            </div>
+                            <div>
+                              <p className="font-bold text-slate-200 text-sm">{u.name || 'User'}</p>
+                              <p className="text-xs text-slate-400 flex items-center gap-1">
+                                <Mail className="h-3 w-3 text-slate-500" /> {u.email}
+                              </p>
+                              {u.mobile && (
+                                <p className="text-[11px] text-slate-500 font-mono flex items-center gap-1 mt-0.5">
+                                  <Phone className="h-3 w-3" /> {u.mobile}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-3.5 px-4">
+                          {getRoleBadge(u.roleName)}
+                        </td>
+                        <td className="py-3.5 px-4">
+                          {u.flatNumber ? (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-slate-900 border border-slate-800 text-slate-300 px-2.5 py-1 rounded-full">
+                              <Building className="h-3 w-3 text-indigo-400" /> Flat {u.flatNumber}
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-sky-950/40 border border-sky-900/60 text-sky-300 px-2.5 py-1 rounded-full">
+                              <Briefcase className="h-3 w-3 text-sky-400" /> Non-Inventory Professional / Staff
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-4 text-slate-400 font-mono text-[11px]">
+                          {new Date(u.createdAt).toLocaleDateString('en-IN')}
+                        </td>
+                        <td className="py-3.5 px-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            {isManagementRole && (
+                              <>
+                                <button
+                                  onClick={() => {
+                                    setEditingUserRole(u);
+                                    setNewRoleSelection(u.roleName);
+                                  }}
+                                  className="p-1.5 rounded-lg border border-slate-700 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white transition-all"
+                                  title="Change System Role"
+                                >
+                                  <Edit2 className="h-3.5 w-3.5" />
+                                </button>
+                                <button
+                                  onClick={() => handleRevokeUserAccess(u)}
+                                  className="p-1.5 rounded-lg border border-red-900/50 bg-red-950/30 hover:bg-red-900/50 text-red-400 hover:text-red-300 transition-all"
+                                  title="Revoke System Login Access"
+                                >
+                                  <UserX className="h-3.5 w-3.5" />
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
       </div>
 
-      {/* ==================== ADD MEMBER MODAL ==================== */}
-      {showAddMember && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          {/* Backdrop */}
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowAddMember(false)} />
-          
-          {/* Modal Panel */}
-          <div className="relative w-full max-w-lg bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-
-            {/* Header */}
-            <div className="flex-shrink-0 flex items-center justify-between p-6 border-b border-slate-800 bg-slate-950/90 backdrop-blur-sm">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-indigo-600/20 border border-indigo-500/20">
-                  <UserPlus className="h-5 w-5 text-indigo-400" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-slate-100">Add New Member</h3>
-                  <p className="text-[11px] text-slate-500">Link an existing user to this society</p>
-                </div>
-              </div>
+      {/* ========================================== */}
+      {/* MODAL: Grant System Access / Add User      */}
+      {/* ========================================== */}
+      {showGrantAccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-150">
+          <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-950 p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
+                <UserPlus className="h-5 w-5 text-indigo-400" /> Grant System Access
+              </h3>
               <button
-                onClick={() => setShowAddMember(false)}
-                className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-500 hover:text-slate-300 transition-all"
+                onClick={() => setShowGrantAccessModal(false)}
+                className="text-slate-500 hover:text-slate-300 p-1"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <div className="p-6 overflow-y-auto space-y-6">
-              {/* Step 1: User Identity Details */}
-              <div className="space-y-4">
-                <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                  <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-indigo-600 text-[10px] font-bold text-white">1</span>
-                  Personal Details
-                </label>
-                
-                <div>
-                  <label className="text-[11px] text-slate-400 font-medium">Full Name <span className="text-red-400">*</span></label>
-                  <input
-                    type="text"
-                    value={newMemberForm.name}
-                    onChange={(e) => setNewMemberForm({ ...newMemberForm, name: e.target.value })}
-                    placeholder="e.g. John Doe"
-                    className="w-full mt-1 rounded-lg border border-slate-800 bg-slate-900/50 py-2.5 px-3.5 text-sm text-slate-200 placeholder-slate-600 focus:border-indigo-600/50 focus:outline-none focus:ring-1 focus:ring-indigo-600/30 transition-all"
-                  />
-                </div>
+            <form onSubmit={handleGrantAccessSubmit} className="space-y-4 text-xs">
+              <p className="text-slate-400 text-[11px] leading-relaxed">
+                Grant login credentials to accountants, auditors, estate managers, or facility staff who do not own a flat in the society.
+              </p>
 
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <div>
-                    <label className="text-[11px] text-slate-400 font-medium">Email Address <span className="text-red-400">*</span></label>
-                    <input
-                      type="email"
-                      value={newMemberForm.email}
-                      onChange={(e) => setNewMemberForm({ ...newMemberForm, email: e.target.value })}
-                      placeholder="john@example.com"
-                      className="w-full mt-1 rounded-lg border border-slate-800 bg-slate-900/50 py-2.5 px-3.5 text-sm text-slate-200 placeholder-slate-600 focus:border-indigo-600/50 focus:outline-none focus:ring-1 focus:ring-indigo-600/30 transition-all"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[11px] text-slate-400 font-medium">Mobile Number</label>
-                    <input
-                      type="text"
-                      value={newMemberForm.mobile}
-                      onChange={(e) => setNewMemberForm({ ...newMemberForm, mobile: e.target.value })}
-                      placeholder="+91 9876543210"
-                      className="w-full mt-1 rounded-lg border border-slate-800 bg-slate-900/50 py-2.5 px-3.5 text-sm text-slate-200 placeholder-slate-600 focus:border-indigo-600/50 focus:outline-none focus:ring-1 focus:ring-indigo-600/30 transition-all"
-                    />
-                  </div>
-                </div>
+              <div>
+                <label className="text-slate-300 font-semibold">Full Name *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Ramesh Sharma"
+                  value={grantAccessForm.name}
+                  onChange={(e) => setGrantAccessForm({ ...grantAccessForm, name: e.target.value })}
+                  className="w-full mt-1.5 rounded-lg border border-slate-800 bg-slate-900/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-indigo-600 focus:outline-none"
+                />
               </div>
 
-              {/* Step 2: Membership Details */}
-              <div className="space-y-4">
-                <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                  <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-indigo-600 text-[10px] font-bold text-white">2</span>
-                  Membership Details
-                </label>
-
-                <div>
-                  <label className="text-[11px] text-slate-400 font-medium">Membership Number</label>
-                  <input
-                    type="text"
-                    disabled
-                    value="Auto-generated by system"
-                    className="w-full mt-1 rounded-lg border border-slate-800 bg-slate-900/20 py-2.5 px-3.5 text-sm text-slate-500 italic cursor-not-allowed"
-                  />
-                  <p className="text-[10px] text-slate-500 mt-1">A sequential membership number (e.g. MEM-0001) will be assigned automatically.</p>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-[11px] text-slate-400 font-medium">System Role & Category</label>
-                    <select
-                      value={newMemberForm.memberType}
-                      onChange={(e) => setNewMemberForm({ ...newMemberForm, memberType: e.target.value })}
-                      className="w-full mt-1 rounded-lg border border-slate-800 bg-slate-900/50 py-2.5 px-3.5 text-sm text-slate-200 focus:border-indigo-600/50 focus:outline-none transition-all"
-                    >
-                      <option value="OWNER">Owner (Default)</option>
-                      <option value="CO_OWNER">Co-owner</option>
-                      <option value="TENANT">Tenant</option>
-                      <option value="ADMIN">Admin</option>
-                      <option value="ACCOUNTANT">Accountant</option>
-                      <option value="PRESIDENT">President</option>
-                      <option value="SECRETARY">Secretary</option>
-                      <option value="TREASURER">Treasurer</option>
-                      <option value="COMMITTEE_MEMBER">Committee Member</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-[11px] text-slate-400 font-medium">Status</label>
-                    <select
-                      value={newMemberForm.status}
-                      onChange={(e) => setNewMemberForm({ ...newMemberForm, status: e.target.value })}
-                      className="w-full mt-1 rounded-lg border border-slate-800 bg-slate-900/50 py-2.5 px-3.5 text-sm text-slate-200 focus:border-indigo-600/50 focus:outline-none transition-all"
-                    >
-                      <option value="ACTIVE">ACTIVE</option>
-                      <option value="INACTIVE">INACTIVE</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Step 3: Login Credentials */}
-                <div className="space-y-3 pt-2 border-t border-slate-800">
-                  <div className="flex items-center justify-between">
-                    <label className="text-[11px] text-slate-300 font-bold">Allow System Login</label>
-                    <input
-                      type="checkbox"
-                      checked={newMemberForm.canLogin}
-                      onChange={(e) => setNewMemberForm({ ...newMemberForm, canLogin: e.target.checked })}
-                      className="h-4 w-4 rounded border-slate-700 bg-slate-900 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-[11px] text-slate-400 font-medium">Initial System Password</label>
-                    <input
-                      type="password"
-                      value={newMemberForm.password}
-                      onChange={(e) => setNewMemberForm({ ...newMemberForm, password: e.target.value })}
-                      placeholder="Optional password (min 6 chars)"
-                      className="w-full mt-1 rounded-lg border border-slate-800 bg-slate-900/50 py-2.5 px-3.5 text-sm text-slate-200 placeholder-slate-600 focus:border-indigo-600/50 focus:outline-none font-mono"
-                    />
-                  </div>
-                </div>
+              <div>
+                <label className="text-slate-300 font-semibold">Email Address (Login Username) *</label>
+                <input
+                  type="email"
+                  required
+                  placeholder="accountant@example.com"
+                  value={grantAccessForm.email}
+                  onChange={(e) => setGrantAccessForm({ ...grantAccessForm, email: e.target.value })}
+                  className="w-full mt-1.5 rounded-lg border border-slate-800 bg-slate-900/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-indigo-600 focus:outline-none"
+                />
               </div>
+
+              <div>
+                <label className="text-slate-300 font-semibold">Mobile Number</label>
+                <input
+                  type="text"
+                  placeholder="9876543210"
+                  value={grantAccessForm.mobile}
+                  onChange={(e) => setGrantAccessForm({ ...grantAccessForm, mobile: e.target.value })}
+                  className="w-full mt-1.5 rounded-lg border border-slate-800 bg-slate-900/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-indigo-600 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="text-slate-300 font-semibold">Assigned System Role *</label>
+                <select
+                  value={grantAccessForm.roleName}
+                  onChange={(e) => setGrantAccessForm({ ...grantAccessForm, roleName: e.target.value })}
+                  className="w-full mt-1.5 rounded-lg border border-slate-800 bg-slate-900/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-indigo-600 focus:outline-none"
+                >
+                  <option value="ACCOUNTANT">Accountant (Ledgers, Vouchers, Payments Recording)</option>
+                  <option value="AUDITOR">Auditor (Financial Auditing & Reports View)</option>
+                  <option value="ESTATE_MANAGER">Estate Manager (Facility & Maintenance Operations)</option>
+                  <option value="MAINTENANCE_INCHARGE">Maintenance Incharge</option>
+                  <option value="SECURITY_SUPERVISOR">Security Supervisor</option>
+                  <option value="PRESIDENT">President</option>
+                  <option value="SECRETARY">Secretary</option>
+                  <option value="TREASURER">Treasurer</option>
+                  <option value="COMMITTEE_MEMBER">Executive Committee Member</option>
+                  <option value="STAFF">Facility Staff / Technician</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-slate-300 font-semibold">Initial Password (Optional)</label>
+                <input
+                  type="password"
+                  placeholder="Defaults to Society@123"
+                  value={grantAccessForm.password}
+                  onChange={(e) => setGrantAccessForm({ ...grantAccessForm, password: e.target.value })}
+                  className="w-full mt-1.5 rounded-lg border border-slate-800 bg-slate-900/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-indigo-600 focus:outline-none"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setShowGrantAccessModal(false)}
+                  className="px-4 py-2 rounded-lg border border-slate-800 text-slate-400 hover:bg-slate-900"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isGranting}
+                  className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold disabled:opacity-50"
+                >
+                  Grant Access
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================== */}
+      {/* MODAL: Change User Role                    */}
+      {/* ========================================== */}
+      {editingUserRole && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-150">
+          <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-950 p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
+                <Edit2 className="h-5 w-5 text-sky-400" /> Change System Role
+              </h3>
+              <button
+                onClick={() => setEditingUserRole(null)}
+                className="text-slate-500 hover:text-slate-300 p-1"
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
 
-            {/* Footer / Submit */}
-            <div className="p-6 border-t border-slate-800 bg-slate-950">
+            <form onSubmit={handleUpdateUserRoleSubmit} className="space-y-4 text-xs">
+              <div className="bg-slate-900/50 border border-slate-800 p-3 rounded-lg">
+                <p className="text-[11px] text-slate-400">Updating role for:</p>
+                <p className="font-bold text-slate-200 mt-0.5">{editingUserRole.name || editingUserRole.email}</p>
+                <p className="text-[11px] text-slate-500">{editingUserRole.email}</p>
+              </div>
+
+              <div>
+                <label className="text-slate-300 font-semibold">Select New System Role</label>
+                <select
+                  value={newRoleSelection}
+                  onChange={(e) => setNewRoleSelection(e.target.value)}
+                  className="w-full mt-1.5 rounded-lg border border-slate-800 bg-slate-900/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-sky-600 focus:outline-none"
+                >
+                  <option value="ACCOUNTANT">Accountant</option>
+                  <option value="AUDITOR">Auditor</option>
+                  <option value="ESTATE_MANAGER">Estate Manager</option>
+                  <option value="MAINTENANCE_INCHARGE">Maintenance Incharge</option>
+                  <option value="SECURITY_SUPERVISOR">Security Supervisor</option>
+                  <option value="PRESIDENT">President</option>
+                  <option value="SECRETARY">Secretary</option>
+                  <option value="TREASURER">Treasurer</option>
+                  <option value="COMMITTEE_MEMBER">Executive Committee Member</option>
+                  <option value="STAFF">Staff / Technician</option>
+                  <option value="OWNER">Owner</option>
+                  <option value="TENANT">Tenant</option>
+                </select>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setEditingUserRole(null)}
+                  className="px-4 py-2 rounded-lg border border-slate-800 text-slate-400 hover:bg-slate-900"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isGranting}
+                  className="px-4 py-2 rounded-lg bg-sky-600 hover:bg-sky-700 text-white font-bold disabled:opacity-50"
+                >
+                  Save New Role
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Upload Modal */}
+      {showBulkUpload && (
+        <BulkUploadModal
+          isOpen={showBulkUpload}
+          onClose={() => setShowBulkUpload(false)}
+          title="Bulk Import Society Members"
+          entityName="Members"
+          sampleHeaders={['Name', 'Email', 'Mobile', 'Member Type', 'Committee Designation']}
+          sampleData={[
+            ['Ramesh Sharma', 'ramesh@example.com', '9876543210', 'OWNER', 'SECRETARY'],
+            ['Suresh Verma', 'suresh@example.com', '9876543211', 'TENANT', 'NONE'],
+          ]}
+          keyMapping={{
+            'Name': 'name',
+            'Email': 'email',
+            'Mobile': 'mobile',
+            'Member Type': 'memberType',
+            'Committee Designation': 'committeeDesignation',
+          }}
+          onUpload={handleBulkUpload}
+        />
+      )}
+
+      {/* Add Member Modal */}
+      {showAddMember && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-150">
+          <div className="w-full max-w-lg rounded-2xl border border-slate-800 bg-slate-950 p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
+                <UserPlus className="h-5 w-5 text-indigo-400" /> Add New Society Member
+              </h3>
               <button
-                type="button"
-                onClick={handleCreateMember}
-                disabled={!newMemberForm.name.trim() || !newMemberForm.email.trim() || isCreating}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-sm font-semibold text-white transition-all shadow-lg shadow-indigo-600/20 disabled:shadow-none"
+                onClick={() => setShowAddMember(false)}
+                className="text-slate-500 hover:text-slate-300 p-1"
               >
-                {isCreating ? (
-                  <><Loader2 className="h-4 w-4 animate-spin" /> Creating...</>
-                ) : (
-                  <><Plus className="h-4 w-4" /> Add Member to Society</>
-                )}
+                <X className="h-5 w-5" />
               </button>
+            </div>
+
+            <div className="space-y-4 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-slate-300 font-semibold">Full Name *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Ramesh Kumar"
+                    value={newMemberForm.name}
+                    onChange={(e) => setNewMemberForm({ ...newMemberForm, name: e.target.value })}
+                    className="w-full mt-1 rounded-lg border border-slate-800 bg-slate-900/60 py-2 px-3 text-sm text-slate-200 focus:border-indigo-600 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-slate-300 font-semibold">Email *</label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="ramesh@example.com"
+                    value={newMemberForm.email}
+                    onChange={(e) => setNewMemberForm({ ...newMemberForm, email: e.target.value })}
+                    className="w-full mt-1 rounded-lg border border-slate-800 bg-slate-900/60 py-2 px-3 text-sm text-slate-200 focus:border-indigo-600 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-slate-300 font-semibold">Mobile</label>
+                  <input
+                    type="text"
+                    placeholder="9876543210"
+                    value={newMemberForm.mobile}
+                    onChange={(e) => setNewMemberForm({ ...newMemberForm, mobile: e.target.value })}
+                    className="w-full mt-1 rounded-lg border border-slate-800 bg-slate-900/60 py-2 px-3 text-sm text-slate-200 focus:border-indigo-600 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-slate-300 font-semibold">Membership Type</label>
+                  <select
+                    value={newMemberForm.memberType}
+                    onChange={(e) => setNewMemberForm({ ...newMemberForm, memberType: e.target.value as any })}
+                    className="w-full mt-1 rounded-lg border border-slate-800 bg-slate-900/60 py-2 px-3 text-sm text-slate-200 focus:border-indigo-600 focus:outline-none"
+                  >
+                    <option value="OWNER">Owner</option>
+                    <option value="CO_OWNER">Co-owner</option>
+                    <option value="TENANT">Tenant</option>
+                    <option value="FAMILY_MEMBER">Family Member</option>
+                    <option value="ASSOCIATE_MEMBER">Associate Member</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-slate-300 font-semibold">Committee Designation</label>
+                <select
+                  value={newMemberForm.committeeDesignation}
+                  onChange={(e) => setNewMemberForm({ ...newMemberForm, committeeDesignation: e.target.value })}
+                  className="w-full mt-1 rounded-lg border border-slate-800 bg-slate-900/60 py-2 px-3 text-sm text-slate-200 focus:border-indigo-600 focus:outline-none"
+                >
+                  <option value="NONE">None (Regular Resident)</option>
+                  <option value="PRESIDENT">President</option>
+                  <option value="SECRETARY">Secretary</option>
+                  <option value="TREASURER">Treasurer</option>
+                  <option value="COMMITTEE_MEMBER">Executive Committee Member</option>
+                </select>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setShowAddMember(false)}
+                  className="px-4 py-2 rounded-lg border border-slate-800 text-slate-400 hover:bg-slate-900"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCreateMember}
+                  disabled={isCreating}
+                  className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold disabled:opacity-50"
+                >
+                  {isCreating ? 'Adding...' : 'Add Member'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
-      
-      <BulkUploadModal
-        isOpen={showBulkUpload}
-        onClose={() => setShowBulkUpload(false)}
-        title="Bulk Import Members"
-        entityName="members"
-        sampleHeaders={['Membership Number', 'Member Type', 'Name', 'Email', 'Mobile']}
-        sampleData={[
-          ['MEM-0001', 'OWNER', 'John Doe', 'john@example.com', '9876543210'],
-          ['MEM-0002', 'TENANT', 'Jane Smith', 'jane@example.com', '9876543211'],
-        ]}
-        keyMapping={{
-          'Membership Number': 'membershipNumber',
-          'Member Type': 'memberType',
-          'Name': 'name',
-          'Email': 'email',
-          'Mobile': 'mobile'
-        }}
-        onUpload={handleBulkUpload}
-      />
     </main>
   );
 }

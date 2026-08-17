@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../providers/auth-context';
 import { apiClient } from '../../../lib/api/client';
 import { PromptModal, PromptModalConfig } from '../../../components/prompt-modal';
-import { Building, Search, Filter, ShieldAlert, Plus, ArrowRight, Loader2, Settings2 , X, Upload } from 'lucide-react';
+import { Building, Search, Filter, ShieldAlert, Plus, ArrowRight, Loader2, Settings2 , X, Upload, Layers } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import BulkUploadModal from '../../../components/bulk-upload-modal';
@@ -43,6 +43,12 @@ export default function FlatsListingPage() {
   const [flatsList, setFlatsList] = useState<FlatListItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   
+  // Flat Types Master Config State
+  const [flatTypesList, setFlatTypesList] = useState<string[]>(['1BHK', '2BHK', '3BHK', '4BHK', 'Penthouse', 'Shop']);
+  const [isManageTypesModalOpen, setIsManageTypesModalOpen] = useState<boolean>(false);
+  const [newUnitTypeInput, setNewUnitTypeInput] = useState<string>('');
+  const [isSavingTypes, setIsSavingTypes] = useState<boolean>(false);
+
   // Filters state
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [occupancyFilter, setOccupancyFilter] = useState<string>('');
@@ -67,8 +73,7 @@ export default function FlatsListingPage() {
   const [selectedLayoutBuildingId, setSelectedLayoutBuildingId] = useState<string>('');
   const [selectedLayoutWingId, setSelectedLayoutWingId] = useState<string>('');
   const [selectedFloorId, setSelectedFloorId] = useState<string>('');
-  // Owner & Tenant Assignment State
-  const [membersList, setMembersList] = useState<{ id: string; name: string; email?: string; mobile?: string; memberType?: string }[]>([]);
+  const [membersList, setMembersList] = useState<{ id: string; name: string; email?: string; mobile?: string; memberType?: string; committeeDesignation?: string | null }[]>([]);
   const [selectedOwnerId, setSelectedOwnerId] = useState<string>('');
   const [assignTenantToggle, setAssignTenantToggle] = useState<boolean>(false);
   const [selectedTenantId, setSelectedTenantId] = useState<string>('');
@@ -108,6 +113,20 @@ export default function FlatsListingPage() {
         const resMembers = await apiClient.get('/members');
         if (resMembers.data?.success) {
           setMembersList(resMembers.data.data);
+        }
+
+        // Fetch society config to populate flat unit types
+        try {
+          const resConfig = await apiClient.get('/maintenance/config');
+          if (resConfig.data?.success && resConfig.data.data?.flatTypes) {
+            const types = resConfig.data.data.flatTypes;
+            if (Array.isArray(types) && types.length > 0) {
+              setFlatTypesList(types);
+              setNewFlatType(types[0]);
+            }
+          }
+        } catch (err) {
+          console.warn('Could not fetch society unit types config:', err);
         }
 
         // Extract buildings and floors
@@ -267,6 +286,48 @@ export default function FlatsListingPage() {
     }
   };
 
+  const handleAddNewUnitType = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = newUnitTypeInput.trim();
+    if (!trimmed) return;
+    if (flatTypesList.includes(trimmed)) {
+      alert('Unit type already exists.');
+      return;
+    }
+    const updated = [...flatTypesList, trimmed];
+    setIsSavingTypes(true);
+    try {
+      await apiClient.post('/maintenance/config', { flatTypes: updated });
+      setFlatTypesList(updated);
+      setNewUnitTypeInput('');
+    } catch (e) {
+      alert('Failed to save unit type.');
+    } finally {
+      setIsSavingTypes(false);
+    }
+  };
+
+  const handleDeleteUnitType = async (fType: string) => {
+    if (flatTypesList.length <= 1) {
+      alert('Society must have at least one unit type.');
+      return;
+    }
+    if (!confirm(`Are you sure you want to remove unit type "${fType}"?`)) return;
+    const updated = flatTypesList.filter(t => t !== fType);
+    setIsSavingTypes(true);
+    try {
+      await apiClient.post('/maintenance/config', { flatTypes: updated });
+      setFlatTypesList(updated);
+      if (newFlatType === fType) {
+        setNewFlatType(updated[0]);
+      }
+    } catch (e) {
+      alert('Failed to delete unit type.');
+    } finally {
+      setIsSavingTypes(false);
+    }
+  };
+
   const handleBulkUpload = async (data: any[]) => {
     try {
       const res = await apiClient.post('/flats/bulk', data);
@@ -319,6 +380,12 @@ export default function FlatsListingPage() {
                   List
                 </button>
               </div>
+              <button
+                onClick={() => setIsManageTypesModalOpen(true)}
+                className="rounded-lg border border-slate-700 bg-slate-100 dark:bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 px-3 text-xs font-semibold transition-all flex items-center gap-2 shadow-md"
+              >
+                <Layers className="h-4 w-4 text-indigo-400" /> Unit Types
+              </button>
               <Link
                 href={`/${society_slug}/flats/layout`}
                 className="rounded-lg border border-slate-700 bg-slate-100 dark:bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 px-3 text-xs font-semibold transition-all flex items-center gap-2 shadow-md"
@@ -592,15 +659,28 @@ export default function FlatsListingPage() {
                   <label className="text-xs text-slate-500 dark:text-slate-400 font-medium">Flat Unit Type</label>
                   <select
                     value={newFlatType}
-                    onChange={(e) => setNewFlatType(e.target.value)}
+                    onChange={(e) => {
+                      if (e.target.value === '__ADD_NEW__') {
+                        const custom = window.prompt('Enter new flat unit type (e.g. Studio, 1.5BHK, Duplex, Villa, Office):');
+                        if (custom && custom.trim()) {
+                          const trimmed = custom.trim();
+                          if (!flatTypesList.includes(trimmed)) {
+                            const updated = [...flatTypesList, trimmed];
+                            setFlatTypesList(updated);
+                            apiClient.post('/maintenance/config', { flatTypes: updated }).catch(console.error);
+                          }
+                          setNewFlatType(trimmed);
+                        }
+                      } else {
+                        setNewFlatType(e.target.value);
+                      }
+                    }}
                     className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2.5 px-3 text-sm text-slate-200 focus:border-slate-700 focus:outline-none mt-1"
                   >
-                    <option value="1BHK">1BHK</option>
-                    <option value="2BHK">2BHK</option>
-                    <option value="3BHK">3BHK</option>
-                    <option value="4BHK">4BHK</option>
-                    <option value="Penthouse">Penthouse</option>
-                    <option value="Shop">Shop / Commercial</option>
+                    {flatTypesList.map((t) => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                    <option value="__ADD_NEW__">+ Add New Unit Type...</option>
                   </select>
                 </div>
 
@@ -740,7 +820,7 @@ export default function FlatsListingPage() {
                   <option value="">-- Select Member as Owner (or Leave Vacant) --</option>
                   {membersList.map((m) => (
                     <option key={m.id} value={m.id}>
-                      {m.name} ({m.email || m.mobile || 'Member'}) [{m.memberType || 'RESIDENT'}]
+                      {m.name} ({m.email || m.mobile || 'Member'}) [{m.memberType || 'OWNER'}{m.committeeDesignation && m.committeeDesignation !== 'NONE' ? ` • ${m.committeeDesignation}` : ''}]
                     </option>
                   ))}
                 </select>
@@ -777,7 +857,7 @@ export default function FlatsListingPage() {
                         <option value="">-- Select Member as Tenant --</option>
                         {membersList.map((m) => (
                           <option key={m.id} value={m.id}>
-                            {m.name} ({m.email || m.mobile || 'Tenant Profile'})
+                            {m.name} ({m.email || m.mobile || 'Tenant Profile'}) [{m.memberType || 'TENANT'}{m.committeeDesignation && m.committeeDesignation !== 'NONE' ? ` • ${m.committeeDesignation}` : ''}]
                           </option>
                         ))}
                       </select>
@@ -888,6 +968,85 @@ export default function FlatsListingPage() {
                 className="rounded-lg bg-indigo-600 hover:bg-indigo-500 text-slate-100 py-2 px-6 text-xs font-semibold disabled:opacity-55 transition-all flex items-center gap-2 shadow-lg shadow-indigo-600/20"
               >
                 {isSubmitting ? <><Loader2 className="h-4 w-4 animate-spin" /> Creating...</> : 'Create Flat Unit'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Manage Unit Types Master Modal */}
+      {isManageTypesModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsManageTypesModalOpen(false)} />
+          <div className="relative w-full max-w-md bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]">
+            <div className="flex items-center justify-between p-6 border-b border-slate-800 bg-slate-950/90">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-indigo-600/20 border border-indigo-500/20">
+                  <Layers className="h-5 w-5 text-indigo-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-slate-100">Society Unit Types Master</h3>
+                  <p className="text-[11px] text-slate-500">Configure allowed unit categories across the society</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsManageTypesModalOpen(false)}
+                className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-500 hover:text-slate-300 transition-all"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto space-y-4">
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-slate-300">Active Unit Types ({flatTypesList.length})</label>
+                <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                  {flatTypesList.map((fType) => (
+                    <div key={fType} className="flex items-center justify-between p-2.5 rounded-lg bg-slate-900 border border-slate-800">
+                      <span className="text-sm font-semibold text-slate-200">{fType}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteUnitType(fType)}
+                        disabled={isSavingTypes}
+                        className="text-slate-500 hover:text-rose-400 p-1 rounded transition-colors"
+                        title="Remove unit type"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <form onSubmit={handleAddNewUnitType} className="pt-4 border-t border-slate-800 space-y-3">
+                <label className="text-xs font-semibold text-slate-300">Add New Unit Type</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="e.g. Studio, Duplex, Villa, 1.5BHK"
+                    value={newUnitTypeInput}
+                    onChange={(e) => setNewUnitTypeInput(e.target.value)}
+                    className="flex-1 rounded-lg border border-slate-800 bg-slate-900 py-2 px-3 text-xs text-slate-200 placeholder-slate-500 focus:border-indigo-500 focus:outline-none font-semibold"
+                  />
+                  <button
+                    type="submit"
+                    disabled={!newUnitTypeInput.trim() || isSavingTypes}
+                    className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold disabled:opacity-40 transition-all flex items-center gap-1.5"
+                  >
+                    {isSavingTypes ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
+                    Add
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <div className="p-4 border-t border-slate-800 bg-slate-950 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setIsManageTypesModalOpen(false)}
+                className="rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 py-2 px-4 text-xs font-semibold transition-all"
+              >
+                Close
               </button>
             </div>
           </div>

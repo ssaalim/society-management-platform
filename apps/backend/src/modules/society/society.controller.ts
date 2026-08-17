@@ -70,6 +70,42 @@ export class SocietyController {
     };
   }
 
+  @ApiOperation({ summary: 'Get society subscription plan status & expiry metadata' })
+  @UseGuards(TenantGuard, RolesGuard)
+  @RequirePermissions('society:read')
+  @Get(':id/subscription')
+  async getSubscriptionStatus(@Param('id') id: string) {
+    const result = await this.societyService.getSubscriptionStatus(id);
+    return {
+      success: true,
+      data: result,
+    };
+  }
+
+  @ApiOperation({ summary: 'Get statutory society registration renewal and expiry status' })
+  @UseGuards(TenantGuard, RolesGuard)
+  @RequirePermissions('society:read')
+  @Get(':id/registration-expiry')
+  async getRegistrationExpiry(@Param('id') id: string) {
+    const result = await this.societyService.getRegistrationExpiry(id);
+    return {
+      success: true,
+      data: result,
+    };
+  }
+
+  @ApiOperation({ summary: 'Get society profile and settings mutation change history' })
+  @UseGuards(TenantGuard, RolesGuard)
+  @RequirePermissions('society:read')
+  @Get(':id/history')
+  async getHistory(@Param('id') id: string) {
+    const result = await this.societyService.getHistory(id);
+    return {
+      success: true,
+      data: result,
+    };
+  }
+
   @ApiOperation({ summary: 'Update society profile (requires write permission)' })
   @UseGuards(TenantGuard, RolesGuard)
   @RequirePermissions('society:write')

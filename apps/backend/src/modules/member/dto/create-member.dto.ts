@@ -20,17 +20,36 @@ export const createMemberSchema = z.object({
   email: z.string().email('Invalid email address'),
   mobile: z.string().max(15).optional().nullable(),
   membershipNumber: z.string().max(50).optional(),
+  
+  // Occupancy Type (Relation to Unit / Flat / Shop / Office)
   memberType: z.enum([
     'OWNER', 
     'CO_OWNER', 
     'TENANT', 
-    'ADMIN', 
-    'ACCOUNTANT', 
-    'PRESIDENT', 
-    'SECRETARY', 
-    'TREASURER', 
-    'COMMITTEE_MEMBER'
+    'FAMILY_MEMBER',
+    'ASSOCIATE_MEMBER'
   ]).default('OWNER'),
+
+  // Society Committee Designations (Optional managing board roles)
+  committeeDesignation: z.enum([
+    'PRESIDENT',
+    'VICE_PRESIDENT',
+    'SECRETARY',
+    'JOINT_SECRETARY',
+    'TREASURER',
+    'ACCOUNTANT',
+    'AUDITOR',
+    'COMMITTEE_MEMBER',
+    'ESTATE_MANAGER',
+    'MAINTENANCE_INCHARGE',
+    'SECURITY_SUPERVISOR',
+    'CULTURAL_SECRETARY',
+    'LEGAL_ADVISOR',
+    'NONE'
+  ]).optional().nullable(),
+
+  unitType: z.string().optional().nullable(),
+  unitNumber: z.string().optional().nullable(),
   photoUrl: z.string().url().optional().nullable(),
   aadhaarUrl: z.string().url().optional().nullable(),
   panUrl: z.string().url().optional().nullable(),
@@ -41,7 +60,7 @@ export const createMemberSchema = z.object({
   status: z.string().default('ACTIVE'),
   canLogin: z.boolean().default(true),
   password: z.string().min(6, 'Password must be at least 6 characters').optional().nullable(),
-  role: z.string().optional(),
+  role: z.string().optional().nullable(),
   familyMembers: z.array(familyMemberSchema).optional(),
   nominees: z.array(nomineeSchema).optional(),
 });

@@ -3,7 +3,7 @@
 import React, { useEffect } from 'react';
 import { useAuth } from '../../app/providers/auth-context';
 import { useRouter } from 'next/navigation';
-import { Loader2, ShieldAlert } from 'lucide-react';
+import { Loader2, ShieldAlert, AlertCircle, ArrowRight, LogOut, Building } from 'lucide-react';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -14,7 +14,16 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children, 
   requiredPermission 
 }) => {
-  const { user, loading, activeSociety } = useAuth();
+  const { 
+    user, 
+    loading, 
+    activeSociety, 
+    memberships, 
+    allSocietiesExpired, 
+    switchSociety, 
+    signOut 
+  } = useAuth();
+  
   const router = useRouter();
 
   useEffect(() => {
@@ -37,6 +46,46 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return null;
   }
 
+  // Handle all societies expired or current active society expired
+  if (allSocietiesExpired || (activeSociety && activeSociety.isExpired)) {
+    const activeAlternative = memberships.find(m => !m.isExpired);
+
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-[#030712] px-4 text-center space-y-6">
+        <div className="p-4 rounded-2xl bg-red-950/40 border border-red-900/60 text-red-400">
+          <AlertCircle className="h-12 w-12" />
+        </div>
+        <div className="space-y-2 max-w-md">
+          <h3 className="text-2xl font-bold text-slate-100">Society Subscription Expired</h3>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            The subscription plan for <strong className="text-slate-200">{activeSociety?.societyName || 'this society'}</strong> has expired. Login and member access are currently restricted until the plan is renewed by the platform administrator.
+          </p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
+          {activeAlternative && (
+            <button
+              onClick={() => switchSociety(activeAlternative.societyId)}
+              className="rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 text-xs font-semibold flex items-center gap-2 transition-all shadow-md shadow-indigo-950/40"
+            >
+              <Building className="h-4 w-4" />
+              <span>Switch to {activeAlternative.societyName}</span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </button>
+          )}
+
+          <button
+            onClick={signOut}
+            className="rounded-lg border border-slate-800 bg-slate-900/60 hover:bg-slate-800 text-slate-300 px-4 py-2.5 text-xs font-semibold flex items-center gap-2 transition-all"
+          >
+            <LogOut className="h-4 w-4" />
+            <span>Sign Out</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // Validate active tenant scope
   if (!activeSociety) {
     return (
@@ -46,6 +95,12 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm">
           You are authenticated, but you are not mapped to any society. Contact your society administrator to be registered.
         </p>
+        <button
+          onClick={signOut}
+          className="mt-4 rounded-lg border border-slate-800 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-300"
+        >
+          Sign Out
+        </button>
       </div>
     );
   }

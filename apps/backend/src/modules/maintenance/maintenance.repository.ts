@@ -330,4 +330,128 @@ export class MaintenanceRepository extends TenantBaseRepository<typeof maintenan
 
     return newHeads[0];
   }
+
+  /**
+   * Statutory Transparency: Retrieves outstanding dues & pending payments by flat across the entire society.
+   * Open to all society members under cooperative housing society transparency compliance.
+   */
+  async getSocietyDuesTransparency() {
+    // 1. Fetch all flats in society
+    const societyFlats = await this.db
+      .select({
+        flatId: flats.id,
+        flatNumber: flats.number,
+        floorNumber: floors.number,
+        wingName: wings.name,
+        buildingName: buildings.name,
+        flatType: flats.flatType,
+        sqftArea: flats.sqftArea,
+      })
+      .from(flats)
+      .innerJoin(floors, eq(flats.floorId, floors.id))
+      .innerJoin(wings, eq(floors.wingId, wings.id))
+      .innerJoin(buildings, eq(wings.buildingId, buildings.id))
+      .where(eq(flats.societyId, this.activeTenantId));
+
+    if (societyFlats.length === 0) return [];
+
+    // 2. Fetch all unpaid/partial bills
+    const allBills = await this.db
+      .select({
+        id: maintenanceBills.id,
+        flatId: maintenanceBills.flatId,
+        billNumber: maintenanceBills.billNumber,
+        totalAmount: maintenanceBills.totalAmount,
+        status: maintenanceBills.status,
+        dueDate: maintenanceBills.dueDate,
+        billingPeriodStart: maintenanceBills.billingPeriodStart,
+        billingPeriodEnd: maintenanceBills.billingPeriodEnd,
+      })
+      .from(maintenanceBills)
+      .where(eq(maintenanceBills.societyId, this.activeTenantId));
+
+    // 3. Fetch all receipts
+    const allReceipts = await this.db
+      .select({
+        billId: receipts.billId,
+        amountPaid: receipts.amountPaid,
+        status: receipts.status,
+      })
+      .from(receipts)
+      .where(eq(receipts.status, 'CLEARED'));
+
+    const receiptMap = new Map<string, number>();
+    for (const r of allReceipts) {
+      if (r.billId) {
+        receiptMap.set(r.billId, (receiptMap.get(r.billId) || 0) + Number(r.amountPaid || 0));
+      }
+    }
+
+    // 4. Resolve owners for flat labeling
+    const flatOwnersList = await this.db
+      .select({
+        flatId: flatOwners.flatId,
+      })
+      .from(flatOwners)
+      .innerJoin(owners, eq(flatOwners.ownerId, owners.id))
+      .where(eq(flatOwners.isCurrent, true));
+
+    const occupiedFlatSet = new Set(flatOwnersList.map((f) => f.flatId));
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const result = [];
+
+    for (const flat of societyFlats) {
+      const flatBills = allBills.filter((b) => b.flatId === flat.flatId);
+      let totalPending = 0;
+      let unpaidCount = 0;
+      let oldestDueDate: string | null = null;
+      let isAnyOverdue = false;
+
+      for (const bill of flatBills) {
+        const paid = receiptMap.get(bill.id) || 0;
+        const total = Number(bill.totalAmount || 0);
+        const remaining = Math.max(0, total - paid);
+
+        if (remaining > 0 || bill.status === 'OVERDUE' || (bill.status !== 'PAID' && remaining > 0)) {
+          totalPending += remaining;
+          unpaidCount += 1;
+
+          if (bill.dueDate) {
+            const dueStr = String(bill.dueDate).substring(0, 10);
+            const dueD = new Date(dueStr);
+            if (!oldestDueDate || dueD < new Date(oldestDueDate)) {
+              oldestDueDate = dueStr;
+            }
+            if (dueD < today) {
+              isAnyOverdue = true;
+            }
+          }
+        }
+      }
+
+      if (totalPending > 0) {
+        result.push({
+          flatId: flat.flatId,
+          flatNumber: flat.flatNumber,
+          wingName: flat.wingName,
+          buildingName: flat.buildingName,
+          floorNumber: flat.floorNumber,
+          flatType: flat.flatType,
+          sqftArea: flat.sqftArea,
+          totalPendingAmount: totalPending.toFixed(2),
+          unpaidInvoicesCount: unpaidCount,
+          oldestDueDate,
+          status: isAnyOverdue ? 'OVERDUE' : 'PENDING',
+          occupancyStatus: occupiedFlatSet.has(flat.flatId) ? 'OCCUPIED' : 'VACANT',
+        });
+      }
+    }
+
+    // Sort by highest pending dues first
+    result.sort((a, b) => Number(b.totalPendingAmount) - Number(a.totalPendingAmount));
+    return result;
+  }
 }

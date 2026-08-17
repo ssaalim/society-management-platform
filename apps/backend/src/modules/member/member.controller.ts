@@ -98,9 +98,10 @@ export class MemberController {
     @Req() req: any,
     @Query('search') search?: string,
     @Query('memberType') memberType?: string,
+    @Query('committeeDesignation') committeeDesignation?: string,
     @Query('status') status?: string,
   ) {
-    const list = await this.memberService.findAll({ search, memberType, status }, req.user?.id);
+    const list = await this.memberService.findAll({ search, memberType, committeeDesignation, status }, req.user?.id);
     return {
       success: true,
       data: list,

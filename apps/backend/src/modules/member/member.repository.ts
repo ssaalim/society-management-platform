@@ -142,12 +142,20 @@ export class MemberRepository extends TenantBaseRepository<typeof members> {
   async searchMembers(filters: {
     search?: string;
     memberType?: string;
+    committeeDesignation?: string;
     status?: string;
   }) {
     const whereClauses = [eq(members.societyId, this.activeTenantId)];
 
     if (filters.memberType) {
       whereClauses.push(eq(members.memberType, filters.memberType));
+    }
+    if (filters.committeeDesignation) {
+      if (filters.committeeDesignation === 'NONE') {
+        whereClauses.push(or(eq(members.committeeDesignation, 'NONE'), eq(members.committeeDesignation, ''))!);
+      } else {
+        whereClauses.push(eq(members.committeeDesignation, filters.committeeDesignation));
+      }
     }
     if (filters.status) {
       whereClauses.push(eq(members.status, filters.status));
@@ -156,7 +164,9 @@ export class MemberRepository extends TenantBaseRepository<typeof members> {
       whereClauses.push(
         or(
           like(users.name, `%${filters.search}%`),
-          like(members.membershipNumber, `%${filters.search}%`)
+          like(members.membershipNumber, `%${filters.search}%`),
+          like(users.email, `%${filters.search}%`),
+          like(users.mobile, `%${filters.search}%`)
         )!
       );
     }
@@ -167,14 +177,18 @@ export class MemberRepository extends TenantBaseRepository<typeof members> {
         userId: members.userId,
         membershipNumber: members.membershipNumber,
         memberType: members.memberType,
+        committeeDesignation: members.committeeDesignation,
         status: members.status,
         name: users.name,
         email: users.email,
         mobile: users.mobile,
         photoUrl: members.photoUrl,
+        canLogin: members.canLogin,
+        createdAt: members.createdAt,
       })
       .from(members)
       .innerJoin(users, eq(members.userId, users.id))
-      .where(and(...whereClauses));
+      .where(and(...whereClauses))
+      .orderBy(members.membershipNumber);
   }
 }
