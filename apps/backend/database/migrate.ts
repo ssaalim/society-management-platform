@@ -21,11 +21,16 @@ async function main() {
   const migrationClient = postgres(dbUrl, { max: 1 });
   const db = drizzle(migrationClient);
 
-  console.log('Ensuring schema updates (can_login, password)...');
-  await migrationClient`ALTER TABLE members ADD COLUMN IF NOT EXISTS can_login BOOLEAN DEFAULT true NOT NULL;`;
-  await migrationClient`ALTER TABLE users ADD COLUMN IF NOT EXISTS password TEXT;`;
-  
   await migrate(db, { migrationsFolder: './database/migrations' });
+  console.log('Core Drizzle migrations applied.');
+
+  try {
+    console.log('Ensuring schema updates (can_login, password)...');
+    await migrationClient`ALTER TABLE members ADD COLUMN IF NOT EXISTS can_login BOOLEAN DEFAULT true NOT NULL;`;
+    await migrationClient`ALTER TABLE users ADD COLUMN IF NOT EXISTS password TEXT;`;
+  } catch (alterErr) {
+    console.warn('Notice during column ensure:', alterErr);
+  }
   
   await migrationClient.end();
   console.log('Migrations completed successfully!');
