@@ -10,8 +10,14 @@ const IS_DEV_AUTH = process.env.NEXT_PUBLIC_DEV_AUTH === 'true';
  * In DEV mode: uses x-dev-user-id header with the stored dev token.
  * In PROD mode: uses Supabase JWT Bearer token.
  */
+// Ensure baseURL always ends with /api/v1 regardless of whether trailing /api/v1 was included in env
+let apiBase = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1').trim().replace(/\/+$/, '');
+if (!apiBase.endsWith('/api/v1')) {
+  apiBase = `${apiBase}/api/v1`;
+}
+
 export const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1',
+  baseURL: apiBase,
   headers: {
     'Content-Type': 'application/json',
   },
