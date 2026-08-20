@@ -1576,29 +1576,30 @@ export default function MaintenanceDashboardPage() {
               {/* Dedicated Variable Detail Help Modal */}
               {selectedVarHelp && (
                 <div 
-                  className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-150"
+                  className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto animate-in fade-in duration-150"
                   onClick={() => setSelectedVarHelp(null)}
                 >
+                  <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm" />
                   <div 
-                    className="w-full max-w-lg rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-6 sm:p-7 space-y-5 animate-in zoom-in-95 duration-150"
+                    className="relative w-full max-w-lg max-h-[88dvh] sm:max-h-[90vh] bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col my-auto z-10 animate-in zoom-in-95 duration-150"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    {/* Header */}
-                    <div className="flex items-start justify-between gap-3 border-b border-slate-100 dark:border-slate-800/80 pb-4">
+                    {/* Pinned Header */}
+                    <div className="flex-shrink-0 flex items-start justify-between gap-3 px-4 py-3.5 sm:px-6 sm:py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/90">
                       <div className="flex items-center gap-3">
-                        <div className="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/60 text-indigo-600 dark:text-indigo-400">
+                        <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/60 text-indigo-600 dark:text-indigo-400">
                           <Calculator className="h-5 w-5" />
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <code className="text-sm font-mono font-extrabold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-800/60">
+                            <code className="text-xs font-mono font-extrabold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-800/60">
                               {selectedVarHelp.tag}
                             </code>
                             <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border uppercase ${selectedVarHelp.categoryColor}`}>
                               {selectedVarHelp.category}
                             </span>
                           </div>
-                          <h4 className="text-base font-bold text-slate-900 dark:text-slate-100 mt-1">
+                          <h4 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 mt-1">
                             {selectedVarHelp.name}
                           </h4>
                         </div>
@@ -1606,30 +1607,30 @@ export default function MaintenanceDashboardPage() {
                       <button
                         type="button"
                         onClick={() => setSelectedVarHelp(null)}
-                        className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                        className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
                       >
-                        <X className="h-4 w-4" />
+                        <X className="h-5 w-5" />
                       </button>
                     </div>
 
-                    {/* Description */}
-                    <div className="space-y-4 text-xs">
+                    {/* Scrollable Body */}
+                    <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 text-xs">
                       <div>
                         <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Description & Purpose</label>
-                        <p className="text-slate-800 dark:text-slate-200 mt-1 leading-relaxed bg-slate-50 dark:bg-slate-950/50 p-3 rounded-xl border border-slate-200 dark:border-slate-800/80">
+                        <p className="text-slate-800 dark:text-slate-200 mt-1 leading-relaxed bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
                           {selectedVarHelp.desc}
                         </p>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div className="bg-slate-50 dark:bg-slate-950/50 p-3 rounded-xl border border-slate-200 dark:border-slate-800/80 space-y-1">
+                        <div className="bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1">
                           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Database Source</span>
                           <p className="font-mono text-[11px] text-slate-900 dark:text-slate-100 font-semibold truncate" title={selectedVarHelp.source}>
                             {selectedVarHelp.source}
                           </p>
                         </div>
 
-                        <div className="bg-slate-50 dark:bg-slate-950/50 p-3 rounded-xl border border-slate-200 dark:border-slate-800/80 space-y-1">
+                        <div className="bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1">
                           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Preview Value (Sample)</span>
                           <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold">
                             {selectedVarHelp.sampleVal}
@@ -1639,7 +1640,7 @@ export default function MaintenanceDashboardPage() {
 
                       <div>
                         <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Example Algebraic Expression</label>
-                        <div className="flex items-center justify-between gap-2 mt-1 bg-slate-100 dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+                        <div className="flex items-center justify-between gap-2 mt-1 bg-slate-50 dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
                           <code className="text-xs font-mono font-bold text-indigo-600 dark:text-indigo-400">
                             {selectedVarHelp.example}
                           </code>
@@ -1649,7 +1650,7 @@ export default function MaintenanceDashboardPage() {
                               setFormulaString(selectedVarHelp.example);
                               setSelectedVarHelp(null);
                             }}
-                            className="text-[10px] font-bold px-2 py-1 rounded bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 border border-indigo-200 dark:border-indigo-800 transition"
+                            className="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/80 border border-indigo-200 dark:border-indigo-800 transition cursor-pointer shadow-xs"
                           >
                             Use Example
                           </button>
@@ -1657,12 +1658,12 @@ export default function MaintenanceDashboardPage() {
                       </div>
                     </div>
 
-                    {/* Actions */}
-                    <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
+                    {/* Pinned Footer */}
+                    <div className="flex-shrink-0 flex items-center justify-end gap-2.5 px-4 py-3 sm:px-6 sm:py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950">
                       <button
                         type="button"
                         onClick={() => setSelectedVarHelp(null)}
-                        className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                        className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer shadow-xs"
                       >
                         Close
                       </button>
@@ -1922,57 +1923,58 @@ export default function MaintenanceDashboardPage() {
         const isPartPayment = newRemainingBalance > 0;
 
         return (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto animate-in fade-in duration-150">
             {/* Backdrop */}
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedBillForPayment(null)} />
+            <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm" onClick={() => setSelectedBillForPayment(null)} />
 
             {/* Modal Panel */}
-            <div className="relative w-full max-w-lg bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+            <div className="relative w-full max-w-lg max-h-[88dvh] sm:max-h-[90vh] bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col my-auto z-10">
 
-              {/* Header */}
-              <div className="flex-shrink-0 flex items-center justify-between p-6 border-b border-slate-800 bg-slate-950/90 backdrop-blur-sm">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-emerald-600/20 border border-emerald-500/20">
-                    <Receipt className="h-5 w-5 text-emerald-400" />
+              {/* Pinned Header */}
+              <div className="flex-shrink-0 flex items-center justify-between px-4 py-3.5 sm:px-6 sm:py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/90">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-600/20 border border-emerald-100 dark:border-emerald-500/20">
+                    <Receipt className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-slate-100">Record Single / Part Payment</h3>
-                    <p className="text-[11px] text-slate-500">Invoice <span className="font-mono text-indigo-400 font-semibold">{selectedBillForPayment.billNumber}</span> for <span className="font-bold text-slate-200">Flat {selectedBillForPayment.flatNumber}</span></p>
+                    <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">Record Single / Part Payment</h3>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">Invoice <span className="font-mono text-indigo-600 dark:text-indigo-400 font-semibold">{selectedBillForPayment.billNumber}</span> for <span className="font-bold text-slate-700 dark:text-slate-200">Flat {selectedBillForPayment.flatNumber}</span></p>
                   </div>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setSelectedBillForPayment(null)}
-                  className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-500 hover:text-slate-300 transition-all"
+                  className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition cursor-pointer"
                 >
                   <X className="h-5 w-5" />
                 </button>
               </div>
 
-              {/* Body */}
-              <div className="p-6 overflow-y-auto space-y-5">
+              {/* Scrollable Body */}
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
 
                 {/* Outstanding & Part Payment Summary Box */}
-                <div className="modal-summary-box bg-slate-950/70 border border-slate-800 p-4 rounded-xl space-y-3">
+                <div className="modal-summary-box bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 p-4 rounded-xl space-y-3">
                   <div className="grid grid-cols-3 gap-2 text-center text-xs">
                     <div>
                       <span className="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-semibold">Total Due (Bill)</span>
-                      <span className="block font-bold text-slate-200 mt-0.5">₹ {billAmount.toLocaleString('en-IN')}</span>
+                      <span className="block font-bold text-slate-800 dark:text-slate-200 mt-0.5">₹ {billAmount.toLocaleString('en-IN')}</span>
                     </div>
                     <div>
                       <span className="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-semibold">Paid So Far</span>
-                      <span className="block font-bold text-emerald-400 mt-0.5">₹ {totalPaidSoFar.toLocaleString('en-IN')}</span>
+                      <span className="block font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">₹ {totalPaidSoFar.toLocaleString('en-IN')}</span>
                     </div>
                     <div>
                       <span className="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-semibold">Balance Due</span>
-                      <span className="block font-black text-amber-400 mt-0.5">₹ {curRemainingBalance.toLocaleString('en-IN')}</span>
+                      <span className="block font-black text-amber-600 dark:text-amber-400 mt-0.5">₹ {curRemainingBalance.toLocaleString('en-IN')}</span>
                     </div>
                   </div>
 
                   {/* Visual Progress Bar */}
-                  <div className="space-y-1 pt-1 border-t border-slate-800/60">
+                  <div className="space-y-1 pt-1 border-t border-slate-200 dark:border-slate-800/60">
                     <div className="flex justify-between text-[11px] font-medium text-slate-500 dark:text-slate-400">
                       <span>Payment Progress</span>
-                      <span className="text-emerald-400 font-bold">{paidPercentage}% Paid ({`₹ ${totalPaidSoFar.toLocaleString('en-IN')} / ₹ ${billAmount.toLocaleString('en-IN')}`})</span>
+                      <span className="text-emerald-600 dark:text-emerald-400 font-bold">{paidPercentage}% Paid ({`₹ ${totalPaidSoFar.toLocaleString('en-IN')} / ₹ ${billAmount.toLocaleString('en-IN')}`})</span>
                     </div>
                     <div className="w-full bg-slate-200 dark:bg-slate-950 h-2 rounded-full overflow-hidden border border-slate-300 dark:border-slate-800 flex">
                       <div
@@ -1984,15 +1986,15 @@ export default function MaintenanceDashboardPage() {
                 </div>
 
                 {/* Past Payment Details Section */}
-                <div className="modal-history-box bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 p-4 rounded-xl space-y-2.5">
+                <div className="modal-history-box bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 p-4 rounded-xl space-y-2.5">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-xs font-bold text-indigo-300 uppercase tracking-wider">
-                      <History className="h-4 w-4 text-indigo-500 dark:text-indigo-400" /> Past Payment Details
+                    <div className="flex items-center gap-2 text-xs font-bold text-indigo-700 dark:text-indigo-300 uppercase tracking-wider">
+                      <History className="h-4 w-4 text-indigo-600 dark:text-indigo-400" /> Past Payment Details
                     </div>
                     {selectedBillForPayment.lastPayment && (
                       <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full border uppercase tracking-wider ${selectedBillForPayment.lastPayment.paymentType === 'FULL'
-                          ? 'bg-emerald-100 dark:bg-emerald-950/50 border-emerald-800 text-emerald-700 dark:text-emerald-400'
-                          : 'bg-amber-100 dark:bg-amber-950/50 border-amber-800 text-amber-700 dark:text-amber-400'
+                          ? 'bg-emerald-100 dark:bg-emerald-950/50 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400'
+                          : 'bg-amber-100 dark:bg-amber-950/50 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400'
                         }`}>
                         {selectedBillForPayment.lastPayment.paymentType === 'FULL' ? 'FULL PAYMENT' : 'PART PAYMENT'}
                       </span>
@@ -2000,39 +2002,39 @@ export default function MaintenanceDashboardPage() {
                   </div>
 
                   {selectedBillForPayment.lastPayment ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs border-t border-indigo-900/40 pt-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs border-t border-indigo-100 dark:border-indigo-900/40 pt-2">
                       <div>
                         <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Invoice Total Billed</span>
-                        <span className="font-mono font-bold text-slate-200">₹ {billAmount.toLocaleString('en-IN')}</span>
+                        <span className="font-mono font-bold text-slate-800 dark:text-slate-200">₹ {billAmount.toLocaleString('en-IN')}</span>
                       </div>
 
                       <div>
                         <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Receipt Amount Paid</span>
-                        <span className="font-black text-emerald-400">
-                          ₹ {Number(selectedBillForPayment.lastPayment.amountPaid).toLocaleString('en-IN')} <span className="text-[10px] text-slate-500 dark:text-slate-400 font-normal">(out of ₹ {billAmount.toLocaleString('en-IN')} Total Due)</span>
+                        <span className="font-black text-emerald-600 dark:text-emerald-400">
+                          ₹ {Number(selectedBillForPayment.lastPayment.amountPaid).toLocaleString('en-IN')} <span className="text-[10px] text-slate-500 dark:text-slate-400 font-normal">(out of ₹ {billAmount.toLocaleString('en-IN')} Total)</span>
                         </span>
                       </div>
 
                       <div>
                         <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Receipt Number</span>
-                        <span className="font-mono font-semibold text-slate-200">{selectedBillForPayment.lastPayment.receiptNumber}</span>
+                        <span className="font-mono font-semibold text-slate-700 dark:text-slate-200">{selectedBillForPayment.lastPayment.receiptNumber}</span>
                       </div>
 
                       <div>
                         <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Billing Period / Month</span>
-                        <span className="font-semibold text-indigo-300">{selectedBillForPayment.lastPayment.monthYear || 'Jul 2026'}</span>
+                        <span className="font-semibold text-indigo-600 dark:text-indigo-300">{selectedBillForPayment.lastPayment.monthYear || 'Jul 2026'}</span>
                       </div>
 
                       <div>
                         <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Payment Mode & Ref</span>
-                        <span className="font-semibold text-slate-300">
+                        <span className="font-semibold text-slate-700 dark:text-slate-300">
                           {selectedBillForPayment.lastPayment.paymentMode} <span className="font-mono text-[10px] text-slate-500 dark:text-slate-400">({selectedBillForPayment.lastPayment.referenceNumber || 'No Ref'})</span>
                         </span>
                       </div>
 
                       <div>
                         <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Payment Date</span>
-                        <span className="font-semibold text-slate-300">{selectedBillForPayment.lastPayment.paymentDate}</span>
+                        <span className="font-semibold text-slate-700 dark:text-slate-300">{selectedBillForPayment.lastPayment.paymentDate}</span>
                       </div>
                     </div>
                   ) : (
@@ -2040,26 +2042,26 @@ export default function MaintenanceDashboardPage() {
                   )}
                 </div>
 
-                <form id="single-payment-form" onSubmit={handleSinglePaymentSubmit} className="space-y-4">
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <form id="single-payment-form" onSubmit={handleSinglePaymentSubmit} className="space-y-4 text-xs">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div>
-                      <label className="text-xs text-slate-600 dark:text-slate-400 font-medium">Amount Received (₹)</label>
+                      <label className="text-xs text-slate-700 dark:text-slate-300 font-semibold">Amount Received (₹) *</label>
                       <input
                         type="number"
                         step="0.01"
                         value={paymentAmount}
                         onChange={(e) => setPaymentAmount(Number(e.target.value))}
-                        className="w-full rounded-lg border border-slate-300 dark:border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-900 dark:text-slate-200 focus:border-slate-700 focus:outline-none mt-1 font-bold"
+                        className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm font-mono text-slate-900 dark:text-slate-100 font-bold focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none mt-1 transition shadow-xs"
                         required
                       />
                     </div>
 
                     <div>
-                      <label className="text-xs text-slate-600 dark:text-slate-400 font-medium">Payment Mode</label>
+                      <label className="text-xs text-slate-700 dark:text-slate-300 font-semibold">Payment Mode</label>
                       <select
                         value={paymentMode}
                         onChange={(e) => setPaymentMode(e.target.value)}
-                        className="w-full rounded-lg border border-slate-300 dark:border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-900 dark:text-slate-300 focus:border-slate-700 focus:outline-none appearance-none mt-1"
+                        className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none mt-1 transition shadow-xs"
                       >
                         <option value="UPI">UPI (GPay / PhonePe / Paytm)</option>
                         <option value="NEFT">NEFT / RTGS (Account Transfer)</option>
@@ -2071,36 +2073,35 @@ export default function MaintenanceDashboardPage() {
                   </div>
 
                   {/* Live Part Payment Impact Preview Box */}
-                  <div className="bg-indigo-950/20 border border-indigo-200 dark:border-indigo-800/50 p-3 rounded-lg space-y-1.5 text-xs shadow-sm">
+                  <div className="bg-indigo-50/70 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-800/50 p-3.5 rounded-xl space-y-1.5 text-xs shadow-xs">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs text-indigo-800 dark:text-indigo-300 font-bold uppercase tracking-wide">Payment Impact Preview</span>
+                      <span className="text-xs text-indigo-900 dark:text-indigo-300 font-bold uppercase tracking-wide">Payment Impact Preview</span>
                       <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border uppercase tracking-wider ${isPartPayment
-                          ? 'bg-amber-100 dark:bg-amber-950/60 border-amber-800/80 text-amber-700 dark:text-amber-400'
-                          : 'bg-emerald-100 dark:bg-emerald-950/60 border-emerald-800/80 text-emerald-700 dark:text-emerald-400'
+                          ? 'bg-amber-100 dark:bg-amber-950/60 border-amber-300 dark:border-amber-800/80 text-amber-700 dark:text-amber-400'
+                          : 'bg-emerald-100 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-800/80 text-emerald-700 dark:text-emerald-400'
                         }`}>
                         {isPartPayment ? 'PARTIAL PAYMENT' : 'FULL PAYMENT'}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between text-slate-200 text-xs mt-2">
+                    <div className="flex items-center justify-between text-slate-700 dark:text-slate-200 text-xs mt-2">
                       <span className="font-medium">Total Paid out of Due:</span>
-                      <span className="font-bold text-emerald-400">
+                      <span className="font-bold text-emerald-600 dark:text-emerald-400">
                         ₹ {newTotalPaid.toLocaleString('en-IN')} <span className="text-[10px] text-slate-500 font-normal">out of ₹ {billAmount.toLocaleString('en-IN')} Total</span>
                       </span>
                     </div>
-                    <div className="flex items-center justify-between text-slate-200 text-xs">
+                    <div className="flex items-center justify-between text-slate-700 dark:text-slate-200 text-xs">
                       <span className="font-medium">Remaining Balance Due:</span>
-                      <span className="font-black text-amber-400 text-sm">₹ {newRemainingBalance.toLocaleString('en-IN')}</span>
+                      <span className="font-black text-amber-600 dark:text-amber-400 text-sm">₹ {newRemainingBalance.toLocaleString('en-IN')}</span>
                     </div>
                   </div>
 
-
                   {paymentMode !== 'CASH' && bankAccounts.length > 0 && (
                     <div>
-                      <label className="text-xs text-slate-600 dark:text-slate-400 font-medium">Deposit Bank Account</label>
+                      <label className="text-xs text-slate-700 dark:text-slate-300 font-semibold">Deposit Bank Account</label>
                       <select
                         value={depositAccountId}
                         onChange={(e) => setDepositAccountId(e.target.value)}
-                        className="w-full rounded-lg border border-slate-300 dark:border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-900 dark:text-slate-300 focus:border-slate-700 focus:outline-none appearance-none mt-1"
+                        className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none mt-1 transition shadow-xs"
                       >
                         {bankAccounts.map((acc) => (
                           <option key={acc.id} value={acc.id}>
@@ -2112,48 +2113,48 @@ export default function MaintenanceDashboardPage() {
                   )}
 
                   <div>
-                    <label className="text-xs text-slate-600 dark:text-slate-400 font-medium">
-                      Reference / Transaction Details <span className="text-slate-500 font-normal">({paymentMode})</span>
+                    <label className="text-xs text-slate-700 dark:text-slate-300 font-semibold">
+                      Reference / Transaction Details <span className="text-slate-400 font-normal">({paymentMode})</span>
                     </label>
                     <input
                       type="text"
                       placeholder={getReferencePlaceholder(paymentMode)}
                       value={transactionRef}
                       onChange={(e) => setTransactionRef(e.target.value)}
-                      className="w-full rounded-lg border border-slate-300 dark:border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-900 dark:text-slate-200 placeholder-slate-600 focus:border-slate-700 focus:outline-none mt-1 font-mono"
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none mt-1 font-mono transition shadow-xs"
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs text-slate-600 dark:text-slate-400 font-medium">Payment Date</label>
+                    <label className="text-xs text-slate-700 dark:text-slate-300 font-semibold">Payment Date *</label>
                     <input
                       type="date"
                       value={paymentDate}
                       onChange={(e) => setPaymentDate(e.target.value)}
-                      className="w-full rounded-lg border border-slate-300 dark:border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-900 dark:text-slate-200 focus:border-slate-700 focus:outline-none mt-1"
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none mt-1 transition shadow-xs"
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs text-slate-600 dark:text-slate-400 font-medium">Remark / Notes (Optional)</label>
+                    <label className="text-xs text-slate-700 dark:text-slate-300 font-semibold">Remark / Notes (Optional)</label>
                     <textarea
                       rows={2}
                       value={userRemark}
                       onChange={(e) => setUserRemark(e.target.value)}
                       placeholder="E.g. Resubmitting after rejection..."
-                      className="w-full rounded-lg border border-slate-300 dark:border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-900 dark:text-slate-200 focus:border-slate-700 focus:outline-none mt-1"
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none mt-1 transition shadow-xs"
                     ></textarea>
                   </div>
                 </form>
               </div>
 
-              {/* Footer */}
-              <div className="p-6 border-t border-slate-800 bg-slate-950 flex justify-end gap-2">
+              {/* Pinned Footer */}
+              <div className="flex-shrink-0 flex items-center justify-end gap-2.5 px-4 py-3 sm:px-6 sm:py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950">
                 <button
                   type="button"
                   onClick={() => setSelectedBillForPayment(null)}
-                  className="rounded-lg border border-slate-800 bg-slate-950/60 py-2 px-4 text-xs font-semibold text-slate-500 hover:bg-slate-900 transition-all shadow-sm"
+                  className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-2 px-4 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all shadow-xs cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -2161,7 +2162,7 @@ export default function MaintenanceDashboardPage() {
                   type="submit"
                   form="single-payment-form"
                   disabled={isProcessing}
-                  className="rounded-lg bg-emerald-600 hover:bg-emerald-500 text-slate-100 py-2 px-6 text-xs font-semibold disabled:opacity-55 transition-all flex items-center gap-2 shadow-lg shadow-emerald-600/20"
+                  className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white py-2 px-5 text-xs font-bold disabled:opacity-55 transition-all flex items-center gap-2 shadow-xs cursor-pointer active:scale-95"
                 >
                   {isProcessing ? <><Loader2 className="h-4 w-4 animate-spin" /> Processing...</> : 'Confirm & Post Receipt'}
                 </button>
@@ -2173,46 +2174,47 @@ export default function MaintenanceDashboardPage() {
 
       {/* Multi-Invoice Bulk Payment Recording Modal Dialog */}
       {isBulkPaymentModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto animate-in fade-in duration-150">
           {/* Backdrop */}
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsBulkPaymentModalOpen(false)} />
+          <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm" onClick={() => setIsBulkPaymentModalOpen(false)} />
 
           {/* Modal Panel */}
-          <div className="relative w-full max-w-lg bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+          <div className="relative w-full max-w-lg max-h-[88dvh] sm:max-h-[90vh] bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col my-auto z-10">
 
-            {/* Header */}
-            <div className="flex-shrink-0 flex items-center justify-between p-6 border-b border-slate-800 bg-slate-950/90 backdrop-blur-sm">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-indigo-600/20 border border-indigo-500/20">
-                  <Receipt className="h-5 w-5 text-indigo-400" />
+            {/* Pinned Header */}
+            <div className="flex-shrink-0 flex items-center justify-between px-4 py-3.5 sm:px-6 sm:py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/90">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-600/20 border border-indigo-100 dark:border-indigo-500/20">
+                  <Receipt className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-slate-100">Multi-Invoice Lump-Sum Payment</h3>
-                  <p className="text-[11px] text-slate-500">Log a single lump-sum payment received across <span className="font-bold text-indigo-300">{selectedBillsData.length} selected invoices</span>.</p>
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">Multi-Invoice Lump-Sum Payment</h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Log lump-sum payment across <span className="font-bold text-indigo-600 dark:text-indigo-300">{selectedBillsData.length} selected invoices</span></p>
                 </div>
               </div>
               <button
+                type="button"
                 onClick={() => setIsBulkPaymentModalOpen(false)}
-                className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-500 hover:text-slate-300 transition-all"
+                className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            {/* Body */}
-            <div className="p-6 overflow-y-auto space-y-5">
+            {/* Scrollable Body */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
 
               {/* Selected Invoices Breakdown */}
-              <div className="modal-summary-box bg-slate-950/60 border border-slate-800 p-3.5 rounded-xl space-y-2 max-h-40 overflow-y-auto">
+              <div className="modal-summary-box bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 p-3.5 rounded-xl space-y-2 max-h-40 overflow-y-auto">
                 <span className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 tracking-wider">Selected Invoices</span>
-                <div className="space-y-1 divide-y divide-slate-800/40">
+                <div className="space-y-1 divide-y divide-slate-200 dark:divide-slate-800/40">
                   {selectedBillsData.map((b) => (
                     <div key={b.id} className="pt-1 flex items-center justify-between text-xs">
                       <div>
-                        <span className="font-bold text-slate-200">Flat {b.flatNumber}</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-200">Flat {b.flatNumber}</span>
                         <span className="text-[10px] text-slate-500 font-mono ml-2">({b.billNumber})</span>
                       </div>
-                      <span className="font-bold text-amber-400">
+                      <span className="font-bold text-amber-600 dark:text-amber-400 font-mono">
                         ₹ {Number(b.remainingBalance || b.amount).toLocaleString('en-IN')}
                       </span>
                     </div>
@@ -2220,32 +2222,31 @@ export default function MaintenanceDashboardPage() {
                 </div>
               </div>
 
-              <div className="modal-history-box bg-indigo-950/40 border border-indigo-900/60 p-3 rounded-lg flex items-center justify-between text-xs">
-                <span className="text-slate-300 font-medium">Combined Due Amount</span>
-                <span className="text-base font-black text-white">₹ {totalSelectedDue.toLocaleString('en-IN')}</span>
+              <div className="modal-history-box bg-indigo-50/60 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/60 p-3.5 rounded-xl flex items-center justify-between text-xs">
+                <span className="text-slate-700 dark:text-slate-300 font-semibold">Combined Due Amount</span>
+                <span className="text-base font-black text-indigo-700 dark:text-white font-mono">₹ {totalSelectedDue.toLocaleString('en-IN')}</span>
               </div>
 
-
-              <form id="bulk-payment-form" onSubmit={handleBulkPaymentSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <form id="bulk-payment-form" onSubmit={handleBulkPaymentSubmit} className="space-y-4 text-xs">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div>
-                    <label className="text-xs text-slate-500 dark:text-slate-400 font-medium">Total Lump-Sum Amount Received (₹)</label>
+                    <label className="text-xs text-slate-700 dark:text-slate-300 font-semibold">Total Lump-Sum Amount Received (₹) *</label>
                     <input
                       type="number"
                       step="0.01"
                       value={bulkPaymentAmount}
                       onChange={(e) => setBulkPaymentAmount(Number(e.target.value))}
-                      className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-slate-700 focus:outline-none mt-1 font-bold"
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm font-mono text-slate-900 dark:text-slate-100 font-bold focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none mt-1 transition shadow-xs"
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs text-slate-500 dark:text-slate-400 font-medium">Payment Mode</label>
+                    <label className="text-xs text-slate-700 dark:text-slate-300 font-semibold">Payment Mode</label>
                     <select
                       value={bulkPaymentMode}
                       onChange={(e) => setBulkPaymentMode(e.target.value)}
-                      className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-300 focus:border-slate-700 focus:outline-none appearance-none mt-1"
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none mt-1 transition shadow-xs"
                     >
                       <option value="UPI">UPI (GPay / PhonePe / Paytm)</option>
                       <option value="NEFT">NEFT / RTGS (Account Transfer)</option>
@@ -2258,11 +2259,11 @@ export default function MaintenanceDashboardPage() {
 
                 {bulkPaymentMode !== 'CASH' && bankAccounts.length > 0 && (
                   <div>
-                    <label className="text-xs text-slate-500 dark:text-slate-400 font-medium">Deposit Bank Account</label>
+                    <label className="text-xs text-slate-700 dark:text-slate-300 font-semibold">Deposit Bank Account</label>
                     <select
                       value={bulkDepositAccountId}
                       onChange={(e) => setBulkDepositAccountId(e.target.value)}
-                      className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-300 focus:border-slate-700 focus:outline-none appearance-none mt-1"
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none mt-1 transition shadow-xs"
                     >
                       {bankAccounts.map((acc) => (
                         <option key={acc.id} value={acc.id}>
@@ -2274,48 +2275,48 @@ export default function MaintenanceDashboardPage() {
                 )}
 
                 <div>
-                  <label className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                    Reference / Transaction Details <span className="text-slate-500 font-normal">({bulkPaymentMode})</span>
+                  <label className="text-xs text-slate-700 dark:text-slate-300 font-semibold">
+                    Reference / Transaction Details <span className="text-slate-400 font-normal">({bulkPaymentMode})</span>
                   </label>
                   <input
                     type="text"
                     placeholder={getReferencePlaceholder(bulkPaymentMode)}
                     value={bulkTransactionRef}
                     onChange={(e) => setBulkTransactionRef(e.target.value)}
-                    className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-200 placeholder-slate-600 focus:border-slate-700 focus:outline-none mt-1 font-mono"
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none mt-1 font-mono transition shadow-xs"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs text-slate-500 dark:text-slate-400 font-medium">Payment Date</label>
+                  <label className="text-xs text-slate-700 dark:text-slate-300 font-semibold">Payment Date *</label>
                   <input
                     type="date"
                     value={bulkPaymentDate}
                     onChange={(e) => setBulkPaymentDate(e.target.value)}
-                    className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-slate-700 focus:outline-none mt-1"
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none mt-1 transition shadow-xs"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs text-slate-500 dark:text-slate-400 font-medium">Remark / Notes (Optional)</label>
+                  <label className="text-xs text-slate-700 dark:text-slate-300 font-semibold">Remark / Notes (Optional)</label>
                   <textarea
                     rows={2}
                     value={bulkUserRemark}
                     onChange={(e) => setBulkUserRemark(e.target.value)}
                     placeholder="E.g. Bulk payment for previous months..."
-                    className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-slate-700 focus:outline-none mt-1"
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none mt-1 transition shadow-xs"
                   ></textarea>
                 </div>
               </form>
             </div>
 
-            {/* Footer */}
-            <div className="p-6 border-t border-slate-800 bg-slate-950 flex justify-end gap-2">
+            {/* Pinned Footer */}
+            <div className="flex-shrink-0 flex items-center justify-end gap-2.5 px-4 py-3 sm:px-6 sm:py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950">
               <button
                 type="button"
                 onClick={() => setIsBulkPaymentModalOpen(false)}
-                className="rounded-lg border border-slate-800 bg-slate-950/60 py-2 px-4 text-xs font-semibold text-slate-500 hover:bg-slate-900 transition-all shadow-sm"
+                className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-2 px-4 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all shadow-xs cursor-pointer"
               >
                 Cancel
               </button>
@@ -2323,7 +2324,7 @@ export default function MaintenanceDashboardPage() {
                 type="submit"
                 form="bulk-payment-form"
                 disabled={isProcessing}
-                className="rounded-lg bg-indigo-600 hover:bg-indigo-500 text-slate-100 py-2 px-6 text-xs font-semibold disabled:opacity-55 transition-all flex items-center gap-2 shadow-lg shadow-indigo-600/20"
+                className="rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-5 text-xs font-bold disabled:opacity-55 transition-all flex items-center gap-2 shadow-xs cursor-pointer active:scale-95"
               >
                 {isProcessing ? <><Loader2 className="h-4 w-4 animate-spin" /> Processing...</> : 'Confirm & Post Bulk Receipts'}
               </button>

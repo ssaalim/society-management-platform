@@ -744,73 +744,76 @@ export const Navbar: React.FC<AppLayoutProps> = ({ children }) => {
 
                   {/* Notification Popover Drawer */}
                   {isNotifOpen && (
-                    <div className="notif-popover absolute right-0 mt-2 w-[calc(100vw-1.5rem)] sm:w-96 max-w-sm rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-2xl p-4 z-50 space-y-3 animate-in fade-in slide-in-from-top-2 duration-150">
-                      <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
-                        <div className="flex items-center gap-2">
-                          <Bell className="h-4 w-4 text-indigo-400" />
-                          <span className="font-bold text-sm text-slate-900 dark:text-slate-100">Notifications</span>
-                          {unreadCount > 0 && (
-                            <span className="bg-red-500/20 border border-red-500/30 text-red-400 text-[10px] font-bold px-1.5 py-0.2 rounded-full">
-                              {unreadCount} new
-                            </span>
-                          )}
-                        </div>
+                    <>
+                      <div className="fixed inset-0 z-40 bg-black/10 dark:bg-black/40 sm:bg-transparent" onClick={() => setIsNotifOpen(false)} />
+                      <div className="notif-popover fixed sm:absolute top-16 sm:top-auto sm:mt-2 right-2 sm:right-0 w-[calc(100vw-1rem)] sm:w-96 max-w-sm rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-2xl p-4 z-50 space-y-3 animate-in fade-in slide-in-from-top-2 duration-150">
+                        <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
+                          <div className="flex items-center gap-2">
+                            <Bell className="h-4 w-4 text-indigo-400" />
+                            <span className="font-bold text-sm text-slate-900 dark:text-slate-100">Notifications</span>
+                            {unreadCount > 0 && (
+                              <span className="bg-red-500/20 border border-red-500/30 text-red-400 text-[10px] font-bold px-1.5 py-0.2 rounded-full">
+                                {unreadCount} new
+                              </span>
+                            )}
+                          </div>
 
-                        <div className="flex items-center gap-1">
-                          {isManagementRole && (
+                          <div className="flex items-center gap-1">
+                            {isManagementRole && (
+                              <button
+                                onClick={handleRunSweep}
+                                disabled={isSweeping}
+                                title="Run Dues Reminder Sweep"
+                                className="p-1 rounded text-slate-400 hover:text-indigo-400 transition-colors"
+                              >
+                                <RefreshCw className={`h-3.5 w-3.5 ${isSweeping ? 'animate-spin' : ''}`} />
+                              </button>
+                            )}
                             <button
-                              onClick={handleRunSweep}
-                              disabled={isSweeping}
-                              title="Run Dues Reminder Sweep"
-                              className="p-1 rounded text-slate-400 hover:text-indigo-400 transition-colors"
+                              onClick={handleMarkAllRead}
+                              title="Mark all as read"
+                              className="p-1 rounded text-slate-400 hover:text-emerald-400 transition-colors"
                             >
-                              <RefreshCw className={`h-3.5 w-3.5 ${isSweeping ? 'animate-spin' : ''}`} />
+                              <CheckCheck className="h-3.5 w-3.5" />
                             </button>
+                          </div>
+                        </div>
+
+                        <div className="max-h-72 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                          {notifications.length === 0 ? (
+                            <p className="text-xs text-slate-500 dark:text-slate-400 text-center py-6">No notifications</p>
+                          ) : (
+                            notifications.map((n) => (
+                              <div
+                                key={n.id}
+                                className={`p-3 rounded-xl border text-xs space-y-1 transition-all flex items-start justify-between gap-2 ${
+                                  n.status === 'READ'
+                                    ? 'border-slate-200 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-900/30 text-slate-400'
+                                    : 'border-indigo-500/30 bg-indigo-50/40 dark:bg-indigo-950/20 text-slate-800 dark:text-slate-200'
+                                }`}
+                              >
+                                <div>
+                                  <p className="font-semibold text-slate-900 dark:text-slate-100">{n.title}</p>
+                                  <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">{n.body}</p>
+                                  <span className="notif-time text-[9px] text-slate-400 mt-1 block">
+                                    {n.createdAt ? new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                                  </span>
+                                </div>
+                                {n.status !== 'READ' && (
+                                  <button
+                                    onClick={() => handleMarkAsRead(n.id)}
+                                    title="Mark read"
+                                    className="text-slate-400 hover:text-emerald-500 p-1 shrink-0"
+                                  >
+                                    <Check className="h-3.5 w-3.5" />
+                                  </button>
+                                )}
+                              </div>
+                            ))
                           )}
-                          <button
-                            onClick={handleMarkAllRead}
-                            title="Mark all as read"
-                            className="p-1 rounded text-slate-400 hover:text-emerald-400 transition-colors"
-                          >
-                            <CheckCheck className="h-3.5 w-3.5" />
-                          </button>
                         </div>
                       </div>
-
-                      <div className="max-h-72 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
-                        {notifications.length === 0 ? (
-                          <p className="text-xs text-slate-500 dark:text-slate-400 text-center py-6">No notifications</p>
-                        ) : (
-                          notifications.map((n) => (
-                            <div
-                              key={n.id}
-                              className={`p-3 rounded-xl border text-xs space-y-1 transition-all flex items-start justify-between gap-2 ${
-                                n.status === 'READ'
-                                  ? 'border-slate-200 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-900/30 text-slate-400'
-                                  : 'border-indigo-500/30 bg-indigo-50/40 dark:bg-indigo-950/20 text-slate-800 dark:text-slate-200'
-                              }`}
-                            >
-                              <div>
-                                <p className="font-semibold text-slate-900 dark:text-slate-100">{n.title}</p>
-                                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">{n.body}</p>
-                                <span className="notif-time text-[9px] text-slate-400 mt-1 block">
-                                  {n.createdAt ? new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
-                                </span>
-                              </div>
-                              {n.status !== 'READ' && (
-                                <button
-                                  onClick={() => handleMarkAsRead(n.id)}
-                                  title="Mark read"
-                                  className="text-slate-400 hover:text-emerald-500 p-1 shrink-0"
-                                >
-                                  <Check className="h-3.5 w-3.5" />
-                                </button>
-                              )}
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    </div>
+                    </>
                   )}
                 </div>
               )}
@@ -820,7 +823,7 @@ export const Navbar: React.FC<AppLayoutProps> = ({ children }) => {
                 <div className="relative" ref={userMenuRef}>
                   <button
                     onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-                    className="flex items-center gap-2 p-1.5 sm:px-3 sm:py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-left group focus:outline-none"
+                    className="flex items-center gap-2 p-1.5 sm:px-3 sm:py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-left group focus:outline-none cursor-pointer"
                   >
                     {/* Avatar Badge */}
                     <div className="h-7 w-7 rounded-lg bg-indigo-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-sm">
@@ -842,64 +845,67 @@ export const Navbar: React.FC<AppLayoutProps> = ({ children }) => {
 
                   {/* Profile Submenu Dropdown */}
                   {isProfileMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-64 max-w-[280px] rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-2xl p-2 z-50 space-y-1 animate-in fade-in slide-in-from-top-2 duration-150">
-                      
-                      {/* User Profile Header Card */}
-                      <div className="px-3 py-2.5 bg-slate-50 dark:bg-slate-900/70 border border-slate-100 dark:border-slate-800/80 rounded-xl mb-1 space-y-1">
-                        <div className="flex items-center gap-2.5">
-                          <div className="h-8 w-8 rounded-lg bg-indigo-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
-                            {displayInitial}
+                    <>
+                      <div className="fixed inset-0 z-40 bg-black/10 dark:bg-black/40 sm:bg-transparent" onClick={() => setIsProfileMenuOpen(false)} />
+                      <div className="fixed sm:absolute top-16 sm:top-auto sm:mt-2 right-2 sm:right-0 w-[calc(100vw-1rem)] sm:w-64 max-w-[270px] rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-2xl p-2 z-50 space-y-1 animate-in fade-in slide-in-from-top-2 duration-150">
+                        
+                        {/* User Profile Header Card */}
+                        <div className="px-3 py-2.5 bg-slate-50 dark:bg-slate-900/70 border border-slate-100 dark:border-slate-800/80 rounded-xl mb-1 space-y-1">
+                          <div className="flex items-center gap-2.5">
+                            <div className="h-8 w-8 rounded-lg bg-indigo-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                              {displayInitial}
+                            </div>
+                            <div className="overflow-hidden">
+                              <p className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">{displayName}</p>
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{user.email}</p>
+                            </div>
                           </div>
-                          <div className="overflow-hidden">
-                            <p className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">{displayName}</p>
-                            <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{user.email}</p>
+                          <div className="pt-1 flex items-center gap-1.5">
+                            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 uppercase">
+                              {userRole.replace('_', ' ') || 'Resident'}
+                            </span>
                           </div>
                         </div>
-                        <div className="pt-1 flex items-center gap-1.5">
-                          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 uppercase">
-                            {userRole.replace('_', ' ') || 'Resident'}
-                          </span>
-                        </div>
+
+                        {/* Option 1: Profile Option */}
+                        <button
+                          onClick={() => {
+                            setIsProfileMenuOpen(false);
+                            setIsProfileModalOpen(true);
+                          }}
+                          className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-300 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg transition-colors text-left cursor-pointer"
+                        >
+                          <UserIcon className="h-4 w-4 text-indigo-400" />
+                          <span>My Profile</span>
+                        </button>
+
+                        {/* Option 2: Change Password Option */}
+                        <button
+                          onClick={() => {
+                            setIsProfileMenuOpen(false);
+                            setIsPasswordModalOpen(true);
+                          }}
+                          className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-300 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg transition-colors text-left cursor-pointer"
+                        >
+                          <Key className="h-4 w-4 text-amber-400" />
+                          <span>Change Password</span>
+                        </button>
+
+                        <div className="border-t border-slate-100 dark:border-slate-800 my-1" />
+
+                        {/* Option 3: Logout Button */}
+                        <button
+                          onClick={() => {
+                            setIsProfileMenuOpen(false);
+                            signOut();
+                          }}
+                          className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors text-left cursor-pointer"
+                        >
+                          <LogOut className="h-4 w-4 text-red-500" />
+                          <span>Sign Out / Log Out</span>
+                        </button>
                       </div>
-
-                      {/* Option 1: Profile Option */}
-                      <button
-                        onClick={() => {
-                          setIsProfileMenuOpen(false);
-                          setIsProfileModalOpen(true);
-                        }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-300 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg transition-colors text-left"
-                      >
-                        <UserIcon className="h-4 w-4 text-indigo-400" />
-                        <span>My Profile</span>
-                      </button>
-
-                      {/* Option 2: Change Password Option */}
-                      <button
-                        onClick={() => {
-                          setIsProfileMenuOpen(false);
-                          setIsPasswordModalOpen(true);
-                        }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-300 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg transition-colors text-left"
-                      >
-                        <Key className="h-4 w-4 text-amber-400" />
-                        <span>Change Password</span>
-                      </button>
-
-                      <div className="border-t border-slate-100 dark:border-slate-800 my-1" />
-
-                      {/* Option 3: Logout Button */}
-                      <button
-                        onClick={() => {
-                          setIsProfileMenuOpen(false);
-                          signOut();
-                        }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors text-left"
-                      >
-                        <LogOut className="h-4 w-4 text-red-500" />
-                        <span>Sign Out / Log Out</span>
-                      </button>
-                    </div>
+                    </>
                   )}
                 </div>
               )}

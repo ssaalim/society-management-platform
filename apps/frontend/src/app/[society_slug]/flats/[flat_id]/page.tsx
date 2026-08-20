@@ -244,27 +244,36 @@ export default function FlatDetailPage() {
         </div>
 
         {/* Tab switchers */}
-        <div className="flex border-b border-slate-800 space-x-4">
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-2 max-w-full whitespace-nowrap">
           <button
+            type="button"
             onClick={() => setActiveTab('profile')}
-            className={`pb-3 text-sm font-semibold transition-all border-b-2 ${
-              activeTab === 'profile' ? 'border-indigo-500 text-slate-200' : 'border-transparent text-slate-500 hover:text-slate-300'
+            className={`shrink-0 flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all shadow-xs cursor-pointer ${
+              activeTab === 'profile'
+                ? 'bg-indigo-600 border border-indigo-500 text-white shadow-indigo-600/20'
+                : 'border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/80'
             }`}
           >
             Unit Properties
           </button>
           <button
+            type="button"
             onClick={() => setActiveTab('tenancy')}
-            className={`pb-3 text-sm font-semibold transition-all border-b-2 ${
-              activeTab === 'tenancy' ? 'border-indigo-500 text-slate-200' : 'border-transparent text-slate-500 hover:text-slate-300'
+            className={`shrink-0 flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all shadow-xs cursor-pointer ${
+              activeTab === 'tenancy'
+                ? 'bg-indigo-600 border border-indigo-500 text-white shadow-indigo-600/20'
+                : 'border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/80'
             }`}
           >
             Active Tenant & NOC
           </button>
           <button
+            type="button"
             onClick={() => setActiveTab('history')}
-            className={`pb-3 text-sm font-semibold transition-all border-b-2 ${
-              activeTab === 'history' ? 'border-indigo-500 text-slate-200' : 'border-transparent text-slate-500 hover:text-slate-300'
+            className={`shrink-0 flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all shadow-xs cursor-pointer ${
+              activeTab === 'history'
+                ? 'bg-indigo-600 border border-indigo-500 text-white shadow-indigo-600/20'
+                : 'border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/80'
             }`}
           >
             Owner & Lease History
@@ -579,41 +588,42 @@ export default function FlatDetailPage() {
 
         {/* Change Owner Modal Dialog */}
         {isChangeOwnerModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto animate-in fade-in duration-150">
             {/* Backdrop */}
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsChangeOwnerModalOpen(false)} />
+            <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm" onClick={() => setIsChangeOwnerModalOpen(false)} />
             
             {/* Modal Panel */}
-            <div className="relative w-full max-w-lg bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+            <div className="relative w-full max-w-lg max-h-[88dvh] sm:max-h-[90vh] bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col my-auto z-10">
 
-              {/* Header */}
-              <div className="flex-shrink-0 flex items-center justify-between p-6 border-b border-slate-800 bg-slate-950/90 backdrop-blur-sm">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-emerald-600/20 border border-emerald-500/20">
-                    <Users className="h-5 w-5 text-emerald-400" />
+              {/* Pinned Header */}
+              <div className="flex-shrink-0 flex items-center justify-between px-4 py-3.5 sm:px-6 sm:py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/90">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-600/20 border border-emerald-100 dark:border-emerald-500/20">
+                    <Users className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-slate-100">Transfer Flat Ownership</h3>
-                    <p className="text-[11px] text-slate-500">Record an ownership change for Flat {flatData?.number}</p>
+                    <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">Transfer Flat Ownership</h3>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">Record an ownership change for Flat {flatData?.number}</p>
                   </div>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setIsChangeOwnerModalOpen(false)}
-                  className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-500 hover:text-slate-300 transition-all"
+                  className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-all cursor-pointer"
                 >
                   <X className="h-5 w-5" />
                 </button>
               </div>
 
-              {/* Body */}
-              <div className="p-6 overflow-y-auto">
-                <form id="change-owner-form" onSubmit={handleChangeOwnerSubmit} className="space-y-4">
+              {/* Scrollable Body */}
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+                <form id="change-owner-form" onSubmit={handleChangeOwnerSubmit} className="space-y-4 text-xs">
                 <div>
-                  <label className="text-xs text-slate-500 dark:text-slate-400 font-medium">New Owner (From Existing Members)</label>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">New Owner (From Existing Members) *</label>
                   <select
                     value={newOwnerId}
                     onChange={(e) => setNewOwnerId(e.target.value)}
-                    className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-slate-700 focus:outline-none mt-1 font-semibold"
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none mt-1 font-semibold transition shadow-xs"
                     required
                   >
                     <option value="">-- Select Member as Owner --</option>
@@ -626,36 +636,36 @@ export default function FlatDetailPage() {
                 </div>
 
                 <div>
-                  <label className="text-xs text-slate-500 dark:text-slate-400 font-medium">Transfer Effective Date</label>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Transfer Effective Date *</label>
                   <input
                     type="date"
                     value={transferDate}
                     onChange={(e) => setTransferDate(e.target.value)}
-                    className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-slate-700 focus:outline-none mt-1"
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none mt-1 transition shadow-xs"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs text-slate-500 dark:text-slate-400 font-medium">Transfer Notes / Reason</label>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Transfer Notes / Reason</label>
                   <textarea
                     rows={2}
                     placeholder="e.g. Sale Agreement #1092, Registered Deed, Inheritance"
                     value={transferNotes}
                     onChange={(e) => setTransferNotes(e.target.value)}
-                    className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-slate-700 focus:outline-none mt-1"
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none mt-1 transition shadow-xs"
                   />
                 </div>
 
                 </form>
               </div>
 
-              {/* Footer */}
-              <div className="p-6 border-t border-slate-800 bg-slate-950 flex justify-end gap-2">
+              {/* Pinned Footer */}
+              <div className="flex-shrink-0 flex items-center justify-end gap-2.5 px-4 py-3 sm:px-6 sm:py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950">
                 <button
                   type="button"
                   onClick={() => setIsChangeOwnerModalOpen(false)}
-                  className="rounded-lg border border-slate-800 bg-slate-950/60 py-2 px-4 text-xs font-semibold text-slate-500 hover:bg-slate-900 transition-all shadow-sm"
+                  className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-2 px-4 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all shadow-xs cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -663,9 +673,9 @@ export default function FlatDetailPage() {
                   type="submit"
                   form="change-owner-form"
                   disabled={isSaving}
-                  className="rounded-lg bg-emerald-600 hover:bg-emerald-500 text-slate-100 py-2 px-6 text-xs font-semibold disabled:opacity-55 transition-all flex items-center gap-2 shadow-lg shadow-emerald-600/20"
+                  className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white py-2 px-5 text-xs font-bold disabled:opacity-55 transition-all flex items-center gap-2 shadow-xs cursor-pointer active:scale-95"
                 >
-                  {isSaving ? <><Loader2 className="h-4 w-4 animate-spin" /> Transferring...</> : 'Confirm Ownership Transfer'}
+                  {isSaving ? <><Loader2 className="h-4 w-4 animate-spin" /> Transferring...</> : 'Confirm Transfer'}
                 </button>
               </div>
             </div>

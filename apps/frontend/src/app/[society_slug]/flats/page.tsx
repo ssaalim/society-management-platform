@@ -612,50 +612,51 @@ export default function FlatsListingPage() {
 
       {/* Add Flat Master Entry Modal */}
       {isAddFlatModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto animate-in fade-in duration-150">
           {/* Backdrop */}
-          <div className="absolute inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm" onClick={() => setIsAddFlatModalOpen(false)} />
+          <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm" onClick={() => setIsAddFlatModalOpen(false)} />
           
           {/* Modal Panel */}
-          <div className="relative w-full max-w-lg bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[90vh]">
+          <div className="relative w-full max-w-lg max-h-[88dvh] sm:max-h-[90vh] bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col my-auto z-10">
 
-            {/* Header */}
-            <div className="flex-shrink-0 flex items-center justify-between p-4 sm:p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/90">
-              <div className="flex items-center gap-3">
+            {/* Pinned Header */}
+            <div className="flex-shrink-0 flex items-center justify-between px-4 py-3.5 sm:px-6 sm:py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/90">
+              <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-600/20 border border-indigo-100 dark:border-indigo-500/20">
                   <Building className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
                 </div>
                 <div>
-                  <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">Create Flat Master Entry</h3>
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">Create Flat Master Entry</h3>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400">Configure a new property unit for the society</p>
                 </div>
               </div>
               <button
+                type="button"
                 onClick={() => setIsAddFlatModalOpen(false)}
-                className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-all cursor-pointer"
+                className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-all cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            {/* Body */}
-            <div className="p-4 sm:p-6 overflow-y-auto">
-              <form id="add-flat-form" onSubmit={handleAddFlatSubmit} className="space-y-4">
+            {/* Scrollable Body */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+              <form id="add-flat-form" onSubmit={handleAddFlatSubmit} className="space-y-4 text-xs">
               <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Flat Unit Number</label>
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Flat Unit Number *</label>
                 <input
                   type="text"
                   placeholder="e.g. A-101, B-402, Shop-03"
                   value={newFlatNumber}
                   onChange={(e) => setNewFlatNumber(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none mt-1 font-semibold transition shadow-xs"
+                  className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none mt-1 font-semibold transition shadow-xs"
                   required
                 />
               </div>
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Flat Unit Type</label>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Flat Unit Type *</label>
                   <select
                     value={newFlatType}
                     onChange={(e) => {
@@ -674,7 +675,7 @@ export default function FlatsListingPage() {
                         setNewFlatType(e.target.value);
                       }
                     }}
-                    className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3 text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none mt-1 transition shadow-xs"
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none mt-1 transition shadow-xs"
                   >
                     {flatTypesList.map((t) => (
                       <option key={t} value={t}>{t}</option>
@@ -684,14 +685,14 @@ export default function FlatsListingPage() {
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Super Builtup Area (SqFt)</label>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Super Builtup Area (SqFt) *</label>
                   <input
                     type="number"
                     step="0.01"
                     placeholder="1200"
                     value={newSqftArea}
                     onChange={(e) => setNewSqftArea(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none mt-1 font-semibold transition shadow-xs"
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none mt-1 font-semibold transition shadow-xs"
                     required
                   />
                 </div>
@@ -705,18 +706,18 @@ export default function FlatsListingPage() {
                   placeholder="950"
                   value={newCarpetArea}
                   onChange={(e) => setNewCarpetArea(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none mt-1 transition shadow-xs"
+                  className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none mt-1 transition shadow-xs"
                 />
               </div>
 
               {/* Layout Configuration: Building -> Wing -> Floor */}
-              <div className="border-t border-slate-100 dark:border-slate-800 pt-3 space-y-4">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">Location Configuration</h4>
+              <div className="border-t border-slate-100 dark:border-slate-800 pt-3 space-y-3.5">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Location Configuration</h4>
                 
                 {/* Building Selection */}
                 <div className="flex items-end gap-2">
-                  <div className="flex-1">
-                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Select Building / Tower <span className="text-rose-500">*</span></label>
+                  <div className="flex-1 min-w-0">
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block truncate">Building / Tower <span className="text-rose-500">*</span></label>
                     <select
                       value={selectedLayoutBuildingId}
                       onChange={(e) => {
@@ -736,7 +737,7 @@ export default function FlatsListingPage() {
                   <button
                     type="button"
                     onClick={handleCreateBuilding}
-                    className="mb-[1px] rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-3 text-xs font-semibold transition-all shadow-xs cursor-pointer active:scale-95"
+                    className="shrink-0 mb-[1px] rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-3 text-xs font-semibold transition-all shadow-xs cursor-pointer active:scale-95"
                   >
                     + Add
                   </button>
@@ -744,8 +745,8 @@ export default function FlatsListingPage() {
 
                 {/* Wing Selection */}
                 <div className="flex items-end gap-2">
-                  <div className="flex-1">
-                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Select Wing <span className="text-rose-500">*</span></label>
+                  <div className="flex-1 min-w-0">
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block truncate">Wing <span className="text-rose-500">*</span></label>
                     <select
                       value={selectedLayoutWingId}
                       onChange={(e) => {
@@ -768,7 +769,7 @@ export default function FlatsListingPage() {
                     type="button"
                     onClick={handleCreateWing}
                     disabled={!selectedLayoutBuildingId}
-                    className="mb-[1px] rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-3 text-xs font-semibold transition-all shadow-xs disabled:opacity-50 cursor-pointer active:scale-95"
+                    className="shrink-0 mb-[1px] rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-3 text-xs font-semibold transition-all shadow-xs disabled:opacity-50 cursor-pointer active:scale-95"
                   >
                     + Add
                   </button>
@@ -776,8 +777,8 @@ export default function FlatsListingPage() {
 
                 {/* Floor Selection */}
                 <div className="flex items-end gap-2">
-                  <div className="flex-1">
-                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Select Floor <span className="text-rose-500">*</span></label>
+                  <div className="flex-1 min-w-0">
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block truncate">Floor <span className="text-rose-500">*</span></label>
                     <select
                       value={selectedFloorId}
                       onChange={(e) => setSelectedFloorId(e.target.value)}
@@ -798,7 +799,7 @@ export default function FlatsListingPage() {
                     type="button"
                     onClick={handleCreateFloor}
                     disabled={!selectedLayoutWingId}
-                    className="mb-[1px] rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-3 text-xs font-semibold transition-all shadow-xs disabled:opacity-50 cursor-pointer active:scale-95"
+                    className="shrink-0 mb-[1px] rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-3 text-xs font-semibold transition-all shadow-xs disabled:opacity-50 cursor-pointer active:scale-95"
                   >
                     + Add
                   </button>
@@ -951,8 +952,8 @@ export default function FlatsListingPage() {
               </form>
             </div>
 
-            {/* Footer */}
-            <div className="p-4 sm:p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex justify-end gap-2.5">
+            {/* Pinned Footer */}
+            <div className="flex-shrink-0 flex items-center justify-end gap-2.5 px-4 py-3 sm:px-6 sm:py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950">
               <button
                 type="button"
                 onClick={() => setIsAddFlatModalOpen(false)}
@@ -975,28 +976,31 @@ export default function FlatsListingPage() {
 
       {/* Manage Unit Types Master Modal */}
       {isManageTypesModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
-          <div className="absolute inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm" onClick={() => setIsManageTypesModalOpen(false)} />
-          <div className="relative w-full max-w-md bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[90vh]">
-            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/90">
-              <div className="flex items-center gap-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto animate-in fade-in duration-150">
+          <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm" onClick={() => setIsManageTypesModalOpen(false)} />
+          <div className="relative w-full max-w-md max-h-[88dvh] sm:max-h-[90vh] bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col my-auto z-10">
+            {/* Pinned Header */}
+            <div className="flex-shrink-0 flex items-center justify-between px-4 py-3.5 sm:px-6 sm:py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/90">
+              <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-600/20 border border-indigo-100 dark:border-indigo-500/20">
                   <Layers className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
                 </div>
                 <div>
-                  <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">Society Unit Types Master</h3>
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">Society Unit Types Master</h3>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400">Configure allowed unit categories across the society</p>
                 </div>
               </div>
               <button
+                type="button"
                 onClick={() => setIsManageTypesModalOpen(false)}
-                className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-all cursor-pointer"
+                className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-all cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <div className="p-4 sm:p-6 overflow-y-auto space-y-4">
+            {/* Scrollable Body */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
               <div className="space-y-2">
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Active Unit Types ({flatTypesList.length})</label>
                 <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
@@ -1039,7 +1043,8 @@ export default function FlatsListingPage() {
               </form>
             </div>
 
-            <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex justify-end">
+            {/* Pinned Footer */}
+            <div className="flex-shrink-0 flex items-center justify-end px-4 py-3 sm:px-6 sm:py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950">
               <button
                 type="button"
                 onClick={() => setIsManageTypesModalOpen(false)}

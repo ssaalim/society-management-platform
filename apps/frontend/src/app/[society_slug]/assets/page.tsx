@@ -207,7 +207,7 @@ export default function AssetManagementPage() {
       <div className="w-full max-w-[1600px] mx-auto space-y-3.5 z-10">
 
         {/* Header */}
-        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
           <div className="flex items-center gap-2.5">
             <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-600/20 border border-indigo-200 dark:border-indigo-500/20 text-indigo-600 dark:text-indigo-400">
               <Box className="h-6 w-6" />
@@ -218,28 +218,43 @@ export default function AssetManagementPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => setActiveTab('assets')}
-              className={`rounded-lg border py-1.5 px-2.5 text-xs font-semibold transition-all ${activeTab === 'assets' ? 'bg-indigo-600 border-indigo-500 text-white shadow-xs' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'}`}
-            >
-              Assets Roster ({assetsList.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('cost')}
-              className={`rounded-lg border py-1.5 px-2.5 text-xs font-semibold transition-all ${activeTab === 'cost' ? 'bg-indigo-600 border-indigo-500 text-white shadow-xs' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'}`}
-            >
-              Cost & AMC Analysis
-            </button>
-            {isManagement && (
+          {isManagement && (
+            <div className="flex items-center gap-2">
               <button
+                type="button"
                 onClick={openAddModal}
-                className="flex items-center gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white py-1.5 px-3 text-xs font-semibold transition-all shadow-xs"
+                className="flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white py-2 px-4 text-xs font-semibold transition-all shadow-xs cursor-pointer active:scale-95"
               >
                 <Plus className="h-3.5 w-3.5" /> Add Asset
               </button>
-            )}
-          </div>
+            </div>
+          )}
+        </div>
+
+        {/* Horizontal Scroll Pill Tabs */}
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-2 max-w-full whitespace-nowrap">
+          <button
+            type="button"
+            onClick={() => setActiveTab('assets')}
+            className={`shrink-0 flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all shadow-xs cursor-pointer ${
+              activeTab === 'assets'
+                ? 'bg-indigo-600 border border-indigo-500 text-white shadow-indigo-600/20'
+                : 'border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/80'
+            }`}
+          >
+            Assets Roster ({assetsList.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('cost')}
+            className={`shrink-0 flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all shadow-xs cursor-pointer ${
+              activeTab === 'cost'
+                ? 'bg-indigo-600 border border-indigo-500 text-white shadow-indigo-600/20'
+                : 'border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/80'
+            }`}
+          >
+            Cost & AMC Analysis
+          </button>
         </div>
 
         {/* KPI row */}
@@ -620,26 +635,33 @@ export default function AssetManagementPage() {
       {/* MODAL: Delete Confirm                      */}
       {/* ═══════════════════════════════════════════ */}
       {deleteConfirmId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setDeleteConfirmId(null)} />
-          <div className="relative w-full max-w-sm bg-slate-950 border border-red-900/50 rounded-2xl shadow-2xl p-6 space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-150">
+          <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm" onClick={() => setDeleteConfirmId(null)} />
+          <div className="relative w-full max-w-sm bg-white dark:bg-slate-950 border border-red-200 dark:border-red-900/50 rounded-2xl shadow-2xl p-5 sm:p-6 space-y-4 my-auto z-10 animate-in zoom-in-95 duration-150">
             <div className="flex items-start gap-3">
-              <div className="p-2 rounded-lg bg-red-600/20 border border-red-500/20 flex-shrink-0">
-                <Trash2 className="h-5 w-5 text-red-400" />
+              <div className="p-2.5 rounded-xl bg-red-50 dark:bg-red-600/20 border border-red-200 dark:border-red-500/20 flex-shrink-0 text-red-600 dark:text-red-400">
+                <Trash2 className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-slate-100">Remove Asset</h3>
-                <p className="text-xs text-slate-400 mt-1">
-                  Are you sure you want to remove <span className="font-bold text-slate-200">{assetsList.find(a => a.id === deleteConfirmId)?.name}</span> from the society asset register? All associated maintenance logs will also be deleted.
+                <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Remove Asset</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                  Are you sure you want to remove <span className="font-bold text-slate-800 dark:text-slate-200">{assetsList.find(a => a.id === deleteConfirmId)?.name}</span> from the society asset register? All associated maintenance logs will also be deleted.
                 </p>
               </div>
             </div>
-            <div className="flex justify-end gap-2">
-              <button onClick={() => setDeleteConfirmId(null)} className="rounded-lg border border-slate-800 bg-slate-900 text-slate-400 py-2 px-4 text-xs font-semibold hover:bg-slate-800 transition-all">Cancel</button>
+            <div className="flex items-center justify-end gap-2.5 pt-2">
               <button
+                type="button"
+                onClick={() => setDeleteConfirmId(null)}
+                className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-400 py-2 px-4 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition-all shadow-xs cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
                 onClick={() => handleDeleteAsset(deleteConfirmId)}
                 disabled={isProcessing}
-                className="rounded-lg bg-red-600 hover:bg-red-700 text-white py-2 px-5 text-xs font-semibold disabled:opacity-55 flex items-center gap-2"
+                className="rounded-xl bg-red-600 hover:bg-red-700 text-white py-2 px-5 text-xs font-bold disabled:opacity-55 flex items-center gap-2 shadow-xs cursor-pointer active:scale-95 transition-all"
               >
                 {isProcessing && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                 Yes, Remove Asset

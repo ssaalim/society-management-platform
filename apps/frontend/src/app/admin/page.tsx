@@ -491,7 +491,7 @@ export default function SuperAdminConsolePage() {
         )}
 
         {/* Sub-menu Navigation Tabs */}
-        <div className="flex flex-wrap items-center gap-1.5 pb-2 border-b border-slate-200 dark:border-slate-800">
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-2 max-w-full whitespace-nowrap">
           {[
             { id: 'overview', label: 'Platform Overview', icon: BarChart3 },
             { id: 'societies', label: 'Societies & Subscriptions', count: societiesList.length, icon: Building },
@@ -501,8 +501,9 @@ export default function SuperAdminConsolePage() {
           ].map((tab) => (
             <button
               key={tab.id}
+              type="button"
               onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap shadow-xs ${
+              className={`shrink-0 flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all shadow-xs cursor-pointer ${
                 activeTab === tab.id
                   ? 'bg-rose-600 border border-rose-500 text-white shadow-rose-600/20'
                   : 'border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/80'
@@ -511,7 +512,7 @@ export default function SuperAdminConsolePage() {
               <tab.icon className="h-3.5 w-3.5" />
               <span>{tab.label}</span>
               {tab.count !== undefined && (
-                <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full ${
+                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
                   activeTab === tab.id
                     ? 'bg-white/20 text-white'
                     : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
@@ -635,7 +636,7 @@ export default function SuperAdminConsolePage() {
                     />
                   </div>
 
-                  <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto">
+                  <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 max-w-full whitespace-nowrap">
                     {[
                       { id: 'ALL', label: 'All Societies' },
                       { id: 'ACTIVE', label: 'Active Plans' },
@@ -645,11 +646,12 @@ export default function SuperAdminConsolePage() {
                     ].map((f) => (
                       <button
                         key={f.id}
+                        type="button"
                         onClick={() => setStatusFilter(f.id as any)}
-                        className={`text-[11px] font-semibold px-3 py-1.5 rounded-lg border whitespace-nowrap transition-all ${
+                        className={`shrink-0 text-xs font-semibold px-3.5 py-2 rounded-xl border transition-all shadow-xs cursor-pointer ${
                           statusFilter === f.id
-                            ? 'bg-indigo-600 border-indigo-500 text-white'
-                            : 'border-slate-800 bg-slate-900/60 text-slate-400 hover:text-slate-200'
+                            ? 'bg-indigo-600 border-indigo-500 text-white shadow-indigo-600/20'
+                            : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/80'
                         }`}
                       >
                         {f.label}
@@ -929,127 +931,137 @@ export default function SuperAdminConsolePage() {
       {/* MODAL: ASSIGN / RENEW SUBSCRIPTION PLAN          */}
       {/* ═════════════════════════════════════════════════ */}
       {showAssignModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowAssignModal(false)} />
-          <div className="relative w-full max-w-lg bg-slate-950 border border-slate-800 rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800 flex-shrink-0">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto animate-in fade-in duration-150">
+          <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm" onClick={() => setShowAssignModal(false)} />
+          <div className="relative w-full max-w-lg max-h-[88dvh] sm:max-h-[90vh] bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col my-auto z-10">
+            {/* Pinned Header */}
+            <div className="flex-shrink-0 flex items-center justify-between px-4 py-3.5 sm:px-6 sm:py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/90">
               <div className="flex items-center gap-2.5">
-                <div className="p-1.5 rounded-lg bg-indigo-600/20 text-indigo-400">
+                <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-600/20 border border-indigo-100 dark:border-indigo-500/20 text-indigo-600 dark:text-indigo-400">
                   <CreditCard className="h-4 w-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-slate-100">
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">
                     {selectedSocietyForAssign ? `Assign Plan: ${selectedSocietyForAssign.name}` : 'Assign Subscription Plan'}
                   </h3>
-                  <p className="text-[10px] text-slate-500">Configure subscription tier and validity dates</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Configure subscription tier and validity dates</p>
                 </div>
               </div>
-              <button onClick={() => setShowAssignModal(false)} className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-500 hover:text-slate-300">
+              <button
+                type="button"
+                onClick={() => setShowAssignModal(false)}
+                className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition cursor-pointer"
+              >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            <form onSubmit={handleAssignSubscriptionSubmit} className="p-4 sm:p-5 space-y-3.5 overflow-y-auto">
-              {/* Society Selector */}
-              <div>
-                <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Target Society *</label>
-                <select
-                  value={assignForm.societyId}
-                  onChange={(e) => setAssignForm(prev => ({ ...prev, societyId: e.target.value }))}
-                  required
-                  className="w-full rounded-lg border border-slate-800 bg-slate-900 py-2 px-3 text-xs text-slate-200 focus:border-indigo-500 focus:outline-none"
-                >
-                  <option value="">Select a society...</option>
-                  {societiesList.map(s => (
-                    <option key={s.id} value={s.id}>{s.name} (/{s.slug})</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Plan Selector */}
-              <div>
-                <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Pricing Plan Tier *</label>
-                <select
-                  value={assignForm.planId}
-                  onChange={(e) => setAssignForm(prev => ({ ...prev, planId: e.target.value }))}
-                  required
-                  className="w-full rounded-lg border border-slate-800 bg-slate-900 py-2 px-3 text-xs text-slate-200 focus:border-indigo-500 focus:outline-none"
-                >
-                  <option value="">Select a plan tier...</option>
-                  {plansList.map(p => (
-                    <option key={p.id} value={p.id}>{p.name} — ₹{Number(p.price).toLocaleString('en-IN')}/yr (Up to {p.maxFlats} flats)</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Dates */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Scrollable Body */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+              <form id="assign-plan-form" onSubmit={handleAssignSubscriptionSubmit} className="space-y-3.5 text-xs">
+                {/* Society Selector */}
                 <div>
-                  <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Start Date *</label>
-                  <input
-                    type="date"
-                    value={assignForm.startDate}
-                    onChange={(e) => setAssignForm(prev => ({ ...prev, startDate: e.target.value }))}
+                  <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-1">Target Society *</label>
+                  <select
+                    value={assignForm.societyId}
+                    onChange={(e) => setAssignForm(prev => ({ ...prev, societyId: e.target.value }))}
                     required
-                    className="w-full rounded-lg border border-slate-800 bg-slate-900 py-2 px-3 text-xs text-slate-200 focus:border-indigo-500 focus:outline-none"
-                  />
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2 px-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition shadow-xs"
+                  >
+                    <option value="">Select a society...</option>
+                    {societiesList.map(s => (
+                      <option key={s.id} value={s.id}>{s.name} (/{s.slug})</option>
+                    ))}
+                  </select>
                 </div>
+
+                {/* Plan Selector */}
                 <div>
-                  <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Expiry Date *</label>
-                  <input
-                    type="date"
-                    value={assignForm.endDate}
-                    onChange={(e) => setAssignForm(prev => ({ ...prev, endDate: e.target.value }))}
+                  <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-1">Pricing Plan Tier *</label>
+                  <select
+                    value={assignForm.planId}
+                    onChange={(e) => setAssignForm(prev => ({ ...prev, planId: e.target.value }))}
                     required
-                    className="w-full rounded-lg border border-slate-800 bg-slate-900 py-2 px-3 text-xs text-slate-200 focus:border-indigo-500 focus:outline-none"
-                  />
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2 px-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition shadow-xs"
+                  >
+                    <option value="">Select a plan tier...</option>
+                    {plansList.map(p => (
+                      <option key={p.id} value={p.id}>{p.name} — ₹{Number(p.price).toLocaleString('en-IN')}/yr (Up to {p.maxFlats} flats)</option>
+                    ))}
+                  </select>
                 </div>
-              </div>
 
-              {/* Quick Duration Buttons */}
-              <div className="pt-0.5">
-                <label className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider block mb-1">Quick Validity Duration</label>
-                <div className="flex gap-2">
-                  {[
-                    { label: '+1 Month', months: 1 },
-                    { label: '+3 Months', months: 3 },
-                    { label: '+6 Months', months: 6 },
-                    { label: '+1 Year', months: 12 },
-                  ].map((btn, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => setQuickDuration(btn.months)}
-                      className="flex-1 py-1.5 rounded-lg border border-slate-800 bg-slate-900 hover:bg-slate-800 text-[11px] font-semibold text-slate-300 hover:text-indigo-300 transition-all"
-                    >
-                      {btn.label}
-                    </button>
-                  ))}
+                {/* Dates */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-1">Start Date *</label>
+                    <input
+                      type="date"
+                      value={assignForm.startDate}
+                      onChange={(e) => setAssignForm(prev => ({ ...prev, startDate: e.target.value }))}
+                      required
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2 px-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition shadow-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-1">Expiry Date *</label>
+                    <input
+                      type="date"
+                      value={assignForm.endDate}
+                      onChange={(e) => setAssignForm(prev => ({ ...prev, endDate: e.target.value }))}
+                      required
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2 px-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition shadow-xs"
+                    />
+                  </div>
                 </div>
-              </div>
 
-              <div className="p-2.5 rounded-lg bg-indigo-950/30 border border-indigo-900/40 text-[11px] text-slate-400">
-                💡 Once expired, members and residents of this society will be blocked from logging in or performing actions until renewed.
-              </div>
+                {/* Quick Duration Buttons */}
+                <div className="pt-0.5">
+                  <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider block mb-1">Quick Validity Duration</label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {[
+                      { label: '+1 Month', months: 1 },
+                      { label: '+3 Months', months: 3 },
+                      { label: '+6 Months', months: 6 },
+                      { label: '+1 Year', months: 12 },
+                    ].map((btn, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setQuickDuration(btn.months)}
+                        className="py-1.5 px-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 hover:bg-indigo-50 dark:hover:bg-slate-800 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-300 transition-all cursor-pointer shadow-xs"
+                      >
+                        {btn.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-              <div className="flex justify-end gap-2 pt-2.5 border-t border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => setShowAssignModal(false)}
-                  className="rounded-lg border border-slate-800 bg-slate-900 text-slate-400 py-1.5 px-3 text-xs font-semibold hover:bg-slate-800"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isProcessing}
-                  className="rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white py-1.5 px-4 text-xs font-semibold disabled:opacity-55 flex items-center gap-1.5 shadow-xs"
-                >
-                  {isProcessing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
-                  Confirm & Assign Plan
-                </button>
-              </div>
-            </form>
+                <div className="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/40 text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+                  💡 Once expired, members and residents of this society will be blocked from logging in or performing actions until renewed.
+                </div>
+              </form>
+            </div>
+
+            {/* Pinned Footer */}
+            <div className="flex-shrink-0 flex items-center justify-end gap-2.5 px-4 py-3 sm:px-6 sm:py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950">
+              <button
+                type="button"
+                onClick={() => setShowAssignModal(false)}
+                className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-400 py-2 px-4 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition-all shadow-xs cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="assign-plan-form"
+                disabled={isProcessing}
+                className="rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-5 text-xs font-bold disabled:opacity-55 flex items-center gap-2 shadow-xs cursor-pointer active:scale-95 transition-all"
+              >
+                {isProcessing && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                Confirm & Assign Plan
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -1058,151 +1070,161 @@ export default function SuperAdminConsolePage() {
       {/* MODAL: CREATE SOCIETY                             */}
       {/* ═════════════════════════════════════════════════ */}
       {showSocietyModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowSocietyModal(false)} />
-          <div className="relative w-full max-w-2xl bg-slate-950 border border-slate-800 rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800 flex-shrink-0">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto animate-in fade-in duration-150">
+          <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm" onClick={() => setShowSocietyModal(false)} />
+          <div className="relative w-full max-w-2xl max-h-[88dvh] sm:max-h-[90vh] bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col my-auto z-10">
+            {/* Pinned Header */}
+            <div className="flex-shrink-0 flex items-center justify-between px-4 py-3.5 sm:px-6 sm:py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/90">
               <div className="flex items-center gap-2.5">
-                <div className="p-1.5 rounded-lg bg-rose-600/20 text-rose-400">
+                <div className="p-2 rounded-xl bg-rose-50 dark:bg-rose-600/20 border border-rose-100 dark:border-rose-500/20 text-rose-600 dark:text-rose-400">
                   <Building className="h-4 w-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-slate-100">Create New Society</h3>
-                  <p className="text-[10px] text-slate-500">Provisions society tenant, president user, and initial chart of accounts</p>
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">Create New Society</h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Provisions society tenant, president user, and initial chart of accounts</p>
                 </div>
               </div>
-              <button onClick={() => setShowSocietyModal(false)} className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-500 hover:text-slate-300">
+              <button
+                type="button"
+                onClick={() => setShowSocietyModal(false)}
+                className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition cursor-pointer"
+              >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateSocietySubmit} className="p-4 sm:p-5 space-y-3.5 overflow-y-auto">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Society Name *</label>
-                  <input
-                    type="text"
-                    value={societyForm.name}
-                    onChange={(e) => setSocietyForm(prev => ({ ...prev, name: e.target.value }))}
-                    placeholder="e.g. Marvel Greens Co-op Housing Society"
-                    required
-                    className="w-full rounded-lg border border-slate-800 bg-slate-900 py-2 px-3 text-xs text-slate-200 focus:border-rose-500 focus:outline-none"
-                  />
+            {/* Scrollable Body */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+              <form id="create-society-form" onSubmit={handleCreateSocietySubmit} className="space-y-3.5 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-1">Society Name *</label>
+                    <input
+                      type="text"
+                      value={societyForm.name}
+                      onChange={(e) => setSocietyForm(prev => ({ ...prev, name: e.target.value }))}
+                      placeholder="e.g. Marvel Greens Co-op Housing Society"
+                      required
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2 px-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-rose-500 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition shadow-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-1">Slug URL Identifier *</label>
+                    <input
+                      type="text"
+                      value={societyForm.slug}
+                      onChange={(e) => setSocietyForm(prev => ({ ...prev, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-') }))}
+                      placeholder="e.g. marvel-greens"
+                      required
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2 px-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-rose-500 focus:bg-white dark:focus:bg-slate-950 focus:outline-none font-mono transition shadow-xs"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Slug URL Identifier *</label>
-                  <input
-                    type="text"
-                    value={societyForm.slug}
-                    onChange={(e) => setSocietyForm(prev => ({ ...prev, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-') }))}
-                    placeholder="e.g. marvel-greens"
-                    required
-                    className="w-full rounded-lg border border-slate-800 bg-slate-900 py-2 px-3 text-xs text-slate-200 focus:border-rose-500 focus:outline-none font-mono"
-                  />
-                </div>
-              </div>
 
-              <div>
-                <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Address</label>
-                <input
-                  type="text"
-                  value={societyForm.address}
-                  onChange={(e) => setSocietyForm(prev => ({ ...prev, address: e.target.value }))}
-                  placeholder="Street, City, Pin code"
-                  className="w-full rounded-lg border border-slate-800 bg-slate-900 py-2 px-3 text-xs text-slate-200 focus:border-rose-500 focus:outline-none"
-                />
-              </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-1">Address</label>
+                  <input
+                    type="text"
+                    value={societyForm.address}
+                    onChange={(e) => setSocietyForm(prev => ({ ...prev, address: e.target.value }))}
+                    placeholder="Street, City, Pin code"
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2 px-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-rose-500 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition shadow-xs"
+                  />
+                </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                <div>
-                  <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Reg Number</label>
-                  <input
-                    type="text"
-                    value={societyForm.registrationNumber}
-                    onChange={(e) => setSocietyForm(prev => ({ ...prev, registrationNumber: e.target.value }))}
-                    placeholder="HSG-001/2026"
-                    className="w-full rounded-lg border border-slate-800 bg-slate-900 py-2 px-3 text-xs text-slate-200 focus:border-rose-500 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">PAN</label>
-                  <input
-                    type="text"
-                    value={societyForm.pan}
-                    onChange={(e) => setSocietyForm(prev => ({ ...prev, pan: e.target.value }))}
-                    placeholder="AAAAA0000A"
-                    className="w-full rounded-lg border border-slate-800 bg-slate-900 py-2 px-3 text-xs text-slate-200 focus:border-rose-500 focus:outline-none font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">GSTIN</label>
-                  <input
-                    type="text"
-                    value={societyForm.gstin}
-                    onChange={(e) => setSocietyForm(prev => ({ ...prev, gstin: e.target.value }))}
-                    placeholder="27AAAAA0000A1Z5"
-                    className="w-full rounded-lg border border-slate-800 bg-slate-900 py-2 px-3 text-xs text-slate-200 focus:border-rose-500 focus:outline-none font-mono"
-                  />
-                </div>
-              </div>
-
-              <div className="pt-2 border-t border-slate-800">
-                <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">President Admin Account</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                   <div>
-                    <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Name *</label>
+                    <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-1">Reg Number</label>
                     <input
                       type="text"
-                      value={societyForm.presidentName}
-                      onChange={(e) => setSocietyForm(prev => ({ ...prev, presidentName: e.target.value }))}
-                      placeholder="e.g. Ramesh Patel"
-                      required
-                      className="w-full rounded-lg border border-slate-800 bg-slate-900 py-2 px-3 text-xs text-slate-200 focus:border-rose-500 focus:outline-none"
+                      value={societyForm.registrationNumber}
+                      onChange={(e) => setSocietyForm(prev => ({ ...prev, registrationNumber: e.target.value }))}
+                      placeholder="HSG-001/2026"
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2 px-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-rose-500 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition shadow-xs"
                     />
                   </div>
                   <div>
-                    <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Email *</label>
+                    <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-1">PAN</label>
                     <input
-                      type="email"
-                      value={societyForm.presidentEmail}
-                      onChange={(e) => setSocietyForm(prev => ({ ...prev, presidentEmail: e.target.value }))}
-                      placeholder="president@society.com"
-                      required
-                      className="w-full rounded-lg border border-slate-800 bg-slate-900 py-2 px-3 text-xs text-slate-200 focus:border-rose-500 focus:outline-none font-mono"
+                      type="text"
+                      value={societyForm.pan}
+                      onChange={(e) => setSocietyForm(prev => ({ ...prev, pan: e.target.value }))}
+                      placeholder="AAAAA0000A"
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2 px-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-rose-500 focus:bg-white dark:focus:bg-slate-950 focus:outline-none font-mono transition shadow-xs"
                     />
                   </div>
                   <div>
-                    <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Mobile *</label>
+                    <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-1">GSTIN</label>
                     <input
                       type="text"
-                      value={societyForm.presidentMobile}
-                      onChange={(e) => setSocietyForm(prev => ({ ...prev, presidentMobile: e.target.value }))}
-                      placeholder="9876543210"
-                      required
-                      className="w-full rounded-lg border border-slate-800 bg-slate-900 py-2 px-3 text-xs text-slate-200 focus:border-rose-500 focus:outline-none font-mono"
+                      value={societyForm.gstin}
+                      onChange={(e) => setSocietyForm(prev => ({ ...prev, gstin: e.target.value }))}
+                      placeholder="27AAAAA0000A1Z5"
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2 px-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-rose-500 focus:bg-white dark:focus:bg-slate-950 focus:outline-none font-mono transition shadow-xs"
                     />
                   </div>
                 </div>
-              </div>
 
-              <div className="flex justify-end gap-2 pt-2.5 border-t border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => setShowSocietyModal(false)}
-                  className="rounded-lg border border-slate-800 bg-slate-900 text-slate-400 py-1.5 px-3 text-xs font-semibold hover:bg-slate-800"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isProcessing}
-                  className="rounded-lg bg-rose-600 hover:bg-rose-700 text-white py-1.5 px-4 text-xs font-semibold disabled:opacity-55 flex items-center gap-1.5 shadow-xs"
-                >
-                  {isProcessing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
-                  Create & Initialize
-                </button>
-              </div>
-            </form>
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <h4 className="text-xs font-bold text-slate-800 dark:text-slate-300 uppercase tracking-wider mb-2">President Admin Account</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    <div>
+                      <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-1">Name *</label>
+                      <input
+                        type="text"
+                        value={societyForm.presidentName}
+                        onChange={(e) => setSocietyForm(prev => ({ ...prev, presidentName: e.target.value }))}
+                        placeholder="e.g. Ramesh Patel"
+                        required
+                        className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2 px-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-rose-500 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition shadow-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-1">Email *</label>
+                      <input
+                        type="email"
+                        value={societyForm.presidentEmail}
+                        onChange={(e) => setSocietyForm(prev => ({ ...prev, presidentEmail: e.target.value }))}
+                        placeholder="president@society.com"
+                        required
+                        className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2 px-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-rose-500 focus:bg-white dark:focus:bg-slate-950 focus:outline-none font-mono transition shadow-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-1">Mobile *</label>
+                      <input
+                        type="text"
+                        value={societyForm.presidentMobile}
+                        onChange={(e) => setSocietyForm(prev => ({ ...prev, presidentMobile: e.target.value }))}
+                        placeholder="9876543210"
+                        required
+                        className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2 px-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-rose-500 focus:bg-white dark:focus:bg-slate-950 focus:outline-none font-mono transition shadow-xs"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+
+            {/* Pinned Footer */}
+            <div className="flex-shrink-0 flex items-center justify-end gap-2.5 px-4 py-3 sm:px-6 sm:py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950">
+              <button
+                type="button"
+                onClick={() => setShowSocietyModal(false)}
+                className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-400 py-2 px-4 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition-all shadow-xs cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="create-society-form"
+                disabled={isProcessing}
+                className="rounded-xl bg-rose-600 hover:bg-rose-700 text-white py-2 px-5 text-xs font-bold disabled:opacity-55 flex items-center gap-2 shadow-xs cursor-pointer active:scale-95 transition-all"
+              >
+                {isProcessing && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                Create & Initialize
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -1211,89 +1233,99 @@ export default function SuperAdminConsolePage() {
       {/* MODAL: CREATE PRICING PLAN                        */}
       {/* ═════════════════════════════════════════════════ */}
       {showPlanModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowPlanModal(false)} />
-          <div className="relative w-full max-w-md bg-slate-950 border border-slate-800 rounded-xl shadow-2xl overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800 flex-shrink-0">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto animate-in fade-in duration-150">
+          <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm" onClick={() => setShowPlanModal(false)} />
+          <div className="relative w-full max-w-md max-h-[88dvh] sm:max-h-[90vh] bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col my-auto z-10">
+            {/* Pinned Header */}
+            <div className="flex-shrink-0 flex items-center justify-between px-4 py-3.5 sm:px-6 sm:py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/90">
               <div className="flex items-center gap-2.5">
-                <div className="p-1.5 rounded-lg bg-emerald-600/20 text-emerald-400">
+                <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-600/20 border border-emerald-100 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400">
                   <CreditCard className="h-4 w-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-slate-100">Create Pricing Plan Tier</h3>
-                  <p className="text-[10px] text-slate-500">Define capacity and annual subscription price</p>
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">Create Pricing Plan Tier</h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Define capacity and annual subscription price</p>
                 </div>
               </div>
-              <button onClick={() => setShowPlanModal(false)} className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-500 hover:text-slate-300">
+              <button
+                type="button"
+                onClick={() => setShowPlanModal(false)}
+                className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition cursor-pointer"
+              >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            <form onSubmit={handleCreatePlanSubmit} className="p-4 sm:p-5 space-y-3.5">
-              <div>
-                <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Plan Name *</label>
-                <input
-                  type="text"
-                  value={planName}
-                  onChange={(e) => setPlanName(e.target.value)}
-                  placeholder="e.g. Enterprise Tier"
-                  required
-                  className="w-full rounded-lg border border-slate-800 bg-slate-900 py-2 px-3 text-xs text-slate-200 focus:border-emerald-500 focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Annual Price (₹) *</label>
-                <input
-                  type="number"
-                  step="1"
-                  value={planPrice}
-                  onChange={(e) => setPlanPrice(Number(e.target.value))}
-                  placeholder="e.g. 12000"
-                  required
-                  className="w-full rounded-lg border border-slate-800 bg-slate-900 py-2 px-3 text-xs text-slate-200 focus:border-emerald-500 focus:outline-none"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
+            {/* Scrollable Body */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+              <form id="create-plan-form" onSubmit={handleCreatePlanSubmit} className="space-y-3.5 text-xs">
                 <div>
-                  <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Max Flats Capacity</label>
+                  <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-1">Plan Name *</label>
                   <input
-                    type="number"
-                    value={planFlats}
-                    onChange={(e) => setPlanFlats(Number(e.target.value))}
-                    className="w-full rounded-lg border border-slate-800 bg-slate-900 py-2 px-3 text-xs text-slate-200 focus:border-emerald-500 focus:outline-none"
+                    type="text"
+                    value={planName}
+                    onChange={(e) => setPlanName(e.target.value)}
+                    placeholder="e.g. Enterprise Tier"
+                    required
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2 px-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition shadow-xs"
                   />
                 </div>
+
                 <div>
-                  <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Storage Limit (GB)</label>
+                  <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-1">Annual Price (₹) *</label>
                   <input
                     type="number"
-                    value={planStorage}
-                    onChange={(e) => setPlanStorage(Number(e.target.value))}
-                    className="w-full rounded-lg border border-slate-800 bg-slate-900 py-2 px-3 text-xs text-slate-200 focus:border-emerald-500 focus:outline-none"
+                    step="1"
+                    value={planPrice}
+                    onChange={(e) => setPlanPrice(Number(e.target.value))}
+                    placeholder="e.g. 12000"
+                    required
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2 px-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition shadow-xs"
                   />
                 </div>
-              </div>
 
-              <div className="flex justify-end gap-2 pt-2.5 border-t border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => setShowPlanModal(false)}
-                  className="rounded-lg border border-slate-800 bg-slate-900 text-slate-400 py-1.5 px-3 text-xs font-semibold hover:bg-slate-800"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isProcessing}
-                  className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white py-1.5 px-4 text-xs font-semibold disabled:opacity-55 flex items-center gap-1.5 shadow-xs"
-                >
-                  {isProcessing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
-                  Register Plan
-                </button>
-              </div>
-            </form>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-1">Max Flats Capacity</label>
+                    <input
+                      type="number"
+                      value={planFlats}
+                      onChange={(e) => setPlanFlats(Number(e.target.value))}
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2 px-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition shadow-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-1">Storage Limit (GB)</label>
+                    <input
+                      type="number"
+                      value={planStorage}
+                      onChange={(e) => setPlanStorage(Number(e.target.value))}
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2 px-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition shadow-xs"
+                    />
+                  </div>
+                </div>
+              </form>
+            </div>
+
+            {/* Pinned Footer */}
+            <div className="flex-shrink-0 flex items-center justify-end gap-2.5 px-4 py-3 sm:px-6 sm:py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950">
+              <button
+                type="button"
+                onClick={() => setShowPlanModal(false)}
+                className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-400 py-2 px-4 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition-all shadow-xs cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="create-plan-form"
+                disabled={isProcessing}
+                className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white py-2 px-5 text-xs font-bold disabled:opacity-55 flex items-center gap-2 shadow-xs cursor-pointer active:scale-95 transition-all"
+              >
+                {isProcessing && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                Register Plan
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -98,19 +98,19 @@ export default function BulkUploadModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
-      <div className="absolute inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm transition-opacity" onClick={onClose} />
-      <div className="relative w-full max-w-md max-h-[90vh] rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-y-auto flex flex-col animate-in zoom-in-95 duration-150">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-4 sm:px-6 py-3.5 sm:py-4">
-          <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">{title}</h2>
-          <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 overflow-y-auto animate-in fade-in duration-150">
+      <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm transition-opacity" onClick={onClose} />
+      <div className="relative w-full max-w-md max-h-[88dvh] sm:max-h-[90vh] rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col my-auto z-10 animate-in zoom-in-95 duration-150">
+        {/* Pinned Header */}
+        <div className="flex-shrink-0 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-4 sm:px-6 py-3.5 sm:py-4 bg-slate-50 dark:bg-slate-900/90">
+          <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">{title}</h2>
+          <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        {/* Body */}
-        <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+        {/* Scrollable Body */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 dark:bg-slate-800/50 p-3.5 sm:p-4 rounded-xl border border-slate-200 dark:border-slate-700/50">
             <div>
               <h3 className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">Need a template?</h3>
@@ -162,8 +162,8 @@ export default function BulkUploadModal({
           )}
         </div>
 
-        {/* Footer */}
-        <div className="border-t border-slate-100 dark:border-slate-800 p-3.5 sm:p-4 bg-slate-50 dark:bg-slate-900/50 flex items-center justify-end gap-2.5 sm:gap-3">
+        {/* Pinned Footer */}
+        <div className="flex-shrink-0 border-t border-slate-100 dark:border-slate-800 p-3.5 sm:p-4 bg-slate-50 dark:bg-slate-900/50 flex items-center justify-end gap-2.5 sm:gap-3">
           <button
             type="button"
             onClick={onClose}

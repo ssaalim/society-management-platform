@@ -235,7 +235,7 @@ export default function MemberDetailPage() {
         </div>
 
         {/* Tab switchers */}
-        <div className="flex border-b border-slate-800 space-x-4 overflow-x-auto">
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-2 max-w-full whitespace-nowrap">
           {[
             { key: 'profile', label: 'Profile' },
             { key: 'family', label: 'Family' },
@@ -248,8 +248,10 @@ export default function MemberDetailPage() {
               key={tab.key}
               type="button"
               onClick={() => setActiveTab(tab.key as any)}
-              className={`pb-3 text-sm font-semibold transition-all border-b-2 whitespace-nowrap ${
-                activeTab === tab.key ? 'border-indigo-500 text-slate-200' : 'border-transparent text-slate-500 hover:text-slate-300'
+              className={`shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all shadow-xs cursor-pointer ${
+                activeTab === tab.key
+                  ? 'bg-indigo-600 border border-indigo-500 text-white shadow-indigo-600/20'
+                  : 'border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/80'
               }`}
             >
               {tab.label}

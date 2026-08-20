@@ -1132,131 +1132,132 @@ export default function AccountingDashboardPage() {
 
       {/* Add Society Bank Account Modal Dialog */}
       {isAddBankModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto animate-in fade-in duration-150">
           {/* Backdrop */}
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsAddBankModalOpen(false)} />
+          <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm" onClick={() => setIsAddBankModalOpen(false)} />
           
           {/* Modal Panel */}
-          <div className="relative w-full max-w-lg bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+          <div className="relative w-full max-w-lg max-h-[88dvh] sm:max-h-[90vh] bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col my-auto z-10">
 
-            {/* Header */}
-            <div className="flex-shrink-0 flex items-center justify-between p-6 border-b border-slate-800 bg-slate-950/90 backdrop-blur-sm">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-emerald-600/20 border border-emerald-500/20">
-                  <Landmark className="h-5 w-5 text-emerald-400" />
+            {/* Pinned Header */}
+            <div className="flex-shrink-0 flex items-center justify-between px-4 py-3.5 sm:px-6 sm:py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/90">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-600/20 border border-emerald-100 dark:border-emerald-500/20">
+                  <Landmark className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-slate-100">Register Society Bank Account</h3>
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">Register Society Bank Account</h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Add operational or reserve bank ledger</p>
                 </div>
               </div>
               <button
+                type="button"
                 onClick={() => setIsAddBankModalOpen(false)}
-                className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-500 hover:text-slate-300 transition-all"
+                className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            {/* Body */}
-            <div className="p-6 overflow-y-auto">
-              <form id="add-bank-form" onSubmit={handleAddBankAccountSubmit} className="space-y-4">
-              <div>
-                <label className="text-xs text-slate-500 dark:text-slate-400 font-medium">Bank Name</label>
-                <input
-                  type="text"
-                  placeholder="e.g. HDFC Bank, State Bank of India"
-                  value={bankName}
-                  onChange={(e) => setBankName(e.target.value)}
-                  className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-slate-700 focus:outline-none mt-1 font-semibold"
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {/* Scrollable Body */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+              <form id="add-bank-form" onSubmit={handleAddBankAccountSubmit} className="space-y-4 text-xs">
                 <div>
-                  <label className="text-xs text-slate-500 dark:text-slate-400 font-medium">Account Number</label>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Bank Name *</label>
                   <input
                     type="text"
-                    placeholder="11 to 16 digit Account No."
-                    value={accountNumber}
-                    onChange={(e) => setAccountNumber(e.target.value)}
-                    className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-slate-700 focus:outline-none mt-1 font-mono"
+                    placeholder="e.g. HDFC Bank, State Bank of India"
+                    value={bankName}
+                    onChange={(e) => setBankName(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-emerald-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none mt-1 font-semibold transition shadow-xs"
                     required
                   />
                 </div>
 
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Account Number *</label>
+                    <input
+                      type="text"
+                      placeholder="11 to 16 digit Account No."
+                      value={accountNumber}
+                      onChange={(e) => setAccountNumber(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-emerald-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none mt-1 font-mono transition shadow-xs"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">IFSC Code *</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. HDFC0001234"
+                      value={ifsc}
+                      onChange={(e) => setIfsc(e.target.value.toUpperCase())}
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-emerald-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none mt-1 font-mono uppercase transition shadow-xs"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Branch Name</label>
+                    <input
+                      type="text"
+                      placeholder="Branch / Location"
+                      value={branchName}
+                      onChange={(e) => setBranchName(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-emerald-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none mt-1 transition shadow-xs"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Account Type</label>
+                    <select
+                      value={accountType}
+                      onChange={(e) => setAccountType(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-emerald-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none mt-1 transition shadow-xs"
+                    >
+                      <option value="SAVINGS">Savings Account</option>
+                      <option value="CURRENT">Current Account</option>
+                    </select>
+                  </div>
+                </div>
+
                 <div>
-                  <label className="text-xs text-slate-500 dark:text-slate-400 font-medium">IFSC Code</label>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Opening Balance (₹)</label>
                   <input
-                    type="text"
-                    placeholder="e.g. HDFC0001234"
-                    value={ifsc}
-                    onChange={(e) => setIfsc(e.target.value.toUpperCase())}
-                    className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-slate-700 focus:outline-none mt-1 font-mono uppercase"
-                    required
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={openingBalance}
+                    onChange={(e) => setOpeningBalance(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-emerald-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none mt-1 font-mono transition shadow-xs"
                   />
                 </div>
-              </div>
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="text-xs text-slate-500 dark:text-slate-400 font-medium">Branch Name</label>
+                <div className="flex items-center gap-2 pt-2">
                   <input
-                    type="text"
-                    placeholder="Branch / Location"
-                    value={branchName}
-                    onChange={(e) => setBranchName(e.target.value)}
-                    className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-slate-700 focus:outline-none mt-1"
+                    type="checkbox"
+                    id="isDefaultBank"
+                    checked={isDefaultBank}
+                    onChange={(e) => setIsDefaultBank(e.target.checked)}
+                    className="rounded border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-indigo-600 focus:ring-0"
                   />
+                  <label htmlFor="isDefaultBank" className="text-xs font-medium text-slate-700 dark:text-slate-300 cursor-pointer">
+                    Set as primary default bank for receipt payments & invoices
+                  </label>
                 </div>
-
-                <div>
-                  <label className="text-xs text-slate-500 dark:text-slate-400 font-medium">Account Type</label>
-                  <select
-                    value={accountType}
-                    onChange={(e) => setAccountType(e.target.value)}
-                    className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2.5 px-3 text-sm text-slate-200 focus:border-slate-700 focus:outline-none mt-1"
-                  >
-                    <option value="SAVINGS">Savings Account</option>
-                    <option value="CURRENT">Current Account</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="text-xs text-slate-500 dark:text-slate-400 font-medium">Opening Balance (₹)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  placeholder="0.00"
-                  value={openingBalance}
-                  onChange={(e) => setOpeningBalance(e.target.value)}
-                  className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-slate-700 focus:outline-none mt-1 font-mono"
-                />
-              </div>
-
-              <div className="flex items-center gap-2 pt-2">
-                <input
-                  type="checkbox"
-                  id="isDefaultBank"
-                  checked={isDefaultBank}
-                  onChange={(e) => setIsDefaultBank(e.target.checked)}
-                  className="rounded border-slate-800 bg-slate-950 text-indigo-600 focus:ring-0"
-                />
-                <label htmlFor="isDefaultBank" className="text-xs text-slate-300">
-                  Set as primary default bank for receipt payments & invoices
-                </label>
-              </div>
-
               </form>
             </div>
 
-            {/* Footer */}
-            <div className="p-6 border-t border-slate-800 bg-slate-950 flex justify-end gap-2">
+            {/* Pinned Footer */}
+            <div className="flex-shrink-0 flex items-center justify-end gap-2.5 px-4 py-3 sm:px-6 sm:py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950">
               <button
                 type="button"
                 onClick={() => setIsAddBankModalOpen(false)}
-                className="rounded-lg border border-slate-800 bg-slate-950/60 py-2 px-4 text-xs font-semibold text-slate-500 hover:bg-slate-900 transition-all shadow-sm"
+                className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-2 px-4 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all shadow-xs cursor-pointer"
               >
                 Cancel
               </button>
@@ -1264,7 +1265,7 @@ export default function AccountingDashboardPage() {
                 type="submit"
                 form="add-bank-form"
                 disabled={isProcessing}
-                className="rounded-lg bg-emerald-600 hover:bg-emerald-500 text-slate-100 py-2 px-6 text-xs font-semibold disabled:opacity-55 transition-all flex items-center gap-2 shadow-lg shadow-emerald-600/20"
+                className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white py-2 px-5 text-xs font-bold disabled:opacity-55 transition-all flex items-center gap-2 shadow-xs cursor-pointer active:scale-95"
               >
                 {isProcessing ? <><Loader2 className="h-4 w-4 animate-spin" /> Processing...</> : 'Register Bank Account'}
               </button>
@@ -1275,131 +1276,131 @@ export default function AccountingDashboardPage() {
 
       {/* MODAL 1: Record New Expenditure / Vendor Bill Dialog */}
       {isExpenseModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto animate-in fade-in duration-150">
           {/* Backdrop */}
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsExpenseModalOpen(false)} />
+          <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm" onClick={() => setIsExpenseModalOpen(false)} />
           
           {/* Modal Panel */}
-          <div className="relative w-full max-w-lg bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+          <div className="relative w-full max-w-lg max-h-[88dvh] sm:max-h-[90vh] bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col my-auto z-10">
 
-            {/* Header */}
-            <div className="flex-shrink-0 flex items-center justify-between p-6 border-b border-slate-800 bg-slate-950/90 backdrop-blur-sm">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-emerald-600/20 border border-emerald-500/20">
-                  <Receipt className="h-5 w-5 text-emerald-400" />
+            {/* Pinned Header */}
+            <div className="flex-shrink-0 flex items-center justify-between px-4 py-3.5 sm:px-6 sm:py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/90">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-600/20 border border-emerald-100 dark:border-emerald-500/20">
+                  <Receipt className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-slate-100">Record New Expenditure Bill</h3>
-                  <p className="text-[11px] text-slate-500">Capture vendor invoices and automatically post vouchers.</p>
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">Record New Expenditure Bill</h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Capture vendor invoices and automatically post vouchers</p>
                 </div>
               </div>
               <button
+                type="button"
                 onClick={() => setIsExpenseModalOpen(false)}
-                className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-500 hover:text-slate-300 transition-all"
+                className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            {/* Body */}
-            <div className="p-6 overflow-y-auto">
-              <form id="record-expense-form" onSubmit={handleRecordExpenseSubmit} className="space-y-4">
-              <div>
-                <label className="text-xs text-slate-500 dark:text-slate-400 font-medium">Vendor / Service Provider Name</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Otis Elevator, Torrent Power, CleanCorp..."
-                  value={expVendorName}
-                  onChange={(e) => setExpVendorName(e.target.value)}
-                  className="w-full mt-1 p-2.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Scrollable Body */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+              <form id="record-expense-form" onSubmit={handleRecordExpenseSubmit} className="space-y-4 text-xs">
                 <div>
-                  <label className="text-xs text-slate-500 dark:text-slate-400 font-medium">Bill Invoice Number</label>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Vendor / Service Provider Name</label>
                   <input
                     type="text"
-                    required
-                    value={expBillNumber}
-                    onChange={(e) => setExpBillNumber(e.target.value)}
-                    className="w-full mt-1 p-2.5 rounded-lg bg-slate-950 border border-slate-800 text-xs font-mono text-slate-200 focus:outline-none focus:border-indigo-500"
+                    placeholder="e.g. Otis Elevator, Torrent Power, CleanCorp..."
+                    value={expVendorName}
+                    onChange={(e) => setExpVendorName(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none mt-1 transition shadow-xs"
                   />
                 </div>
 
-                <div>
-                  <label className="text-xs text-slate-500 dark:text-slate-400 font-medium">Bill Date</label>
-                  <input
-                    type="date"
-                    required
-                    value={expDate}
-                    onChange={(e) => setExpDate(e.target.value)}
-                    className="w-full mt-1 p-2.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
-                  />
-                </div>
-              </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Bill Invoice Number *</label>
+                    <input
+                      type="text"
+                      required
+                      value={expBillNumber}
+                      onChange={(e) => setExpBillNumber(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm font-mono text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none mt-1 transition shadow-xs"
+                    />
+                  </div>
 
-              <div>
-                <label className="text-xs text-slate-500 dark:text-slate-400 font-medium">Expense Category Head</label>
-                <select
-                  value={expHeadName}
-                  onChange={(e) => setExpHeadName(e.target.value)}
-                  className="w-full mt-1 p-2.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
-                >
-                  <option value="Repairs & Building Maintenance">EXP-01 - Repairs & Building Maintenance</option>
-                  <option value="Security Guard Agency Expenses">EXP-02 - Security Guard Agency Expenses</option>
-                  <option value="Electricity & Water Utilities">EXP-03 - Electricity & Water Utilities</option>
-                  <option value="Administrative & Accounting Expenses">EXP-04 - Administrative & Accounting Expenses</option>
-                </select>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                  <label className="text-xs text-slate-500 dark:text-slate-400 font-medium">Amount (₹)</label>
-                  <input
-                    type="number"
-                    required
-                    min="1"
-                    value={expAmount || ''}
-                    onChange={(e) => setExpAmount(Number(e.target.value))}
-                    className="w-full mt-1 p-2.5 rounded-lg bg-slate-950 border border-slate-800 text-xs font-mono text-slate-100 font-bold focus:outline-none focus:border-indigo-500"
-                  />
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Bill Date *</label>
+                    <input
+                      type="date"
+                      required
+                      value={expDate}
+                      onChange={(e) => setExpDate(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none mt-1 transition shadow-xs"
+                    />
+                  </div>
                 </div>
 
                 <div>
-                  <label className="text-xs text-slate-500 dark:text-slate-400 font-medium">Payment Mode</label>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Expense Category Head</label>
                   <select
-                    value={expPaymentMode}
-                    onChange={(e) => setExpPaymentMode(e.target.value)}
-                    className="w-full mt-1 p-2.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+                    value={expHeadName}
+                    onChange={(e) => setExpHeadName(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none mt-1 transition shadow-xs"
                   >
-                    <option value="BANK">BANK (Bank Account)</option>
-                    <option value="CASH">CASH (Cash in Hand)</option>
+                    <option value="Repairs & Building Maintenance">EXP-01 - Repairs & Building Maintenance</option>
+                    <option value="Security Guard Agency Expenses">EXP-02 - Security Guard Agency Expenses</option>
+                    <option value="Electricity & Water Utilities">EXP-03 - Electricity & Water Utilities</option>
+                    <option value="Administrative & Accounting Expenses">EXP-04 - Administrative & Accounting Expenses</option>
                   </select>
                 </div>
 
-                <div>
-                  <label className="text-xs text-slate-500 dark:text-slate-400 font-medium">Bill Status</label>
-                  <select
-                    value={expStatus}
-                    onChange={(e) => setExpStatus(e.target.value as any)}
-                    className="w-full mt-1 p-2.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
-                  >
-                    <option value="PAID">PAID (Clear Bill)</option>
-                    <option value="UNPAID">UNPAID (Pending)</option>
-                  </select>
-                </div>
-              </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Amount (₹) *</label>
+                    <input
+                      type="number"
+                      required
+                      min="1"
+                      value={expAmount || ''}
+                      onChange={(e) => setExpAmount(Number(e.target.value))}
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm font-mono text-slate-900 dark:text-slate-100 font-bold focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none mt-1 transition shadow-xs"
+                    />
+                  </div>
 
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Payment Mode</label>
+                    <select
+                      value={expPaymentMode}
+                      onChange={(e) => setExpPaymentMode(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none mt-1 transition shadow-xs"
+                    >
+                      <option value="BANK">BANK (Bank Account)</option>
+                      <option value="CASH">CASH (Cash in Hand)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Bill Status</label>
+                    <select
+                      value={expStatus}
+                      onChange={(e) => setExpStatus(e.target.value as any)}
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none mt-1 transition shadow-xs"
+                    >
+                      <option value="PAID">PAID (Clear Bill)</option>
+                      <option value="UNPAID">UNPAID (Pending)</option>
+                    </select>
+                  </div>
+                </div>
               </form>
             </div>
 
-            {/* Footer */}
-            <div className="p-6 border-t border-slate-800 bg-slate-950 flex justify-end gap-2">
+            {/* Pinned Footer */}
+            <div className="flex-shrink-0 flex items-center justify-end gap-2.5 px-4 py-3 sm:px-6 sm:py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950">
               <button
                 type="button"
                 onClick={() => setIsExpenseModalOpen(false)}
-                className="rounded-lg border border-slate-800 bg-slate-950/60 py-2 px-4 text-xs font-semibold text-slate-500 hover:bg-slate-900 transition-all shadow-sm"
+                className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-2 px-4 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all shadow-xs cursor-pointer"
               >
                 Cancel
               </button>
@@ -1407,7 +1408,7 @@ export default function AccountingDashboardPage() {
                 type="submit"
                 form="record-expense-form"
                 disabled={isProcessing}
-                className="rounded-lg bg-emerald-600 hover:bg-emerald-500 text-slate-100 py-2 px-6 text-xs font-semibold disabled:opacity-55 transition-all flex items-center gap-2 shadow-lg shadow-emerald-600/20"
+                className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white py-2 px-5 text-xs font-bold disabled:opacity-55 transition-all flex items-center gap-2 shadow-xs cursor-pointer active:scale-95"
               >
                 {isProcessing ? <><Loader2 className="h-4 w-4 animate-spin" /> Processing...</> : 'Record & Post Voucher'}
               </button>
@@ -1418,76 +1419,75 @@ export default function AccountingDashboardPage() {
 
       {/* MODAL 2: Voucher Lines Detail Breakdown */}
       {selectedVoucherForModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto animate-in fade-in duration-150">
           {/* Backdrop */}
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedVoucherForModal(null)} />
+          <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm" onClick={() => setSelectedVoucherForModal(null)} />
           
           {/* Modal Panel */}
-          <div className="relative w-full max-w-lg bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+          <div className="relative w-full max-w-lg max-h-[88dvh] sm:max-h-[90vh] bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col my-auto z-10">
 
-            {/* Header */}
-            <div className="flex-shrink-0 flex items-center justify-between p-6 border-b border-slate-800 bg-slate-950/90 backdrop-blur-sm">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-indigo-600/20 border border-indigo-500/20">
-                  <Receipt className="h-5 w-5 text-indigo-400" />
+            {/* Pinned Header */}
+            <div className="flex-shrink-0 flex items-center justify-between px-4 py-3.5 sm:px-6 sm:py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/90">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-600/20 border border-indigo-100 dark:border-indigo-500/20">
+                  <Receipt className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-                    <span className="font-mono text-indigo-400">{selectedVoucherForModal.voucherNumber}</span>
-                    <span className="text-[10px] font-bold border rounded-full px-2.5 py-0.5 uppercase bg-indigo-950/30 border-indigo-900/50 text-indigo-400">
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                    <span className="font-mono text-indigo-600 dark:text-indigo-400">{selectedVoucherForModal.voucherNumber}</span>
+                    <span className="text-[10px] font-bold border rounded-full px-2 py-0.5 uppercase bg-indigo-50 dark:bg-indigo-950/30 border-indigo-200 dark:border-indigo-900/50 text-indigo-600 dark:text-indigo-400">
                       {selectedVoucherForModal.type}
                     </span>
                   </h3>
-                  <p className="text-[11px] text-slate-500">{selectedVoucherForModal.narration || 'N/A'}</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">{selectedVoucherForModal.narration || 'Journal Ledger Entry'}</p>
                 </div>
               </div>
               <button
+                type="button"
                 onClick={() => setSelectedVoucherForModal(null)}
-                className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-500 hover:text-slate-300 transition-all"
+                className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            {/* Body */}
-            <div className="p-6 overflow-y-auto">
-
-            <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/40">
-              <table className="w-full text-left text-xs border-collapse whitespace-nowrap">
-                <thead>
-                  <tr className="bg-black/60 text-slate-500 dark:text-slate-400 font-semibold border-b border-slate-800">
-                    <th className="p-3">Ledger Account</th>
-                    <th className="p-3">Entry Type</th>
-                    <th className="p-3 text-right">Amount (₹)</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/40">
-                  {selectedVoucherForModal.lines?.map((line) => (
-                    <tr key={line.id} className="text-slate-300">
-                      <td className="p-3 font-semibold text-slate-200">
-                        {line.ledgerCode ? <span className="font-mono text-indigo-400 mr-1">[{line.ledgerCode}]</span> : null}
-                        {line.ledgerName}
-                      </td>
-                      <td className="p-3">
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded border uppercase ${
-                          line.type === 'DEBIT' ? 'bg-red-950/40 border-red-800 text-red-400' : 'bg-emerald-950/40 border-emerald-800 text-emerald-400'
-                        }`}>
-                          {line.type}
-                        </span>
-                      </td>
-                      <td className="p-3 text-right font-mono font-bold text-slate-100">
-                        ₹ {Number(line.amount).toLocaleString('en-IN')}
-                      </td>
+            {/* Scrollable Body */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+              <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/40">
+                <table className="w-full text-left text-xs border-collapse whitespace-nowrap">
+                  <thead>
+                    <tr className="bg-slate-100 dark:bg-black/60 text-slate-600 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800">
+                      <th className="p-3">Ledger Account</th>
+                      <th className="p-3">Entry Type</th>
+                      <th className="p-3 text-right">Amount (₹)</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200 dark:divide-slate-800/40">
+                    {selectedVoucherForModal.lines?.map((line) => (
+                      <tr key={line.id} className="text-slate-700 dark:text-slate-300">
+                        <td className="p-3 font-semibold text-slate-900 dark:text-slate-200">
+                          {line.ledgerCode ? <span className="font-mono text-indigo-600 dark:text-indigo-400 mr-1">[{line.ledgerCode}]</span> : null}
+                          {line.ledgerName}
+                        </td>
+                        <td className="p-3">
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded border uppercase ${
+                            line.type === 'DEBIT' ? 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400' : 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400'
+                          }`}>
+                            {line.type}
+                          </span>
+                        </td>
+                        <td className="p-3 text-right font-mono font-bold text-slate-900 dark:text-slate-100">
+                          ₹ {Number(line.amount).toLocaleString('en-IN')}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
-            </div>
-
-            {/* Footer */}
-            <div className="p-6 border-t border-slate-800 bg-slate-950 flex justify-between items-center gap-2">
+            {/* Pinned Footer */}
+            <div className="flex-shrink-0 flex items-center justify-between gap-2.5 px-4 py-3 sm:px-6 sm:py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950">
               <button
                 type="button"
                 onClick={() => {
@@ -1495,15 +1495,15 @@ export default function AccountingDashboardPage() {
                   setSelectedVoucherForModal(null);
                   setPrintVoucherData(v);
                 }}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white py-2 px-4 text-xs font-bold shadow-md transition active:scale-95 cursor-pointer"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white py-2 px-4 text-xs font-bold shadow-xs transition active:scale-95 cursor-pointer"
               >
-                <Printer className="h-3.5 w-3.5" /> Print This Voucher
+                <Printer className="h-3.5 w-3.5" /> Print Voucher
               </button>
 
               <button
                 type="button"
                 onClick={() => setSelectedVoucherForModal(null)}
-                className="rounded-lg border border-slate-800 bg-slate-950/60 py-2 px-6 text-xs font-semibold text-slate-500 hover:bg-slate-900 transition-all shadow-sm cursor-pointer"
+                className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-2 px-5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all shadow-xs cursor-pointer"
               >
                 Close
               </button>
@@ -1518,12 +1518,12 @@ export default function AccountingDashboardPage() {
         const totalNum = Number(printVoucherData.totalAmount || 0);
 
         return (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto animate-in fade-in duration-150">
             {/* Backdrop */}
-            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setPrintVoucherData(null)} />
+            <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm" onClick={() => setPrintVoucherData(null)} />
             
             {/* Modal Panel */}
-            <div className="relative w-full max-w-4xl bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[92vh]">
+            <div className="relative w-full max-w-4xl max-h-[88dvh] sm:max-h-[92vh] bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col my-auto z-10">
 
               {/* Header with Format Selector & Action (no-print) */}
               <div className="no-print flex-shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 sm:p-5 border-b border-slate-800 bg-slate-900/90 backdrop-blur-sm">

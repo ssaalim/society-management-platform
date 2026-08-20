@@ -202,10 +202,11 @@ export default function ReportsCenterPage() {
         )}
 
         {/* Tabs */}
-        <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-hide">
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-2 max-w-full whitespace-nowrap">
           {TABS.map((tab) => (
             <button
               key={tab.id}
+              type="button"
               onClick={() => {
                 if (tab.id === 'custom-sql') {
                   router.push(`/${society_slug}/reports/custom`);
@@ -213,10 +214,10 @@ export default function ReportsCenterPage() {
                   setActiveTab(tab.id);
                 }
               }}
-              className={`flex items-center gap-1.5 whitespace-nowrap px-3 py-1.5 rounded-xl text-xs font-semibold shadow-xs transition-all ${
+              className={`shrink-0 flex items-center gap-1.5 whitespace-nowrap px-3.5 py-2 rounded-xl text-xs font-semibold shadow-xs transition-all cursor-pointer ${
                 activeTab === tab.id
-                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
-                  : 'bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:border-slate-300 dark:hover:border-slate-700'
+                  ? 'bg-indigo-600 border border-indigo-500 text-white shadow-md shadow-indigo-600/20'
+                  : 'bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/80'
               }`}
             >
               <tab.icon className="h-3.5 w-3.5" />

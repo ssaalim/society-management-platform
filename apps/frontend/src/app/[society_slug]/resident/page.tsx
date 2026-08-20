@@ -751,89 +751,103 @@ export default function ResidentDashboardPage() {
       {/* MODAL 1: Add Vehicle                       */}
       {/* ========================================== */}
       {isAddVehicleOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-150">
-          <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-950 p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
-                <Car className="h-5 w-5 text-indigo-400" /> Register Vehicle
-              </h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto animate-in fade-in duration-150">
+          <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm" onClick={() => setIsAddVehicleOpen(false)} />
+          <div className="relative w-full max-w-md max-h-[88dvh] sm:max-h-[90vh] bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col my-auto z-10">
+            {/* Pinned Header */}
+            <div className="flex-shrink-0 flex items-center justify-between px-4 py-3.5 sm:px-6 sm:py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/90">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-600/20 border border-indigo-100 dark:border-indigo-500/20">
+                  <Car className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                </div>
+                <div>
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">Register Vehicle</h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Add resident parking pass record</p>
+                </div>
+              </div>
               <button
+                type="button"
                 onClick={() => setIsAddVehicleOpen(false)}
-                className="text-slate-500 hover:text-slate-300 p-1"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <form onSubmit={handleAddVehicleSubmit} className="space-y-4 text-xs">
-              <div>
-                <label className="text-slate-300 font-semibold">License Plate / Vehicle Number *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. MH 12 AB 1234"
-                  value={vehicleForm.number}
-                  onChange={(e) => setVehicleForm({ ...vehicleForm, number: e.target.value })}
-                  className="w-full mt-1.5 rounded-lg border border-slate-800 bg-slate-900/60 py-2.5 px-3.5 text-sm text-slate-200 uppercase font-mono focus:border-indigo-600 focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="text-slate-300 font-semibold">Vehicle Type</label>
-                <select
-                  value={vehicleForm.type}
-                  onChange={(e) => setVehicleForm({ ...vehicleForm, type: e.target.value })}
-                  className="w-full mt-1.5 rounded-lg border border-slate-800 bg-slate-900/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-indigo-600 focus:outline-none"
-                >
-                  <option value="FOUR_WHEELER">🚗 Four Wheeler (Petrol / Diesel / CNG Car)</option>
-                  <option value="TWO_WHEELER">🛵 Two Wheeler (Petrol Scooter / Bike)</option>
-                  <option value="EV_CAR">⚡ EV Car (Electric Four Wheeler / SUV)</option>
-                  <option value="EV_TWO_WHEELER">⚡ EV Two Wheeler (Electric Scooter / Bike)</option>
-                  <option value="COMMERCIAL">🚐 Commercial Vehicle (Van / Cab / Auto)</option>
-                  <option value="BICYCLE">🚲 Bicycle</option>
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
+            {/* Scrollable Body */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+              <form id="add-vehicle-form" onSubmit={handleAddVehicleSubmit} className="space-y-4 text-xs">
                 <div>
-                  <label className="text-slate-300 font-semibold">Make / Brand</label>
+                  <label className="text-slate-700 dark:text-slate-300 font-semibold">License Plate / Vehicle Number *</label>
                   <input
                     type="text"
-                    placeholder="e.g. Tata / Honda"
-                    value={vehicleForm.make}
-                    onChange={(e) => setVehicleForm({ ...vehicleForm, make: e.target.value })}
-                    className="w-full mt-1.5 rounded-lg border border-slate-800 bg-slate-900/60 py-2 px-3 text-sm text-slate-200 focus:border-indigo-600 focus:outline-none"
+                    required
+                    placeholder="e.g. MH 12 AB 1234"
+                    value={vehicleForm.number}
+                    onChange={(e) => setVehicleForm({ ...vehicleForm, number: e.target.value })}
+                    className="w-full mt-1 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 uppercase font-mono placeholder-slate-400 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition shadow-xs font-semibold"
                   />
                 </div>
-                <div>
-                  <label className="text-slate-300 font-semibold">Model</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Nexon EV / Activa"
-                    value={vehicleForm.model}
-                    onChange={(e) => setVehicleForm({ ...vehicleForm, model: e.target.value })}
-                    className="w-full mt-1.5 rounded-lg border border-slate-800 bg-slate-900/60 py-2 px-3 text-sm text-slate-200 focus:border-indigo-600 focus:outline-none"
-                  />
-                </div>
-              </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => setIsAddVehicleOpen(false)}
-                  className="px-4 py-2 rounded-lg border border-slate-800 text-slate-400 hover:bg-slate-900"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isProcessing}
-                  className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold disabled:opacity-50"
-                >
-                  Register Vehicle
-                </button>
-              </div>
-            </form>
+                <div>
+                  <label className="text-slate-700 dark:text-slate-300 font-semibold">Vehicle Type</label>
+                  <select
+                    value={vehicleForm.type}
+                    onChange={(e) => setVehicleForm({ ...vehicleForm, type: e.target.value })}
+                    className="w-full mt-1 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition shadow-xs"
+                  >
+                    <option value="FOUR_WHEELER">🚗 Four Wheeler (Car / SUV)</option>
+                    <option value="TWO_WHEELER">🛵 Two Wheeler (Scooter / Bike)</option>
+                    <option value="EV_CAR">⚡ EV Car (Electric Vehicle)</option>
+                    <option value="EV_TWO_WHEELER">⚡ EV Two Wheeler (Electric Bike)</option>
+                    <option value="COMMERCIAL">🚐 Commercial Vehicle</option>
+                    <option value="BICYCLE">🚲 Bicycle</option>
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-slate-700 dark:text-slate-300 font-semibold">Make / Brand</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Tata / Honda"
+                      value={vehicleForm.make}
+                      onChange={(e) => setVehicleForm({ ...vehicleForm, make: e.target.value })}
+                      className="w-full mt-1 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition shadow-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-slate-700 dark:text-slate-300 font-semibold">Model</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Nexon EV / Activa"
+                      value={vehicleForm.model}
+                      onChange={(e) => setVehicleForm({ ...vehicleForm, model: e.target.value })}
+                      className="w-full mt-1 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition shadow-xs"
+                    />
+                  </div>
+                </div>
+              </form>
+            </div>
+
+            {/* Pinned Footer */}
+            <div className="flex-shrink-0 flex items-center justify-end gap-2.5 px-4 py-3 sm:px-6 sm:py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950">
+              <button
+                type="button"
+                onClick={() => setIsAddVehicleOpen(false)}
+                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="add-vehicle-form"
+                disabled={isProcessing}
+                className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-xs disabled:opacity-50 cursor-pointer active:scale-95 transition-all"
+              >
+                Register Vehicle
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -842,79 +856,93 @@ export default function ResidentDashboardPage() {
       {/* MODAL 2: Publish Document / Circular       */}
       {/* ========================================== */}
       {isAddDocOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-150">
-          <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-950 p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
-                <FileText className="h-5 w-5 text-emerald-400" /> Publish Circular / Shared File
-              </h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto animate-in fade-in duration-150">
+          <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm" onClick={() => setIsAddDocOpen(false)} />
+          <div className="relative w-full max-w-md max-h-[88dvh] sm:max-h-[90vh] bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col my-auto z-10">
+            {/* Pinned Header */}
+            <div className="flex-shrink-0 flex items-center justify-between px-4 py-3.5 sm:px-6 sm:py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/90">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-600/20 border border-emerald-100 dark:border-emerald-500/20">
+                  <FileText className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <div>
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">Publish Circular / Document</h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Share document with society residents</p>
+                </div>
+              </div>
               <button
+                type="button"
                 onClick={() => setIsAddDocOpen(false)}
-                className="text-slate-500 hover:text-slate-300 p-1"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <form onSubmit={handleAddDocSubmit} className="space-y-4 text-xs">
-              <div>
-                <label className="text-slate-300 font-semibold">Document Title *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. AGM Notice & Agenda 2026 / Audited Balance Sheet"
-                  value={docForm.name}
-                  onChange={(e) => setDocForm({ ...docForm, name: e.target.value })}
-                  className="w-full mt-1.5 rounded-lg border border-slate-800 bg-slate-900/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-emerald-600 focus:outline-none"
-                />
-              </div>
+            {/* Scrollable Body */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+              <form id="add-doc-form" onSubmit={handleAddDocSubmit} className="space-y-4 text-xs">
+                <div>
+                  <label className="text-slate-700 dark:text-slate-300 font-semibold">Document Title *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. AGM Notice & Agenda 2026 / Audited Balance Sheet"
+                    value={docForm.name}
+                    onChange={(e) => setDocForm({ ...docForm, name: e.target.value })}
+                    className="w-full mt-1 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-emerald-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition shadow-xs font-semibold"
+                  />
+                </div>
 
-              <div>
-                <label className="text-slate-300 font-semibold">Category</label>
-                <select
-                  value={docForm.category}
-                  onChange={(e) => setDocForm({ ...docForm, category: e.target.value })}
-                  className="w-full mt-1.5 rounded-lg border border-slate-800 bg-slate-900/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-emerald-600 focus:outline-none"
-                >
-                  <option value="CIRCULAR">General Society Circular</option>
-                  <option value="BYE_LAW">Bye-Laws & Society Rules</option>
-                  <option value="AUDIT_REPORT">Audited Financial Report</option>
-                  <option value="MEETING_MINUTES">AGM / EGM Minutes</option>
-                  <option value="MAINTENANCE_NOTICE">Maintenance & Tariff Notice</option>
-                  <option value="CONTRACT">Vendor / AMC Contract</option>
-                </select>
-              </div>
+                <div>
+                  <label className="text-slate-700 dark:text-slate-300 font-semibold">Category</label>
+                  <select
+                    value={docForm.category}
+                    onChange={(e) => setDocForm({ ...docForm, category: e.target.value })}
+                    className="w-full mt-1 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-emerald-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition shadow-xs"
+                  >
+                    <option value="CIRCULAR">General Society Circular</option>
+                    <option value="BYE_LAW">Bye-Laws & Society Rules</option>
+                    <option value="AUDIT_REPORT">Audited Financial Report</option>
+                    <option value="MEETING_MINUTES">AGM / EGM Minutes</option>
+                    <option value="MAINTENANCE_NOTICE">Maintenance & Tariff Notice</option>
+                    <option value="CONTRACT">Vendor / AMC Contract</option>
+                  </select>
+                </div>
 
-              <div>
-                <label className="text-slate-300 font-semibold">File / Attachment URL *</label>
-                <input
-                  type="url"
-                  required
-                  placeholder="https://drive.google.com/... or cloud storage URL"
-                  value={docForm.fileUrl}
-                  onChange={(e) => setDocForm({ ...docForm, fileUrl: e.target.value })}
-                  className="w-full mt-1.5 rounded-lg border border-slate-800 bg-slate-900/60 py-2.5 px-3.5 text-sm text-slate-200 font-mono focus:border-emerald-600 focus:outline-none"
-                />
-                <p className="text-[10px] text-slate-500 mt-1">Direct link to PDF, document, or spreadsheet.</p>
-              </div>
+                <div>
+                  <label className="text-slate-700 dark:text-slate-300 font-semibold">File / Attachment URL *</label>
+                  <input
+                    type="url"
+                    required
+                    placeholder="https://drive.google.com/... or cloud storage URL"
+                    value={docForm.fileUrl}
+                    onChange={(e) => setDocForm({ ...docForm, fileUrl: e.target.value })}
+                    className="w-full mt-1 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 font-mono focus:border-emerald-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition shadow-xs"
+                  />
+                  <p className="text-[10px] text-slate-500 mt-1">Direct link to PDF, document, or spreadsheet.</p>
+                </div>
+              </form>
+            </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => setIsAddDocOpen(false)}
-                  className="px-4 py-2 rounded-lg border border-slate-800 text-slate-400 hover:bg-slate-900"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isProcessing}
-                  className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold disabled:opacity-50"
-                >
-                  Publish Document
-                </button>
-              </div>
-            </form>
+            {/* Pinned Footer */}
+            <div className="flex-shrink-0 flex items-center justify-end gap-2.5 px-4 py-3 sm:px-6 sm:py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950">
+              <button
+                type="button"
+                onClick={() => setIsAddDocOpen(false)}
+                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="add-doc-form"
+                disabled={isProcessing}
+                className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs disabled:opacity-50 cursor-pointer active:scale-95 transition-all"
+              >
+                Publish Document
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -923,72 +951,86 @@ export default function ResidentDashboardPage() {
       {/* MODAL 3: Create General Body Proposal      */}
       {/* ========================================== */}
       {isCreatePollOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-150">
-          <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-950 p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
-                <Vote className="h-5 w-5 text-purple-400" /> Create General Body Proposal
-              </h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto animate-in fade-in duration-150">
+          <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm" onClick={() => setIsCreatePollOpen(false)} />
+          <div className="relative w-full max-w-md max-h-[88dvh] sm:max-h-[90vh] bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col my-auto z-10">
+            {/* Pinned Header */}
+            <div className="flex-shrink-0 flex items-center justify-between px-4 py-3.5 sm:px-6 sm:py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/90">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-purple-50 dark:bg-purple-600/20 border border-purple-100 dark:border-purple-500/20">
+                  <Vote className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                </div>
+                <div>
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">Create General Body Proposal</h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Launch resolution ballot vote for residents</p>
+                </div>
+              </div>
               <button
+                type="button"
                 onClick={() => setIsCreatePollOpen(false)}
-                className="text-slate-500 hover:text-slate-300 p-1"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <form onSubmit={handleCreatePollSubmit} className="space-y-4 text-xs">
-              <div>
-                <label className="text-slate-300 font-semibold">Proposal / Resolution Question *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Upgrade clubhouse solar water heater infrastructure?"
-                  value={pollForm.question}
-                  onChange={(e) => setPollForm({ ...pollForm, question: e.target.value })}
-                  className="w-full mt-1.5 rounded-lg border border-slate-800 bg-slate-900/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-purple-600 focus:outline-none"
-                />
-              </div>
+            {/* Scrollable Body */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+              <form id="create-poll-form" onSubmit={handleCreatePollSubmit} className="space-y-4 text-xs">
+                <div>
+                  <label className="text-slate-700 dark:text-slate-300 font-semibold">Proposal / Resolution Question *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Upgrade clubhouse solar water heater infrastructure?"
+                    value={pollForm.question}
+                    onChange={(e) => setPollForm({ ...pollForm, question: e.target.value })}
+                    className="w-full mt-1 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-purple-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition shadow-xs font-semibold"
+                  />
+                </div>
 
-              <div>
-                <label className="text-slate-300 font-semibold">Detailed Description & Budget Impact</label>
-                <textarea
-                  rows={3}
-                  placeholder="Proposed budget allocation of ₹4,50,000 funded via Sinking Fund reserves with 3-year AMC warranty."
-                  value={pollForm.description}
-                  onChange={(e) => setPollForm({ ...pollForm, description: e.target.value })}
-                  className="w-full mt-1.5 rounded-lg border border-slate-800 bg-slate-900/60 py-2 px-3 text-sm text-slate-200 focus:border-purple-600 focus:outline-none"
-                />
-              </div>
+                <div>
+                  <label className="text-slate-700 dark:text-slate-300 font-semibold">Detailed Description & Budget Impact</label>
+                  <textarea
+                    rows={3}
+                    placeholder="Proposed budget allocation of ₹4,50,000 funded via Sinking Fund reserves with 3-year AMC warranty."
+                    value={pollForm.description}
+                    onChange={(e) => setPollForm({ ...pollForm, description: e.target.value })}
+                    className="w-full mt-1 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2 px-3 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-purple-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition shadow-xs"
+                  />
+                </div>
 
-              <div>
-                <label className="text-slate-300 font-semibold">Voting Closing Date *</label>
-                <input
-                  type="date"
-                  required
-                  value={pollForm.endDate}
-                  onChange={(e) => setPollForm({ ...pollForm, endDate: e.target.value })}
-                  className="w-full mt-1.5 rounded-lg border border-slate-800 bg-slate-900/60 py-2 px-3 text-sm text-slate-200 focus:border-purple-600 focus:outline-none"
-                />
-              </div>
+                <div>
+                  <label className="text-slate-700 dark:text-slate-300 font-semibold">Voting Closing Date *</label>
+                  <input
+                    type="date"
+                    required
+                    value={pollForm.endDate}
+                    onChange={(e) => setPollForm({ ...pollForm, endDate: e.target.value })}
+                    className="w-full mt-1 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-purple-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition shadow-xs"
+                  />
+                </div>
+              </form>
+            </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => setIsCreatePollOpen(false)}
-                  className="px-4 py-2 rounded-lg border border-slate-800 text-slate-400 hover:bg-slate-900"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isProcessing}
-                  className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-bold disabled:opacity-50"
-                >
-                  Launch Proposal
-                </button>
-              </div>
-            </form>
+            {/* Pinned Footer */}
+            <div className="flex-shrink-0 flex items-center justify-end gap-2.5 px-4 py-3 sm:px-6 sm:py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950">
+              <button
+                type="button"
+                onClick={() => setIsCreatePollOpen(false)}
+                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="create-poll-form"
+                disabled={isProcessing}
+                className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-xs disabled:opacity-50 cursor-pointer active:scale-95 transition-all"
+              >
+                Launch Proposal
+              </button>
+            </div>
           </div>
         </div>
       )}

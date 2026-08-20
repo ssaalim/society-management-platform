@@ -156,13 +156,16 @@ Please note the details regarding ${noticeDetails}.
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 max-w-full whitespace-nowrap">
             {['chat', 'notices', 'predictive', 'ocr'].map((tab) => (
               <button
                 key={tab}
+                type="button"
                 onClick={() => setActiveTab(tab as any)}
-                className={`rounded-lg border py-1.5 px-2.5 text-xs font-semibold uppercase tracking-wider transition-all ${
-                  activeTab === tab ? 'bg-indigo-600 border-indigo-500 text-white shadow-xs' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900'
+                className={`shrink-0 rounded-xl border py-2 px-3.5 text-xs font-semibold uppercase tracking-wider transition-all shadow-xs cursor-pointer ${
+                  activeTab === tab
+                    ? 'bg-indigo-600 border-indigo-500 text-white shadow-indigo-600/20'
+                    : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/80'
                 }`}
               >
                 {tab}
