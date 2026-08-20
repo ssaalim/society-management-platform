@@ -27,7 +27,9 @@ export class UserController {
   @Get('me')
   async getMe(@Req() req: any) {
     const userId = req.user.id;
-    const result = await this.userService.getUserMemberships(userId);
+    const email = req.user.email;
+    const name = req.user.userMetadata?.name || req.user.name;
+    const result = await this.userService.getUserMemberships(userId, email, name);
     return {
       success: true,
       data: result,

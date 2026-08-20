@@ -88,19 +88,38 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // Validate active tenant scope
   if (!activeSociety) {
+    const isSuperAdmin = memberships.some(m => m.role === 'SUPER_ADMIN') || user?.email?.toLowerCase().includes('superadmin');
+
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-[#030712] px-4 text-center space-y-4">
         <ShieldAlert className="h-12 w-12 text-yellow-500" />
-        <h3 className="text-xl font-bold text-slate-200">No Society Workspace</h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm">
-          You are authenticated, but you are not mapped to any society. Contact your society administrator to be registered.
+        <h3 className="text-xl font-bold text-slate-200">No Society Workspace Selected</h3>
+        <p className="text-sm text-slate-400 max-w-sm">
+          {isSuperAdmin
+            ? 'You are logged in as Platform Super Administrator. You can access the Admin Console to manage societies and system settings.'
+            : 'You are authenticated, but you are not mapped to any active society. Contact your society administrator to be registered.'}
         </p>
-        <button
-          onClick={signOut}
-          className="mt-4 rounded-lg border border-slate-800 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-300"
-        >
-          Sign Out
-        </button>
+
+        <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
+          {isSuperAdmin && (
+            <button
+              onClick={() => router.push('/admin')}
+              className="rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 text-xs font-semibold flex items-center gap-2 transition-all shadow-md shadow-indigo-950/40"
+            >
+              <Building className="h-4 w-4" />
+              <span>Go to Platform Admin Console</span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </button>
+          )}
+
+          <button
+            onClick={signOut}
+            className="rounded-lg border border-slate-800 bg-slate-900/60 hover:bg-slate-800 text-slate-300 px-4 py-2.5 text-xs font-semibold flex items-center gap-2 transition-all"
+          >
+            <LogOut className="h-4 w-4" />
+            <span>Sign Out</span>
+          </button>
+        </div>
       </div>
     );
   }

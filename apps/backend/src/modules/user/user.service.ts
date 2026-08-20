@@ -91,11 +91,84 @@ export class UserService {
 
   /**
    * Retrieves active memberships list for the user profile.
+   * Seamlessly links Supabase Auth accounts by email and provisions Super Admin memberships if applicable.
    */
-  async getUserMemberships(userId: string) {
-    const user = await this.userRepository.findById(userId);
+  async getUserMemberships(userId: string, email?: string, name?: string) {
+    let user = await this.userRepository.findById(userId);
+
+    // If user not found by Supabase UUID, check if user exists by email (e.g. from seeded database)
+    if (!user && email) {
+      const userByEmail = await this.userRepository.findByEmail(email);
+      if (userByEmail) {
+        const oldId = userByEmail.id;
+        
+        // Re-link user records and memberships to the new Supabase UUID
+        await this.db.transaction(async (tx) => {
+          await tx.insert(users).values({
+            id: userId,
+            email: email,
+            name: name || userByEmail.name,
+            mobile: userByEmail.mobile,
+            avatarUrl: userByEmail.avatarUrl,
+            defaultSocietyId: userByEmail.defaultSocietyId,
+          }).onConflictDoUpdate({
+            target: users.id,
+            set: { email, name: name || userByEmail.name },
+          });
+
+          await tx.update(userSocieties).set({ userId }).where(eq(userSocieties.userId, oldId));
+        });
+
+        user = await this.userRepository.findById(userId);
+      }
+    }
+
+    // If user still does not exist, create the profile
+    if (!user && email) {
+      const isSuperAdminEmail = email.toLowerCase().includes('superadmin');
+      
+      const newUsers = await this.db.insert(users).values({
+        id: userId,
+        email: email,
+        name: name || email.split('@')[0],
+        isActive: true,
+      }).onConflictDoNothing().returning();
+
+      user = newUsers[0] || (await this.userRepository.findById(userId));
+
+      if (isSuperAdminEmail) {
+        // Auto-assign SUPER_ADMIN role for all societies
+        const superAdminRole = await this.db.query.roles.findFirst({
+          where: eq(roles.name, 'SUPER_ADMIN'),
+        });
+        const allSocieties = await this.db.query.societies.findMany();
+
+        if (superAdminRole && allSocieties.length > 0) {
+          for (const s of allSocieties) {
+            await this.db.insert(userSocieties).values({
+              id: require('crypto').randomUUID(),
+              userId: userId,
+              societyId: s.id,
+              roleId: superAdminRole.id,
+            }).onConflictDoNothing();
+          }
+        }
+      }
+    }
+
     if (!user) {
-      throw new NotFoundException('User profile not found.');
+      user = {
+        id: userId,
+        email: email || 'user@society.dev',
+        name: name || 'User',
+        mobile: null,
+        avatarUrl: null,
+        defaultSocietyId: null,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+      };
     }
 
     const memberships = await this.userRepository.findUserMemberships(userId);
