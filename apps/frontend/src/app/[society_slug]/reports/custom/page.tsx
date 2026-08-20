@@ -1272,19 +1272,21 @@ export default function CustomReportsPage() {
               )}
 
               {/* Action Buttons */}
-              <div className="flex items-center justify-between gap-3 pt-3 border-t border-slate-200 dark:border-slate-800">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-slate-200 dark:border-slate-800">
                 <button
+                  type="button"
                   onClick={() => setViewMode('list')}
-                  className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-900 transition"
+                  className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-900 transition cursor-pointer text-center"
                 >
                   Back to Catalog
                 </button>
 
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
                   <button
+                    type="button"
                     onClick={handleExportCsv}
                     disabled={exportingCsv || executing}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold shadow-xs transition disabled:opacity-50"
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold shadow-xs transition disabled:opacity-50 cursor-pointer"
                   >
                     {exportingCsv ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -1295,16 +1297,17 @@ export default function CustomReportsPage() {
                   </button>
 
                   <button
+                    type="button"
                     onClick={handleRunQuery}
                     disabled={executing}
-                    className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white font-bold text-xs shadow-xs transition disabled:opacity-50 active:scale-95"
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white font-bold text-xs shadow-xs transition disabled:opacity-50 cursor-pointer active:scale-95"
                   >
                     {executing ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
                     ) : (
                       <Play className="h-3.5 w-3.5 fill-current" />
                     )}
-                    {executing ? 'Executing Query...' : 'Run Query'}
+                    {executing ? 'Executing...' : 'Run Query'}
                   </button>
                 </div>
               </div>

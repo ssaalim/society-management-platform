@@ -189,13 +189,13 @@ export default function AssetManagementPage() {
 
   const inp = (field: keyof typeof BLANK_FORM, label: string, type = 'text', placeholder = '') => (
     <div className="space-y-1">
-      <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">{label}</label>
+      <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">{label}</label>
       <input
         type={type}
         value={assetForm[field]}
         onChange={(e) => setAssetForm(prev => ({ ...prev, [field]: e.target.value }))}
         placeholder={placeholder}
-        className="w-full rounded-lg border border-slate-800 bg-slate-950 py-2 px-3 text-sm text-slate-200 focus:border-indigo-500 focus:outline-none transition-all"
+        className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2 px-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition-all shadow-xs"
       />
     </div>
   );
@@ -424,49 +424,52 @@ export default function AssetManagementPage() {
       {/* MODAL: Add / Edit Asset                    */}
       {/* ═══════════════════════════════════════════ */}
       {assetModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setAssetModal(null)} />
-          <div className="relative w-full max-w-2xl bg-slate-950 border border-slate-800 rounded-xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm p-3 sm:p-4 animate-in fade-in duration-150">
+          <div className="relative w-full max-w-2xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800 flex-shrink-0">
+            <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 border-b border-slate-100 dark:border-slate-800 flex-shrink-0 bg-slate-50 dark:bg-slate-950/90">
               <div className="flex items-center gap-2.5">
-                <div className="p-1.5 rounded-lg bg-emerald-600/20 border border-emerald-500/20">
-                  <Box className="h-4 w-4 text-emerald-400" />
+                <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-600/20 border border-emerald-100 dark:border-emerald-500/20">
+                  <Box className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-slate-100">{assetModal === 'add' ? 'Add New Society Asset' : 'Edit Asset Details'}</h3>
-                  <p className="text-[10px] text-slate-500">Register capital assets like lifts, pumps, generators, CCTV, etc.</p>
+                  <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">{assetModal === 'add' ? 'Add New Society Asset' : 'Edit Asset Details'}</h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Register capital assets like lifts, pumps, generators, CCTV, etc.</p>
                 </div>
               </div>
-              <button onClick={() => setAssetModal(null)} className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-500 hover:text-slate-300 transition-all">
-                <X className="h-4 w-4" />
+              <button
+                type="button"
+                onClick={() => setAssetModal(null)}
+                className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-all cursor-pointer"
+              >
+                <X className="h-5 w-5" />
               </button>
             </div>
 
             {/* Body */}
-            <div className="overflow-y-auto p-4 sm:p-5">
-              <form id="asset-form" onSubmit={handleSaveAsset} className="space-y-5">
+            <div className="overflow-y-auto p-4 sm:p-6">
+              <form id="asset-form" onSubmit={handleSaveAsset} className="space-y-4 text-xs">
                 {/* Row 1 */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Asset Name *</label>
+                    <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Asset Name *</label>
                     <input
                       type="text"
                       value={assetForm.name}
                       onChange={(e) => setAssetForm(prev => ({ ...prev, name: e.target.value }))}
                       placeholder="e.g. Main Elevator Tower A, Water Pump Unit 3"
                       required
-                      className="w-full rounded-lg border border-slate-800 bg-slate-950 py-2 px-3 text-sm text-slate-200 focus:border-indigo-500 focus:outline-none"
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2 px-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition-all shadow-xs"
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Asset Type *</label>
+                    <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Asset Type *</label>
                     <select
                       value={assetForm.type}
                       onChange={(e) => setAssetForm(prev => ({ ...prev, type: e.target.value }))}
                       required
-                      className="w-full rounded-lg border border-slate-800 bg-slate-950 py-2 px-3 text-sm text-slate-200 focus:border-indigo-500 focus:outline-none appearance-none"
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2 px-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition-all shadow-xs"
                     >
                       {ASSET_TYPES.map(t => <option key={t} value={t}>{t.replace(/_/g, ' ')}</option>)}
                     </select>
@@ -474,16 +477,16 @@ export default function AssetManagementPage() {
                 </div>
 
                 {/* Row 2 */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {inp('purchaseDate', 'Purchase Date', 'date')}
                   {inp('cost', 'Purchase Cost (₹)', 'number', '0.00')}
                   {inp('warrantyExpiry', 'Warranty Expiry Date', 'date')}
                 </div>
 
                 {/* Row 3 - AMC */}
-                <div className="border border-amber-900/30 bg-amber-950/10 rounded-xl p-4 space-y-3">
-                  <h4 className="text-[11px] font-bold text-amber-400 uppercase tracking-wider">Annual Maintenance Contract (AMC) Details</h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="border border-amber-200 dark:border-amber-900/30 bg-amber-50/50 dark:bg-amber-950/10 rounded-xl p-3.5 sm:p-4 space-y-3">
+                  <h4 className="text-[11px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Annual Maintenance Contract (AMC) Details</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {inp('amcProvider', 'AMC Service Provider', 'text', 'e.g. Otis Elevators India, Kirloskar Brothers Ltd')}
                     {inp('amcCost', 'Annual AMC Cost (₹)', 'number', '0.00')}
                   </div>
@@ -493,11 +496,20 @@ export default function AssetManagementPage() {
             </div>
 
             {/* Footer */}
-            <div className="flex justify-end gap-2 px-6 py-4 border-t border-slate-800 flex-shrink-0">
-              <button type="button" onClick={() => setAssetModal(null)} className="rounded-lg border border-slate-800 bg-slate-900/60 text-slate-400 py-2 px-5 text-xs font-semibold hover:bg-slate-800 transition-all">
+            <div className="flex justify-end gap-2.5 px-4 sm:px-6 py-3.5 border-t border-slate-100 dark:border-slate-800 flex-shrink-0 bg-slate-50 dark:bg-slate-950">
+              <button
+                type="button"
+                onClick={() => setAssetModal(null)}
+                className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-400 py-2 px-4 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition-all shadow-xs cursor-pointer"
+              >
                 Cancel
               </button>
-              <button type="submit" form="asset-form" disabled={isProcessing} className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white py-2 px-6 text-xs font-semibold disabled:opacity-55 flex items-center gap-2 transition-all shadow-lg">
+              <button
+                type="submit"
+                form="asset-form"
+                disabled={isProcessing}
+                className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white py-2 px-5 text-xs font-bold disabled:opacity-55 flex items-center gap-2 transition-all shadow-xs cursor-pointer active:scale-95"
+              >
                 {isProcessing && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                 {assetModal === 'add' ? 'Add Asset to Register' : 'Save Changes'}
               </button>
@@ -510,55 +522,92 @@ export default function AssetManagementPage() {
       {/* MODAL: Log Maintenance / Repair            */}
       {/* ═══════════════════════════════════════════ */}
       {logAssetId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setLogAssetId(null)} />
-          <div className="relative w-full max-w-lg bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-indigo-600/20 border border-indigo-500/20">
-                  <Wrench className="h-5 w-5 text-indigo-400" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm p-3 sm:p-4 animate-in fade-in duration-150">
+          <div className="relative w-full max-w-lg bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+            <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/90">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-600/20 border border-indigo-100 dark:border-indigo-500/20">
+                  <Wrench className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-slate-100">Log Maintenance / Repair</h3>
-                  <p className="text-[11px] text-slate-500">
+                  <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">Log Maintenance / Repair</h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
                     {assetsList.find(a => a.id === logAssetId)?.name || 'Asset'}
                   </p>
                 </div>
               </div>
-              <button onClick={() => setLogAssetId(null)} className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-500 hover:text-slate-300 transition-all">
+              <button
+                type="button"
+                onClick={() => setLogAssetId(null)}
+                className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-all cursor-pointer"
+              >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <div className="p-6 overflow-y-auto">
-              <form id="log-form" onSubmit={handlePostLog} className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="p-4 sm:p-6 overflow-y-auto">
+              <form id="log-form" onSubmit={handlePostLog} className="space-y-3.5 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Work Type</label>
-                    <select value={logType} onChange={(e) => setLogType(e.target.value as any)} className="w-full rounded-lg border border-slate-800 bg-slate-950 py-2 px-3 text-sm text-slate-200 appearance-none focus:border-indigo-500 focus:outline-none">
+                    <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Work Type</label>
+                    <select
+                      value={logType}
+                      onChange={(e) => setLogType(e.target.value as any)}
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2 px-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none shadow-xs"
+                    >
                       <option value="MAINTENANCE">Scheduled Maintenance</option>
                       <option value="REPAIR">Repair / Replacement</option>
                     </select>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Activity Date</label>
-                    <input type="date" value={logDate} onChange={(e) => setLogDate(e.target.value)} required className="w-full rounded-lg border border-slate-800 bg-slate-950 py-2 px-3 text-sm text-slate-200 focus:border-indigo-500 focus:outline-none" />
+                    <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Activity Date</label>
+                    <input
+                      type="date"
+                      value={logDate}
+                      onChange={(e) => setLogDate(e.target.value)}
+                      required
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2 px-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none shadow-xs"
+                    />
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Expense Cost (₹)</label>
-                  <input type="number" step="0.01" value={logCost} onChange={(e) => setLogCost(Number(e.target.value))} className="w-full rounded-lg border border-slate-800 bg-slate-950 py-2 px-3 text-sm text-slate-200 focus:border-indigo-500 focus:outline-none" />
+                  <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Expense Cost (₹)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={logCost}
+                    onChange={(e) => setLogCost(Number(e.target.value))}
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2 px-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none shadow-xs"
+                  />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Activity Description *</label>
-                  <textarea rows={3} placeholder="e.g. Quarterly elevator rope inspection and brake adjustment..." value={logDesc} onChange={(e) => setLogDesc(e.target.value)} required className="w-full rounded-lg border border-slate-800 bg-slate-950 py-2 px-3 text-sm text-slate-200 focus:border-indigo-500 focus:outline-none" />
+                  <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Activity Description *</label>
+                  <textarea
+                    rows={3}
+                    placeholder="e.g. Quarterly elevator rope inspection and brake adjustment..."
+                    value={logDesc}
+                    onChange={(e) => setLogDesc(e.target.value)}
+                    required
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2 px-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none shadow-xs"
+                  />
                 </div>
               </form>
             </div>
 
-            <div className="flex justify-end gap-2 px-6 py-4 border-t border-slate-800 flex-shrink-0">
-              <button type="button" onClick={() => setLogAssetId(null)} className="rounded-lg border border-slate-800 bg-slate-900/60 text-slate-400 py-2 px-4 text-xs font-semibold hover:bg-slate-800 transition-all">Cancel</button>
-              <button type="submit" form="log-form" disabled={isProcessing} className="rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white py-2 px-6 text-xs font-semibold disabled:opacity-55 flex items-center gap-2 shadow-lg">
+            <div className="flex justify-end gap-2.5 px-4 sm:px-6 py-3.5 border-t border-slate-100 dark:border-slate-800 flex-shrink-0 bg-slate-50 dark:bg-slate-950">
+              <button
+                type="button"
+                onClick={() => setLogAssetId(null)}
+                className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-400 py-2 px-4 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition-all shadow-xs cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="log-form"
+                disabled={isProcessing}
+                className="rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-5 text-xs font-bold disabled:opacity-55 flex items-center gap-2 shadow-xs cursor-pointer active:scale-95"
+              >
                 {isProcessing && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                 Save Log Entry
               </button>

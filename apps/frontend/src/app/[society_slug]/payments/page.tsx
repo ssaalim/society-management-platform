@@ -261,46 +261,47 @@ export default function PaymentsCheckoutPage() {
         )}
       </div>
 
-        {/* Modal Sweep Dialog */}
+        {/* Payment Action Dialog Modal */}
         {modalAction && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
             {/* Backdrop */}
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setModalAction(null)} />
+            <div className="absolute inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm" onClick={() => setModalAction(null)} />
             
             {/* Modal Panel */}
-            <div className="relative w-full max-w-lg bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+            <div className="relative w-full max-w-lg bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[90vh]">
 
               {/* Header */}
-              <div className="flex-shrink-0 flex items-center justify-between p-6 border-b border-slate-800 bg-slate-950/90 backdrop-blur-sm">
+              <div className="flex-shrink-0 flex items-center justify-between p-4 sm:p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/90">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-indigo-600/20 border border-indigo-500/20">
-                    <Receipt className="h-5 w-5 text-indigo-400" />
+                  <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-600/20 border border-indigo-100 dark:border-indigo-500/20">
+                    <Receipt className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold capitalize text-slate-100">{modalAction} Payment Receipt</h3>
-                    <p className="text-[11px] text-slate-500">Post reverse journal voucher and adjust outstanding balances.</p>
+                    <h3 className="text-base sm:text-lg font-bold capitalize text-slate-900 dark:text-slate-100">{modalAction} Payment Receipt</h3>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">Post reverse journal voucher and adjust outstanding balances.</p>
                   </div>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setModalAction(null)}
-                  className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-500 hover:text-slate-300 transition-all"
+                  className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-all cursor-pointer"
                 >
                   <X className="h-5 w-5" />
                 </button>
               </div>
 
               {/* Body */}
-              <div className="p-6 overflow-y-auto">
-                <form id="payment-action-form" onSubmit={handlePostAction} className="space-y-4">
+              <div className="p-4 sm:p-6 overflow-y-auto">
+                <form id="payment-action-form" onSubmit={handlePostAction} className="space-y-4 text-xs">
                 {modalAction === 'refund' && (
                   <div>
-                    <label className="text-xs text-slate-500 dark:text-slate-400 font-medium">Refund Amount (₹)</label>
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Refund Amount (₹)</label>
                     <input
                       type="number"
                       step="0.01"
                       value={formAmount}
                       onChange={(e) => setFormAmount(Number(e.target.value))}
-                      className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2 px-3 text-sm text-slate-200 focus:border-slate-700 focus:outline-none mt-1"
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none mt-1 shadow-xs transition"
                       max={receiptsList.find(r => r.id === actionReceiptId)?.amountPaid || 0}
                       required
                     />
@@ -308,28 +309,28 @@ export default function PaymentsCheckoutPage() {
                 )}
                 {(modalAction === 'cancel' || modalAction === 'refund' || modalAction === 'reject') && (
                   <div>
-                    <label className="text-xs text-slate-500 dark:text-slate-400 font-medium capitalize">{modalAction} Reason</label>
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 capitalize">{modalAction} Reason *</label>
                     <textarea
                       rows={3}
                       value={formReason}
                       onChange={(e) => setFormReason(e.target.value)}
-                      className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2 px-3 text-sm text-slate-200 focus:border-slate-700 focus:outline-none mt-1"
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2 px-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none mt-1 shadow-xs transition"
                       required
                     />
                   </div>
                 )}
                 {modalAction === 'approve' && (
-                  <p className="text-sm text-slate-300">Are you sure you want to approve this payment? The ledger will be updated.</p>
+                  <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300">Are you sure you want to approve this payment? The ledger will be updated.</p>
                 )}
                 </form>
               </div>
 
               {/* Footer */}
-              <div className="p-6 border-t border-slate-800 bg-slate-950 flex justify-end gap-2">
+              <div className="p-4 sm:p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex justify-end gap-2.5">
                 <button
                   type="button"
                   onClick={() => setModalAction(null)}
-                  className="rounded-lg border border-slate-800 bg-slate-950/60 py-2 px-4 text-xs font-semibold text-slate-500 hover:bg-slate-900 transition-all shadow-sm"
+                  className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-2 px-4 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all shadow-xs cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -337,7 +338,7 @@ export default function PaymentsCheckoutPage() {
                   type="submit"
                   form="payment-action-form"
                   disabled={isProcessing}
-                  className="rounded-lg bg-indigo-600 hover:bg-indigo-500 text-slate-100 py-2 px-6 text-xs font-semibold disabled:opacity-55 transition-all flex items-center gap-2 shadow-lg shadow-indigo-600/20"
+                  className="rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-5 text-xs font-bold disabled:opacity-55 transition-all flex items-center gap-2 shadow-xs cursor-pointer active:scale-95"
                 >
                   {isProcessing ? <><Loader2 className="h-4 w-4 animate-spin" /> Processing...</> : 'Confirm Action'}
                 </button>

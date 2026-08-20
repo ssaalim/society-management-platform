@@ -810,66 +810,79 @@ export default function MembersListingPage() {
       {/* MODAL: Grant System Access / Add User      */}
       {/* ========================================== */}
       {showGrantAccessModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-150">
-          <div className="w-full max-w-md rounded-xl border border-slate-800 bg-slate-950 p-4 sm:p-5 shadow-2xl space-y-3">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
-              <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
-                <UserPlus className="h-4 w-4 text-indigo-400" /> Grant System Access
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm p-3 sm:p-4 animate-in fade-in duration-150">
+          <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-4 sm:p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <UserPlus className="h-4 w-4 text-indigo-600 dark:text-indigo-400" /> Grant System Access
               </h3>
               <button
                 onClick={() => setShowGrantAccessModal(false)}
-                className="text-slate-500 hover:text-slate-300 p-1"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            <form onSubmit={handleGrantAccessSubmit} className="space-y-3 text-xs">
-              <p className="text-slate-400 text-[11px] leading-relaxed">
+            <form onSubmit={handleGrantAccessSubmit} className="space-y-3.5 text-xs">
+              <p className="text-slate-500 dark:text-slate-400 text-[11px] leading-relaxed">
                 Grant login credentials to accountants, auditors, estate managers, or facility staff who do not own a flat in the society.
               </p>
 
               <div>
-                <label className="text-slate-300 font-semibold">Full Name *</label>
+                <label className="text-slate-700 dark:text-slate-300 font-semibold">Full Name *</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Ramesh Sharma"
                   value={grantAccessForm.name}
                   onChange={(e) => setGrantAccessForm({ ...grantAccessForm, name: e.target.value })}
-                  className="w-full mt-1 rounded-lg border border-slate-800 bg-slate-900/60 py-2 px-3 text-xs text-slate-200 focus:border-indigo-600 focus:outline-none"
+                  className="w-full mt-1 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2 px-3 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition shadow-xs"
                 />
               </div>
 
               <div>
-                <label className="text-slate-300 font-semibold">Email Address (Login Username) *</label>
+                <label className="text-slate-700 dark:text-slate-300 font-semibold">Email Address (Login Username) *</label>
                 <input
                   type="email"
                   required
                   placeholder="accountant@example.com"
                   value={grantAccessForm.email}
                   onChange={(e) => setGrantAccessForm({ ...grantAccessForm, email: e.target.value })}
-                  className="w-full mt-1 rounded-lg border border-slate-800 bg-slate-900/60 py-2 px-3 text-xs text-slate-200 focus:border-indigo-600 focus:outline-none"
+                  className="w-full mt-1 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2 px-3 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition shadow-xs"
                 />
               </div>
 
-              <div>
-                <label className="text-slate-300 font-semibold">Mobile Number</label>
-                <input
-                  type="text"
-                  placeholder="9876543210"
-                  value={grantAccessForm.mobile}
-                  onChange={(e) => setGrantAccessForm({ ...grantAccessForm, mobile: e.target.value })}
-                  className="w-full mt-1 rounded-lg border border-slate-800 bg-slate-900/60 py-2 px-3 text-xs text-slate-200 focus:border-indigo-600 focus:outline-none"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-slate-700 dark:text-slate-300 font-semibold">Mobile Number</label>
+                  <input
+                    type="text"
+                    placeholder="9876543210"
+                    value={grantAccessForm.mobile}
+                    onChange={(e) => setGrantAccessForm({ ...grantAccessForm, mobile: e.target.value })}
+                    className="w-full mt-1 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2 px-3 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition shadow-xs"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-slate-700 dark:text-slate-300 font-semibold">Initial Password</label>
+                  <input
+                    type="password"
+                    placeholder="Defaults to Society@123"
+                    value={grantAccessForm.password}
+                    onChange={(e) => setGrantAccessForm({ ...grantAccessForm, password: e.target.value })}
+                    className="w-full mt-1 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2 px-3 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition shadow-xs"
+                  />
+                </div>
               </div>
 
               <div>
-                <label className="text-slate-300 font-semibold">Assigned System Role *</label>
+                <label className="text-slate-700 dark:text-slate-300 font-semibold">Assigned System Role *</label>
                 <select
                   value={grantAccessForm.roleName}
                   onChange={(e) => setGrantAccessForm({ ...grantAccessForm, roleName: e.target.value })}
-                  className="w-full mt-1 rounded-lg border border-slate-800 bg-slate-900/60 py-2 px-3 text-xs text-slate-200 focus:border-indigo-600 focus:outline-none"
+                  className="w-full mt-1 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2 px-3 text-xs text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition shadow-xs"
                 >
                   <option value="ACCOUNTANT">Accountant (Ledgers, Vouchers, Payments Recording)</option>
                   <option value="AUDITOR">Auditor (Financial Auditing & Reports View)</option>
@@ -884,31 +897,20 @@ export default function MembersListingPage() {
                 </select>
               </div>
 
-              <div>
-                <label className="text-slate-300 font-semibold">Initial Password (Optional)</label>
-                <input
-                  type="password"
-                  placeholder="Defaults to Society@123"
-                  value={grantAccessForm.password}
-                  onChange={(e) => setGrantAccessForm({ ...grantAccessForm, password: e.target.value })}
-                  className="w-full mt-1 rounded-lg border border-slate-800 bg-slate-900/60 py-2 px-3 text-xs text-slate-200 focus:border-indigo-600 focus:outline-none"
-                />
-              </div>
-
-              <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-800">
+              <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => setShowGrantAccessModal(false)}
-                  className="px-3.5 py-1.5 rounded-lg border border-slate-800 text-slate-400 hover:bg-slate-900 text-xs font-semibold"
+                  className="px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isGranting}
-                  className="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-xs disabled:opacity-50"
+                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-xs disabled:opacity-50 cursor-pointer active:scale-95"
                 >
-                  Grant Access
+                  {isGranting ? 'Granting...' : 'Grant Access'}
                 </button>
               </div>
             </form>
@@ -920,33 +922,33 @@ export default function MembersListingPage() {
       {/* MODAL: Change User Role                    */}
       {/* ========================================== */}
       {editingUserRole && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-150">
-          <div className="w-full max-w-md rounded-xl border border-slate-800 bg-slate-950 p-4 sm:p-5 shadow-2xl space-y-3">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
-              <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
-                <Edit2 className="h-4 w-4 text-sky-400" /> Change System Role
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm p-3 sm:p-4 animate-in fade-in duration-150">
+          <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-4 sm:p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <Edit2 className="h-4 w-4 text-sky-600 dark:text-sky-400" /> Change System Role
               </h3>
               <button
                 onClick={() => setEditingUserRole(null)}
-                className="text-slate-500 hover:text-slate-300 p-1"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            <form onSubmit={handleUpdateUserRoleSubmit} className="space-y-3 text-xs">
-              <div className="bg-slate-900/50 border border-slate-800 p-2.5 rounded-lg">
-                <p className="text-[11px] text-slate-400">Updating role for:</p>
-                <p className="font-bold text-slate-200 mt-0.5">{editingUserRole.name || editingUserRole.email}</p>
-                <p className="text-[11px] text-slate-500">{editingUserRole.email}</p>
+            <form onSubmit={handleUpdateUserRoleSubmit} className="space-y-4 text-xs">
+              <div className="bg-slate-50 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 p-3 rounded-xl">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">Updating role for:</p>
+                <p className="font-bold text-slate-900 dark:text-slate-100 text-sm mt-0.5">{editingUserRole.name || editingUserRole.email}</p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">{editingUserRole.email}</p>
               </div>
 
               <div>
-                <label className="text-slate-300 font-semibold">Select New System Role</label>
+                <label className="text-slate-700 dark:text-slate-300 font-semibold">Select New System Role</label>
                 <select
                   value={newRoleSelection}
                   onChange={(e) => setNewRoleSelection(e.target.value)}
-                  className="w-full mt-1 rounded-lg border border-slate-800 bg-slate-900/60 py-2 px-3 text-xs text-slate-200 focus:border-sky-600 focus:outline-none"
+                  className="w-full mt-1 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3 text-xs text-slate-900 dark:text-slate-100 focus:border-sky-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition shadow-xs"
                 >
                   <option value="ACCOUNTANT">Accountant</option>
                   <option value="AUDITOR">Auditor</option>
@@ -963,18 +965,18 @@ export default function MembersListingPage() {
                 </select>
               </div>
 
-              <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-800">
+              <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => setEditingUserRole(null)}
-                  className="px-3.5 py-1.5 rounded-lg border border-slate-800 text-slate-400 hover:bg-slate-900 text-xs font-semibold"
+                  className="px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isGranting}
-                  className="px-4 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-xs disabled:opacity-50"
+                  className="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-xs disabled:opacity-50 cursor-pointer active:scale-95"
                 >
                   Save New Role
                 </button>
@@ -1009,63 +1011,63 @@ export default function MembersListingPage() {
 
       {/* Add Member Modal */}
       {showAddMember && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-150">
-          <div className="w-full max-w-lg rounded-xl border border-slate-800 bg-slate-950 p-4 sm:p-5 shadow-2xl space-y-3">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
-              <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
-                <UserPlus className="h-4 w-4 text-indigo-400" /> Add New Society Member
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm p-3 sm:p-4 animate-in fade-in duration-150">
+          <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-4 sm:p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <UserPlus className="h-4 w-4 text-indigo-600 dark:text-indigo-400" /> Add New Society Member
               </h3>
               <button
                 onClick={() => setShowAddMember(false)}
-                className="text-slate-500 hover:text-slate-300 p-1"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            <div className="space-y-3 text-xs">
-              <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-3.5 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-slate-300 font-semibold">Full Name *</label>
+                  <label className="text-slate-700 dark:text-slate-300 font-semibold">Full Name *</label>
                   <input
                     type="text"
                     required
                     placeholder="e.g. Ramesh Kumar"
                     value={newMemberForm.name}
                     onChange={(e) => setNewMemberForm({ ...newMemberForm, name: e.target.value })}
-                    className="w-full mt-1 rounded-lg border border-slate-800 bg-slate-900/60 py-2 px-3 text-xs text-slate-200 focus:border-indigo-600 focus:outline-none"
+                    className="w-full mt-1 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2 px-3 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition shadow-xs"
                   />
                 </div>
                 <div>
-                  <label className="text-slate-300 font-semibold">Email *</label>
+                  <label className="text-slate-700 dark:text-slate-300 font-semibold">Email *</label>
                   <input
                     type="email"
                     required
                     placeholder="ramesh@example.com"
                     value={newMemberForm.email}
                     onChange={(e) => setNewMemberForm({ ...newMemberForm, email: e.target.value })}
-                    className="w-full mt-1 rounded-lg border border-slate-800 bg-slate-900/60 py-2 px-3 text-xs text-slate-200 focus:border-indigo-600 focus:outline-none"
+                    className="w-full mt-1 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2 px-3 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition shadow-xs"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-slate-300 font-semibold">Mobile</label>
+                  <label className="text-slate-700 dark:text-slate-300 font-semibold">Mobile</label>
                   <input
                     type="text"
                     placeholder="9876543210"
                     value={newMemberForm.mobile}
                     onChange={(e) => setNewMemberForm({ ...newMemberForm, mobile: e.target.value })}
-                    className="w-full mt-1 rounded-lg border border-slate-800 bg-slate-900/60 py-2 px-3 text-xs text-slate-200 focus:border-indigo-600 focus:outline-none"
+                    className="w-full mt-1 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2 px-3 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition shadow-xs"
                   />
                 </div>
                 <div>
-                  <label className="text-slate-300 font-semibold">Membership Type</label>
+                  <label className="text-slate-700 dark:text-slate-300 font-semibold">Membership Type</label>
                   <select
                     value={newMemberForm.memberType}
                     onChange={(e) => setNewMemberForm({ ...newMemberForm, memberType: e.target.value as any })}
-                    className="w-full mt-1 rounded-lg border border-slate-800 bg-slate-900/60 py-2 px-3 text-xs text-slate-200 focus:border-indigo-600 focus:outline-none"
+                    className="w-full mt-1 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2 px-3 text-xs text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition shadow-xs"
                   >
                     <option value="OWNER">Owner</option>
                     <option value="CO_OWNER">Co-owner</option>
@@ -1077,11 +1079,11 @@ export default function MembersListingPage() {
               </div>
 
               <div>
-                <label className="text-slate-300 font-semibold">Committee Designation</label>
+                <label className="text-slate-700 dark:text-slate-300 font-semibold">Committee Designation</label>
                 <select
                   value={newMemberForm.committeeDesignation}
                   onChange={(e) => setNewMemberForm({ ...newMemberForm, committeeDesignation: e.target.value })}
-                  className="w-full mt-1 rounded-lg border border-slate-800 bg-slate-900/60 py-2 px-3 text-xs text-slate-200 focus:border-indigo-600 focus:outline-none"
+                  className="w-full mt-1 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2 px-3 text-xs text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition shadow-xs"
                 >
                   <option value="NONE">None (Regular Resident)</option>
                   <option value="PRESIDENT">President</option>
@@ -1091,11 +1093,11 @@ export default function MembersListingPage() {
                 </select>
               </div>
 
-              <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-800">
+              <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => setShowAddMember(false)}
-                  className="px-3.5 py-1.5 rounded-lg border border-slate-800 text-slate-400 hover:bg-slate-900 text-xs font-semibold"
+                  className="px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -1103,7 +1105,7 @@ export default function MembersListingPage() {
                   type="button"
                   onClick={handleCreateMember}
                   disabled={isCreating}
-                  className="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-xs disabled:opacity-50"
+                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-xs disabled:opacity-50 cursor-pointer active:scale-95"
                 >
                   {isCreating ? 'Adding...' : 'Add Member'}
                 </button>

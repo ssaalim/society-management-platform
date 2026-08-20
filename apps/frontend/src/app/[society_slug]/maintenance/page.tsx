@@ -593,23 +593,23 @@ export default function MaintenanceDashboardPage() {
       <div className="w-full max-w-[1600px] mx-auto space-y-6 z-10">
 
         {/* Header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <CreditCard className="h-8 w-8 text-indigo-400" />
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+          <div className="flex items-center gap-2.5">
+            <CreditCard className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
             <div>
-              <h2 className="text-2xl font-bold tracking-tight text-slate-100">Billing & Maintenance Portal</h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Manage billing cycles, record single/multi-invoice payments, track part payments, and audit double-entry ledger postings</p>
+              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Billing & Maintenance Portal</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Manage billing cycles, record single/multi-invoice payments, track part payments, and audit double-entry ledger postings</p>
             </div>
           </div>
 
           {/* Action Tabs for Management and Residents */}
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar max-w-full pb-1 sm:pb-0 whitespace-nowrap">
             <button
               onClick={() => setActiveView('bills')}
-              className={`rounded-lg border py-2 px-3 text-xs font-semibold transition-all flex items-center gap-1.5 ${
+              className={`rounded-xl border py-1.5 px-3 text-xs font-semibold shrink-0 transition-all flex items-center gap-1.5 cursor-pointer ${
                 activeView === 'bills'
-                  ? 'bg-indigo-600 border-indigo-500 text-slate-100 shadow-sm'
-                  : 'border-slate-800 bg-slate-950/60 text-slate-300 hover:bg-slate-900'
+                  ? 'bg-indigo-600 border-indigo-500 text-white shadow-xs'
+                  : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900'
               }`}
             >
               <CreditCard className="h-3.5 w-3.5" />
@@ -620,10 +620,10 @@ export default function MaintenanceDashboardPage() {
                 setActiveView('society_dues');
                 fetchSocietyDues();
               }}
-              className={`rounded-lg border py-2 px-3 text-xs font-semibold transition-all flex items-center gap-1.5 ${
+              className={`rounded-xl border py-1.5 px-3 text-xs font-semibold shrink-0 transition-all flex items-center gap-1.5 cursor-pointer ${
                 activeView === 'society_dues'
-                  ? 'bg-indigo-600 border-indigo-500 text-slate-100 shadow-sm'
-                  : 'border-slate-800 bg-slate-950/60 text-slate-300 hover:bg-slate-900'
+                  ? 'bg-indigo-600 border-indigo-500 text-white shadow-xs'
+                  : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900'
               }`}
             >
               <Building className="h-3.5 w-3.5" /> Society Outstanding Dues
@@ -632,20 +632,20 @@ export default function MaintenanceDashboardPage() {
               <>
                 <button
                   onClick={() => setActiveView('generate')}
-                  className={`rounded-lg border py-2 px-3 text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                  className={`rounded-xl border py-1.5 px-3 text-xs font-semibold shrink-0 transition-all flex items-center gap-1.5 cursor-pointer ${
                     activeView === 'generate'
-                      ? 'bg-indigo-600 border-indigo-500 text-slate-100 shadow-sm'
-                      : 'border-slate-800 bg-slate-950/60 text-slate-300 hover:bg-slate-900'
+                      ? 'bg-indigo-600 border-indigo-500 text-white shadow-xs'
+                      : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900'
                   }`}
                 >
                   <Calculator className="h-3.5 w-3.5" /> Batch Billing Sweep
                 </button>
                 <button
                   onClick={() => setActiveView('settings')}
-                  className={`rounded-lg border py-2 px-3 text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                  className={`rounded-xl border py-1.5 px-3 text-xs font-semibold shrink-0 transition-all flex items-center gap-1.5 cursor-pointer ${
                     activeView === 'settings'
-                      ? 'bg-indigo-600 border-indigo-500 text-slate-100 shadow-sm'
-                      : 'border-slate-800 bg-slate-950/60 text-slate-300 hover:bg-slate-900'
+                      ? 'bg-indigo-600 border-indigo-500 text-white shadow-xs'
+                      : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900'
                   }`}
                 >
                   <Settings className="h-3.5 w-3.5" /> Formula & Late Fees

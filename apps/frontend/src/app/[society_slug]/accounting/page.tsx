@@ -363,10 +363,10 @@ export default function AccountingDashboardPage() {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-1.5">
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar max-w-full pb-1 sm:pb-0 whitespace-nowrap">
             <button
               onClick={() => setActiveTab('expenditure')}
-              className={`rounded-lg border py-1.5 px-2.5 text-xs font-semibold transition-all ${
+              className={`rounded-xl border py-1.5 px-3 text-xs font-semibold shrink-0 transition-all cursor-pointer ${
                 activeTab === 'expenditure' ? 'bg-indigo-600 border-indigo-500 text-white shadow-xs' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900'
               }`}
             >
@@ -375,7 +375,7 @@ export default function AccountingDashboardPage() {
 
             <button
               onClick={() => setActiveTab('vouchers')}
-              className={`rounded-lg border py-1.5 px-2.5 text-xs font-semibold transition-all ${
+              className={`rounded-xl border py-1.5 px-3 text-xs font-semibold shrink-0 transition-all cursor-pointer ${
                 activeTab === 'vouchers' ? 'bg-indigo-600 border-indigo-500 text-white shadow-xs' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900'
               }`}
             >
@@ -384,7 +384,7 @@ export default function AccountingDashboardPage() {
 
             <button
               onClick={() => setActiveTab('trial')}
-              className={`rounded-lg border py-1.5 px-2.5 text-xs font-semibold transition-all ${
+              className={`rounded-xl border py-1.5 px-3 text-xs font-semibold shrink-0 transition-all cursor-pointer ${
                 activeTab === 'trial' ? 'bg-indigo-600 border-indigo-500 text-white shadow-xs' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900'
               }`}
             >
@@ -393,7 +393,7 @@ export default function AccountingDashboardPage() {
 
             <button
               onClick={() => setActiveTab('income')}
-              className={`rounded-lg border py-1.5 px-2.5 text-xs font-semibold transition-all ${
+              className={`rounded-xl border py-1.5 px-3 text-xs font-semibold shrink-0 transition-all cursor-pointer ${
                 activeTab === 'income' ? 'bg-indigo-600 border-indigo-500 text-white shadow-xs' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900'
               }`}
             >
@@ -402,7 +402,7 @@ export default function AccountingDashboardPage() {
 
             <button
               onClick={() => setActiveTab('balance')}
-              className={`rounded-lg border py-1.5 px-2.5 text-xs font-semibold transition-all ${
+              className={`rounded-xl border py-1.5 px-3 text-xs font-semibold shrink-0 transition-all cursor-pointer ${
                 activeTab === 'balance' ? 'bg-indigo-600 border-indigo-500 text-white shadow-xs' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900'
               }`}
             >
@@ -411,7 +411,7 @@ export default function AccountingDashboardPage() {
 
             <button
               onClick={() => setActiveTab('bank_accounts')}
-              className={`rounded-lg border py-1.5 px-2.5 text-xs font-semibold transition-all flex items-center gap-1.5 ${
+              className={`rounded-xl border py-1.5 px-3 text-xs font-semibold shrink-0 transition-all flex items-center gap-1.5 cursor-pointer ${
                 activeTab === 'bank_accounts' ? 'bg-indigo-600 border-indigo-500 text-white shadow-xs' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900'
               }`}
             >
@@ -421,7 +421,7 @@ export default function AccountingDashboardPage() {
             {isManagementRole && (
               <button
                 onClick={() => setActiveTab('voucher')}
-                className={`rounded-lg border py-1.5 px-2.5 text-xs font-semibold transition-all flex items-center gap-1 ${
+                className={`rounded-xl border py-1.5 px-3 text-xs font-semibold shrink-0 transition-all flex items-center gap-1 cursor-pointer ${
                   activeTab === 'voucher' ? 'bg-indigo-600 border-indigo-500 text-white shadow-xs' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900'
                 }`}
               >

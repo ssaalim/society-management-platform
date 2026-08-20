@@ -98,36 +98,37 @@ export default function BulkUploadModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-md rounded-2xl bg-slate-900 border border-slate-800 shadow-xl overflow-hidden flex flex-col">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
+      <div className="absolute inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm transition-opacity" onClick={onClose} />
+      <div className="relative w-full max-w-md max-h-[90vh] rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-y-auto flex flex-col animate-in zoom-in-95 duration-150">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-800 px-6 py-4">
-          <h2 className="text-lg font-semibold text-white">{title}</h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-4 sm:px-6 py-3.5 sm:py-4">
+          <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">{title}</h2>
+          <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
             <X className="h-5 w-5" />
           </button>
         </div>
 
         {/* Body */}
-        <div className="p-6 space-y-6">
-          <div className="flex justify-between items-center bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
+        <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 dark:bg-slate-800/50 p-3.5 sm:p-4 rounded-xl border border-slate-200 dark:border-slate-700/50">
             <div>
-              <h3 className="text-sm font-medium text-slate-200">Need a template?</h3>
-              <p className="text-xs text-slate-400 mt-1">Download the sample file with correct headers.</p>
+              <h3 className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">Need a template?</h3>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Download the sample file with correct headers.</p>
             </div>
             <button
+              type="button"
               onClick={handleDownloadTemplate}
-              className="flex items-center gap-2 rounded-lg bg-slate-800 px-3 py-2 text-xs font-medium text-slate-300 hover:bg-slate-700 hover:text-white transition-colors border border-slate-700"
+              className="flex items-center justify-center gap-2 rounded-lg bg-white dark:bg-slate-800 px-3 py-2 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-slate-700 border border-indigo-200 dark:border-slate-700 shadow-xs transition-colors cursor-pointer"
             >
-              <Download className="h-4 w-4" />
-              Template
+              <Download className="h-3.5 w-3.5" />
+              Download Template
             </button>
           </div>
 
           <div
-            className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors cursor-pointer ${
-              file ? 'border-brand-500 bg-brand-500/5' : 'border-slate-700 hover:border-slate-500 bg-slate-950/30'
+            className={`border-2 border-dashed rounded-xl p-5 sm:p-8 text-center transition-colors cursor-pointer ${
+              file ? 'border-indigo-500 bg-indigo-50/20 dark:bg-indigo-500/10' : 'border-slate-300 dark:border-slate-700 hover:border-indigo-400 bg-slate-50/50 dark:bg-slate-950/30'
             }`}
             onClick={() => fileInputRef.current?.click()}
           >
@@ -138,23 +139,23 @@ export default function BulkUploadModal({
               accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
               onChange={handleFileChange}
             />
-            <div className="flex flex-col items-center justify-center space-y-3">
-              <div className={`p-3 rounded-full ${file ? 'bg-brand-500/20 text-brand-400' : 'bg-slate-800 text-slate-400'}`}>
+            <div className="flex flex-col items-center justify-center space-y-2.5">
+              <div className={`p-3 rounded-full ${file ? 'bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'}`}>
                 {file ? <FileSpreadsheet className="h-6 w-6" /> : <Upload className="h-6 w-6" />}
               </div>
               <div>
-                <p className="text-sm font-medium text-slate-200">
-                  {file ? file.name : 'Click or drag file to upload'}
+                <p className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 break-all px-2">
+                  {file ? file.name : 'Click or tap to upload file'}
                 </p>
-                <p className="text-xs text-slate-500 mt-1">
-                  {file ? `${(file.size / 1024).toFixed(1)} KB` : 'CSV or XLSX formats supported'}
+                <p className="text-[11px] text-slate-500 mt-1">
+                  {file ? `${(file.size / 1024).toFixed(1)} KB` : 'CSV or XLSX format supported'}
                 </p>
               </div>
             </div>
           </div>
 
           {error && (
-            <div className="flex items-start gap-2 text-red-400 bg-red-400/10 p-3 rounded-lg text-sm border border-red-400/20">
+            <div className="flex items-start gap-2 text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 p-3 rounded-lg text-xs border border-rose-200 dark:border-rose-900/60 font-medium">
               <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
               <p>{error}</p>
             </div>
@@ -162,21 +163,23 @@ export default function BulkUploadModal({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-slate-800 p-4 bg-slate-900/50 flex justify-end gap-3">
+        <div className="border-t border-slate-100 dark:border-slate-800 p-3.5 sm:p-4 bg-slate-50 dark:bg-slate-900/50 flex items-center justify-end gap-2.5 sm:gap-3">
           <button
+            type="button"
             onClick={onClose}
-            className="rounded-lg px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800 transition-colors"
+            className="rounded-lg px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
             Cancel
           </button>
           <button
+            type="button"
             onClick={processFile}
             disabled={!file || isUploading}
-            className="flex items-center justify-center min-w-[120px] rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center justify-center min-w-[110px] rounded-lg bg-indigo-600 hover:bg-indigo-700 px-4 py-2 text-xs font-bold text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-xs cursor-pointer active:scale-95"
           >
             {isUploading ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
                 Processing...
               </>
             ) : (

@@ -27,7 +27,8 @@ import {
   Users,
   Trash2,
   Phone,
-  Briefcase
+  Briefcase,
+  PlusCircle
 } from 'lucide-react';
 import { useParams } from 'next/navigation';
 
@@ -666,18 +667,18 @@ export default function ComplaintManagementPage() {
       </div>
 
       {/* ========================================== */}
-      {/* MODAL 1: Raise Complaint                   */}
+      {/* MODAL 1: Raise / Log Complaint             */}
       {/* ========================================== */}
       {isCreateOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-150">
-          <div className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                <MessageSquare className="h-5 w-5 text-indigo-600 dark:text-indigo-400" /> Raise Complaint Ticket
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm p-3 sm:p-4 animate-in fade-in duration-150">
+          <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-4 sm:p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <PlusCircle className="h-5 w-5 text-indigo-600 dark:text-indigo-400" /> Log Maintenance Complaint
               </h3>
               <button
                 onClick={() => setIsCreateOpen(false)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -692,7 +693,7 @@ export default function ComplaintManagementPage() {
                   placeholder="e.g. Lift A stuck between 4th & 5th floor / Water pipeline leak"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  className="w-full mt-1.5 rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900/60 py-2.5 px-3.5 text-sm text-slate-900 dark:text-slate-200 focus:border-indigo-600 focus:outline-none"
+                  className="w-full mt-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition shadow-xs"
                 />
               </div>
 
@@ -702,7 +703,7 @@ export default function ComplaintManagementPage() {
                   <select
                     value={selectedFlatId}
                     onChange={(e) => setSelectedFlatId(e.target.value)}
-                    className="w-full mt-1.5 rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900/60 py-2.5 px-3.5 text-sm text-slate-900 dark:text-slate-200 focus:border-indigo-600 focus:outline-none"
+                    className="w-full mt-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition shadow-xs"
                   >
                     <option value="">-- Auto-Detect My Flat / Common Area --</option>
                     {flatsList.map((f) => (
@@ -718,7 +719,7 @@ export default function ComplaintManagementPage() {
                   <select
                     value={newPriority}
                     onChange={(e) => setNewPriority(e.target.value)}
-                    className="w-full mt-1.5 rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900/60 py-2.5 px-3.5 text-sm text-slate-900 dark:text-slate-200 focus:border-indigo-600 focus:outline-none"
+                    className="w-full mt-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition shadow-xs"
                   >
                     <option value="LOW">🟢 Low (Cosmetic / General maintenance)</option>
                     <option value="MEDIUM">🔵 Medium (Standard Repair)</option>
@@ -736,22 +737,22 @@ export default function ComplaintManagementPage() {
                   placeholder="Provide complete breakdown details, location, and severity..."
                   value={newDescription}
                   onChange={(e) => setNewDescription(e.target.value)}
-                  className="w-full mt-1.5 rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900/60 py-2 px-3 text-sm text-slate-900 dark:text-slate-200 focus:border-indigo-600 focus:outline-none"
+                  className="w-full mt-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2 px-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition shadow-xs"
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+              <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => setIsCreateOpen(false)}
-                  className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900"
+                  className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 font-semibold cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isProcessing}
-                  className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold disabled:opacity-50"
+                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold disabled:opacity-50 shadow-xs cursor-pointer active:scale-95"
                 >
                   Log Ticket
                 </button>
@@ -765,10 +766,10 @@ export default function ComplaintManagementPage() {
       {/* MODAL 2: Assign Staff / Technician         */}
       {/* ========================================== */}
       {activeAssignTicket && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-150">
-          <div className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm p-3 sm:p-4 animate-in fade-in duration-150">
+          <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-4 sm:p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                 <UserCheck className="h-5 w-5 text-sky-600 dark:text-sky-400" /> Assign Staff to Ticket
               </h3>
               <button
@@ -776,16 +777,16 @@ export default function ComplaintManagementPage() {
                   setActiveAssignTicket(null);
                   setIsInlineAddStaff(false);
                 }}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
             <form onSubmit={handleAssignSubmit} className="space-y-4 text-xs">
-              <div className="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 p-3 rounded-lg">
+              <div className="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 p-3 rounded-xl">
                 <p className="text-[11px] text-slate-500 dark:text-slate-400">Assigning for:</p>
-                <p className="font-bold text-slate-900 dark:text-slate-200 mt-0.5">{activeAssignTicket.title}</p>
+                <p className="font-bold text-slate-900 dark:text-slate-100 text-sm mt-0.5">{activeAssignTicket.title}</p>
               </div>
 
               {!isInlineAddStaff ? (
@@ -796,7 +797,7 @@ export default function ComplaintManagementPage() {
                       <button
                         type="button"
                         onClick={() => setIsInlineAddStaff(true)}
-                        className="text-[11px] text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 font-semibold flex items-center gap-1"
+                        className="text-[11px] text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 font-semibold flex items-center gap-1 cursor-pointer"
                       >
                         <Plus className="h-3 w-3" /> Register New Staff
                       </button>
@@ -807,7 +808,7 @@ export default function ComplaintManagementPage() {
                         setSelectedStaffId(e.target.value);
                         if (e.target.value) setCustomStaffName('');
                       }}
-                      className="w-full mt-1.5 rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900/60 py-2.5 px-3.5 text-sm text-slate-900 dark:text-slate-200 focus:border-sky-600 focus:outline-none"
+                      className="w-full mt-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-sky-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition shadow-xs"
                     >
                       <option value="">-- Choose from staff roster --</option>
                       {staffList.map((s) => (
@@ -828,7 +829,7 @@ export default function ComplaintManagementPage() {
                         setCustomStaffName(e.target.value);
                         if (e.target.value) setSelectedStaffId('');
                       }}
-                      className="w-full mt-1.5 rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900/60 py-2.5 px-3.5 text-sm text-slate-900 dark:text-slate-200 focus:border-sky-600 focus:outline-none"
+                      className="w-full mt-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-sky-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition shadow-xs"
                     />
                   </div>
                 </>
@@ -842,7 +843,7 @@ export default function ComplaintManagementPage() {
                     <button
                       type="button"
                       onClick={() => setIsInlineAddStaff(false)}
-                      className="text-[10px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                      className="text-[10px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 cursor-pointer"
                     >
                       Back to list
                     </button>
@@ -855,11 +856,11 @@ export default function ComplaintManagementPage() {
                       placeholder="e.g. Ramesh Kumar"
                       value={staffForm.name}
                       onChange={(e) => setStaffForm({ ...staffForm, name: e.target.value })}
-                      className="w-full mt-1 rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900/80 py-2 px-3 text-sm text-slate-900 dark:text-slate-200 focus:border-sky-600 focus:outline-none"
+                      className="w-full mt-1 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-2 px-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-sky-600 focus:outline-none shadow-xs"
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div>
                       <label className="text-slate-700 dark:text-slate-300 font-semibold">Mobile *</label>
                       <input
@@ -867,7 +868,7 @@ export default function ComplaintManagementPage() {
                         placeholder="9876543210"
                         value={staffForm.mobile}
                         onChange={(e) => setStaffForm({ ...staffForm, mobile: e.target.value })}
-                        className="w-full mt-1 rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900/80 py-2 px-3 text-sm text-slate-900 dark:text-slate-200 focus:border-sky-600 focus:outline-none"
+                        className="w-full mt-1 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-2 px-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-sky-600 focus:outline-none shadow-xs"
                       />
                     </div>
                     <div>
@@ -875,7 +876,7 @@ export default function ComplaintManagementPage() {
                       <select
                         value={staffForm.role}
                         onChange={(e) => setStaffForm({ ...staffForm, role: e.target.value })}
-                        className="w-full mt-1 rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900/80 py-2 px-3 text-sm text-slate-900 dark:text-slate-200 focus:border-sky-600 focus:outline-none"
+                        className="w-full mt-1 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-2 px-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-sky-600 focus:outline-none shadow-xs"
                       >
                         <option value="ELECTRICIAN">Electrician</option>
                         <option value="PLUMBER">Plumber</option>
@@ -894,28 +895,28 @@ export default function ComplaintManagementPage() {
                     type="button"
                     onClick={handleCreateStaffSubmit}
                     disabled={isProcessing}
-                    className="w-full py-2 rounded-lg bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs transition-all shadow"
+                    className="w-full py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs transition-all shadow-xs cursor-pointer active:scale-95"
                   >
                     Save & Select for Ticket
                   </button>
                 </div>
               )}
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+              <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => {
                     setActiveAssignTicket(null);
                     setIsInlineAddStaff(false);
                   }}
-                  className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900"
+                  className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 font-semibold cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isProcessing}
-                  className="px-4 py-2 rounded-lg bg-sky-600 hover:bg-sky-700 text-white font-bold disabled:opacity-50"
+                  className="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold disabled:opacity-50 shadow-xs cursor-pointer active:scale-95"
                 >
                   Assign Ticket
                 </button>
@@ -929,24 +930,24 @@ export default function ComplaintManagementPage() {
       {/* MODAL 3: Record Resolution Comments        */}
       {/* ========================================== */}
       {activeResolveTicket && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-150">
-          <div className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm p-3 sm:p-4 animate-in fade-in duration-150">
+          <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-4 sm:p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                 <Wrench className="h-5 w-5 text-teal-600 dark:text-teal-400" /> Record Resolution Comments
               </h3>
               <button
                 onClick={() => setActiveResolveTicket(null)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
             <form onSubmit={handleResolveSubmit} className="space-y-4 text-xs">
-              <div className="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 p-3 rounded-lg">
+              <div className="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 p-3 rounded-xl">
                 <p className="text-[11px] text-slate-500 dark:text-slate-400">Resolving:</p>
-                <p className="font-bold text-slate-900 dark:text-slate-200 mt-0.5">{activeResolveTicket.title}</p>
+                <p className="font-bold text-slate-900 dark:text-slate-100 text-sm mt-0.5">{activeResolveTicket.title}</p>
               </div>
 
               <div>
@@ -957,22 +958,22 @@ export default function ComplaintManagementPage() {
                   placeholder="Detail the root cause and actions taken (e.g. Replaced faulty relay in elevator panel, tested operational for 30 mins)..."
                   value={resolutionComment}
                   onChange={(e) => setResolutionComment(e.target.value)}
-                  className="w-full mt-1.5 rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900/60 py-2 px-3 text-sm text-slate-900 dark:text-slate-200 focus:border-teal-600 focus:outline-none"
+                  className="w-full mt-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2 px-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-teal-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition shadow-xs"
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+              <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => setActiveResolveTicket(null)}
-                  className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900"
+                  className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 font-semibold cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isProcessing}
-                  className="px-4 py-2 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-bold disabled:opacity-50"
+                  className="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold disabled:opacity-50 shadow-xs cursor-pointer active:scale-95"
                 >
                   Mark as Resolved
                 </button>
@@ -986,24 +987,24 @@ export default function ComplaintManagementPage() {
       {/* MODAL 4: Resident Feedback & Closing       */}
       {/* ========================================== */}
       {activeFeedbackTicket && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-150">
-          <div className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm p-3 sm:p-4 animate-in fade-in duration-150">
+          <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-4 sm:p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                 <Star className="h-5 w-5 text-amber-500 fill-amber-400" /> Resident Feedback & Review
               </h3>
               <button
                 onClick={() => setActiveFeedbackTicket(null)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
             <form onSubmit={handleFeedbackSubmit} className="space-y-4 text-xs">
-              <div className="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 p-3 rounded-lg">
+              <div className="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 p-3 rounded-xl">
                 <p className="text-[11px] text-slate-500 dark:text-slate-400">Closing Ticket:</p>
-                <p className="font-bold text-slate-900 dark:text-slate-200 mt-0.5">{activeFeedbackTicket.title}</p>
+                <p className="font-bold text-slate-900 dark:text-slate-100 text-sm mt-0.5">{activeFeedbackTicket.title}</p>
                 {activeFeedbackTicket.resolutionComment && (
                   <p className="text-[11px] text-emerald-700 dark:text-emerald-300 mt-1 italic">
                     Resolution: "{activeFeedbackTicket.resolutionComment}"
@@ -1020,7 +1021,7 @@ export default function ComplaintManagementPage() {
                       type="button"
                       key={star}
                       onClick={() => setFeedbackRating(star)}
-                      className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-900 transition-all"
+                      className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-900 transition-all cursor-pointer"
                     >
                       <Star
                         className={`h-6 w-6 ${
@@ -1044,22 +1045,22 @@ export default function ComplaintManagementPage() {
                   placeholder="Share your satisfaction with the repair turnaround and technician service..."
                   value={feedbackText}
                   onChange={(e) => setFeedbackText(e.target.value)}
-                  className="w-full mt-1.5 rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900/60 py-2 px-3 text-sm text-slate-900 dark:text-slate-200 focus:border-indigo-600 focus:outline-none"
+                  className="w-full mt-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2 px-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition shadow-xs"
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+              <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => setActiveFeedbackTicket(null)}
-                  className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900"
+                  className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 font-semibold cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isProcessing}
-                  className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold disabled:opacity-50"
+                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold disabled:opacity-50 shadow-xs cursor-pointer active:scale-95"
                 >
                   Close & Submit Feedback
                 </button>
@@ -1073,18 +1074,18 @@ export default function ComplaintManagementPage() {
       {/* MODAL 5: Staff & Technicians Manager       */}
       {/* ========================================== */}
       {isStaffManagerOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-150">
-          <div className="w-full max-w-2xl rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-6 shadow-2xl space-y-5 max-h-[90vh] flex flex-col">
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm p-3 sm:p-4 animate-in fade-in duration-150">
+          <div className="w-full max-w-2xl rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-4 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto flex flex-col">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <div>
-                <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                   <Users className="h-5 w-5 text-sky-600 dark:text-sky-400" /> Society Staff & Facility Technicians Team
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Manage electricians, plumbers, security guards, and facility maintenance team</p>
               </div>
               <button
                 onClick={() => setIsStaffManagerOpen(false)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -1097,35 +1098,35 @@ export default function ComplaintManagementPage() {
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="text-slate-600 dark:text-slate-400 font-medium">Full Name *</label>
+                  <label className="text-slate-700 dark:text-slate-300 font-semibold">Full Name *</label>
                   <input
                     type="text"
                     required
                     placeholder="e.g. Ramesh Kumar"
                     value={staffForm.name}
                     onChange={(e) => setStaffForm({ ...staffForm, name: e.target.value })}
-                    className="w-full mt-1 rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-950/80 py-2 px-3 text-xs text-slate-900 dark:text-slate-200 focus:border-sky-600 focus:outline-none"
+                    className="w-full mt-1 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 py-2 px-3 text-xs text-slate-900 dark:text-slate-100 focus:border-sky-600 focus:outline-none shadow-xs"
                   />
                 </div>
 
                 <div>
-                  <label className="text-slate-600 dark:text-slate-400 font-medium">Mobile Phone *</label>
+                  <label className="text-slate-700 dark:text-slate-300 font-semibold">Mobile Phone *</label>
                   <input
                     type="text"
                     required
                     placeholder="9876543210"
                     value={staffForm.mobile}
                     onChange={(e) => setStaffForm({ ...staffForm, mobile: e.target.value })}
-                    className="w-full mt-1 rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-950/80 py-2 px-3 text-xs text-slate-900 dark:text-slate-200 focus:border-sky-600 focus:outline-none"
+                    className="w-full mt-1 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 py-2 px-3 text-xs text-slate-900 dark:text-slate-100 focus:border-sky-600 focus:outline-none shadow-xs"
                   />
                 </div>
 
                 <div>
-                  <label className="text-slate-600 dark:text-slate-400 font-medium">Trade / Role</label>
+                  <label className="text-slate-700 dark:text-slate-300 font-semibold">Trade / Role</label>
                   <select
                     value={staffForm.role}
                     onChange={(e) => setStaffForm({ ...staffForm, role: e.target.value })}
-                    className="w-full mt-1 rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-950/80 py-2 px-3 text-xs text-slate-900 dark:text-slate-200 focus:border-sky-600 focus:outline-none"
+                    className="w-full mt-1 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 py-2 px-3 text-xs text-slate-900 dark:text-slate-100 focus:border-sky-600 focus:outline-none shadow-xs"
                   >
                     <option value="ELECTRICIAN">Electrician</option>
                     <option value="PLUMBER">Plumber</option>
@@ -1144,7 +1145,7 @@ export default function ComplaintManagementPage() {
                 <button
                   type="submit"
                   disabled={isProcessing}
-                  className="px-4 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs disabled:opacity-50 transition-all shadow"
+                  className="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs disabled:opacity-50 transition-all shadow-xs cursor-pointer active:scale-95"
                 >
                   Register Staff Member
                 </button>
@@ -1161,11 +1162,11 @@ export default function ComplaintManagementPage() {
                 staffList.map((s) => (
                   <div key={s.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 text-xs">
                     <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-lg bg-sky-100 dark:bg-slate-800/80 border border-sky-200 dark:border-slate-700 flex items-center justify-center text-sky-700 dark:text-sky-400 font-bold">
+                      <div className="h-8 w-8 rounded-xl bg-sky-100 dark:bg-slate-800/80 border border-sky-200 dark:border-slate-700 flex items-center justify-center text-sky-700 dark:text-sky-400 font-bold">
                         {s.name[0]?.toUpperCase() || 'S'}
                       </div>
                       <div>
-                        <p className="font-bold text-slate-900 dark:text-slate-200">{s.name}</p>
+                        <p className="font-bold text-slate-900 dark:text-slate-100">{s.name}</p>
                         <p className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-2">
                           <span className="text-sky-600 dark:text-sky-400 font-semibold">{s.role.replace('_', ' ')}</span>
                           {s.phone && (
@@ -1183,7 +1184,7 @@ export default function ComplaintManagementPage() {
                       </span>
                       <button
                         onClick={() => handleDeleteStaff(s.id, s.name)}
-                        className="text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 p-1.5 transition-colors"
+                        className="text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 p-1.5 transition-colors cursor-pointer"
                         title="Remove staff"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -1192,6 +1193,16 @@ export default function ComplaintManagementPage() {
                   </div>
                 ))
               )}
+            </div>
+
+            <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setIsStaffManagerOpen(false)}
+                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 font-semibold text-xs cursor-pointer"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>

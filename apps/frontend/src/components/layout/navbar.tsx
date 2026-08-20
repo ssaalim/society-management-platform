@@ -744,7 +744,7 @@ export const Navbar: React.FC<AppLayoutProps> = ({ children }) => {
 
                   {/* Notification Popover Drawer */}
                   {isNotifOpen && (
-                    <div className="notif-popover absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-2xl p-4 z-50 space-y-3 animate-in fade-in slide-in-from-top-2 duration-150">
+                    <div className="notif-popover absolute right-0 mt-2 w-[calc(100vw-1.5rem)] sm:w-96 max-w-sm rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-2xl p-4 z-50 space-y-3 animate-in fade-in slide-in-from-top-2 duration-150">
                       <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
                         <div className="flex items-center gap-2">
                           <Bell className="h-4 w-4 text-indigo-400" />
@@ -842,7 +842,7 @@ export const Navbar: React.FC<AppLayoutProps> = ({ children }) => {
 
                   {/* Profile Submenu Dropdown */}
                   {isProfileMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-64 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-2xl p-2 z-50 space-y-1 animate-in fade-in slide-in-from-top-2 duration-150">
+                    <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-64 max-w-[280px] rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-2xl p-2 z-50 space-y-1 animate-in fade-in slide-in-from-top-2 duration-150">
                       
                       {/* User Profile Header Card */}
                       <div className="px-3 py-2.5 bg-slate-50 dark:bg-slate-900/70 border border-slate-100 dark:border-slate-800/80 rounded-xl mb-1 space-y-1">

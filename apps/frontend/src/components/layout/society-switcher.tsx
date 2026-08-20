@@ -28,7 +28,7 @@ export const SocietySwitcher: React.FC = () => {
       <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/40 text-slate-700 dark:text-slate-300 shadow-xs">
         <Building className="h-4 w-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
         <div className="text-left">
-          <p className="text-xs font-bold truncate max-w-[150px] text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+          <p className="text-xs font-bold truncate max-w-[110px] sm:max-w-[160px] text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
             {single.societyName}
             {single.isExpired && (
               <span className="text-[9px] px-1.5 py-0.2 rounded bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/60 font-semibold">
@@ -66,17 +66,17 @@ export const SocietySwitcher: React.FC = () => {
       {/* Trigger Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`society-switcher-btn flex items-center justify-between gap-3 px-3 py-1.5 rounded-xl border text-left transition-all focus:outline-none shadow-xs ${
+        className={`society-switcher-btn flex items-center justify-between gap-2 sm:gap-3 px-2.5 sm:px-3 py-1.5 rounded-xl border text-left transition-all focus:outline-none shadow-xs ${
           activeSociety?.isExpired
             ? 'border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300'
             : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 hover:bg-slate-50 dark:hover:bg-slate-900/80 text-slate-800 dark:text-slate-200'
         }`}
       >
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2 sm:gap-2.5">
           <Building className={`h-4 w-4 shrink-0 ${activeSociety?.isExpired ? 'text-red-500 dark:text-red-400' : 'text-indigo-600 dark:text-indigo-400'}`} />
           <div>
             <div className="flex items-center gap-1.5">
-              <p className="text-xs font-bold truncate max-w-[150px] text-slate-900 dark:text-slate-100">
+              <p className="text-xs font-bold truncate max-w-[110px] sm:max-w-[160px] text-slate-900 dark:text-slate-100">
                 {activeSociety?.societyName || 'Select Society'}
               </p>
               {activeSociety?.societyId === defaultSocietyId && (
@@ -96,7 +96,7 @@ export const SocietySwitcher: React.FC = () => {
         <>
           <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
           
-          <div className="society-switcher-dropdown absolute left-0 mt-2 w-80 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2 shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+          <div className="society-switcher-dropdown absolute left-0 mt-2 w-[calc(100vw-2rem)] sm:w-80 max-w-[320px] rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2 shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-150">
             <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-slate-100 dark:border-slate-800/60 mb-1.5">
               <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Society Workspaces
