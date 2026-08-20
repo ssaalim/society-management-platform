@@ -2,6 +2,14 @@
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false, // Disables the 'X-Powered-By: Next.js' header
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: `${(process.env.NEXT_PUBLIC_API_URL || 'https://housive.onrender.com/api/v1').replace(/\/+$/, '').replace(/\/api\/v1$/, '')}/api/:path*`,
+      },
+    ];
+  },
   async headers() {
     return [
       {

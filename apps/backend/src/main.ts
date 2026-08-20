@@ -37,15 +37,9 @@ async function bootstrap() {
 
   // Security Middleware
   app.use(helmet({
-    contentSecurityPolicy: process.env.NODE_ENV === 'production' ? {
-      directives: {
-        defaultSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        imgSrc: ["'self'", 'data:', 'https:'],
-        scriptSrc: ["'self'"],
-      },
-    } : false, // Disable CSP in dev to allow Swagger UI
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
     crossOriginEmbedderPolicy: false,
+    contentSecurityPolicy: false, // API server returns JSON, disable CSP to prevent blocking client requests
     hsts: {
       maxAge: 31536000,
       includeSubDomains: true,
