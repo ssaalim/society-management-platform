@@ -18,10 +18,13 @@ export class AuthController {
     @Body() payload: any,
   ) {
     const expectedSecret = this.configService.get<string>('WEBHOOK_SECRET');
+    const isProduction = this.configService.get<string>('NODE_ENV') === 'production';
 
-    // Secure webhook invocation with secret check
-    if (expectedSecret && signature !== expectedSecret) {
-      throw new UnauthorizedException('Invalid webhook signature key.');
+    // Secure webhook invocation with secret check in production and when secret is configured
+    if (isProduction || expectedSecret) {
+      if (!expectedSecret || !signature || signature !== expectedSecret) {
+        throw new UnauthorizedException('Invalid or missing webhook signature key.');
+      }
     }
 
     const { event, record } = payload;
@@ -45,14 +48,15 @@ export class AuthController {
 
   /**
    * Dev-only login endpoint. Returns user profile + memberships given an email.
-   * Only works when DEV_AUTH=true.
+   * Only works when DEV_AUTH=true and NODE_ENV !== 'production'.
    */
   @ApiOperation({ summary: '[DEV ONLY] Login with email to get user profile and dev token' })
   @Post('dev-login')
   async devLogin(@Body() body: { email: string; password: string }) {
     const isDevMode = this.configService.get<string>('DEV_AUTH') === 'true';
-    if (!isDevMode) {
-      throw new BadRequestException('Dev login is disabled in production.');
+    const isNotProd = this.configService.get<string>('NODE_ENV') !== 'production';
+    if (!isDevMode || !isNotProd) {
+      throw new BadRequestException('Dev login is strictly disabled in production environments.');
     }
 
     if (!body.email) {
@@ -80,14 +84,15 @@ export class AuthController {
 
   /**
    * Dev-only: list all available test users for the dev login picker.
-   * Only works when DEV_AUTH=true.
+   * Only works when DEV_AUTH=true and NODE_ENV !== 'production'.
    */
   @ApiOperation({ summary: '[DEV ONLY] List all test users for dev login picker' })
   @Get('dev-users')
   async listDevUsers() {
     const isDevMode = this.configService.get<string>('DEV_AUTH') === 'true';
-    if (!isDevMode) {
-      throw new BadRequestException('Dev users listing is disabled in production.');
+    const isNotProd = this.configService.get<string>('NODE_ENV') !== 'production';
+    if (!isDevMode || !isNotProd) {
+      throw new BadRequestException('Dev users listing is strictly disabled in production environments.');
     }
 
     const users = await this.userService.findAllUsers();

@@ -12,8 +12,10 @@ import { CreateCustomReportDto, UpdateCustomReportDto, ExecuteCustomReportDto } 
 
 // Allowed SQL keywords that start a valid SELECT statement
 const ALLOWED_SELECT_START = /^\s*select\s+/i;
-// Detect dangerous keywords that are not allowed
-const DANGEROUS_KEYWORDS = /\b(insert|update|delete|drop|truncate|alter|create|grant|revoke|exec|execute|call|do)\b/i;
+// Detect dangerous keywords and commands that are not allowed
+const DANGEROUS_KEYWORDS = /\b(insert|update|delete|drop|truncate|alter|create|grant|revoke|exec|execute|call|do|copy|vacuum|reindex|analyze|lock|set|reset|listen|notify|unlisten|load)\b/i;
+// Detect dangerous postgres system functions and catalog tables
+const DANGEROUS_FUNCTIONS_AND_CATALOGS = /\b(pg_sleep|pg_read_file|pg_write_file|pg_ls_dir|dblink|pg_terminate_backend|pg_cancel_backend|set_config|current_setting|pg_shadow|pg_authid|pg_user|pg_database|pg_tablespace|pg_settings|information_schema|pg_catalog)\b/i;
 
 @Injectable()
 export class CustomReportService {
@@ -49,7 +51,13 @@ export class CustomReportService {
 
     if (DANGEROUS_KEYWORDS.test(cleaned)) {
       throw new BadRequestException(
-        'The SQL query contains disallowed keywords (INSERT, UPDATE, DELETE, DROP, etc.).',
+        'The SQL query contains disallowed keywords (INSERT, UPDATE, DELETE, DROP, ALTER, COPY, etc.).',
+      );
+    }
+
+    if (DANGEROUS_FUNCTIONS_AND_CATALOGS.test(cleaned)) {
+      throw new BadRequestException(
+        'The SQL query contains disallowed system functions or database catalog references.',
       );
     }
 

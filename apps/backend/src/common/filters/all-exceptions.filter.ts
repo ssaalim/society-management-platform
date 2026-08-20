@@ -37,12 +37,16 @@ export class AllExceptionsFilter implements ExceptionFilter {
         message: err.message,
       }));
     } else if (exception instanceof Error) {
-      message = exception.message;
+      const isProduction = process.env.NODE_ENV === 'production';
+      // In production, mask internal database or server error messages to prevent leakage
+      message = isProduction ? 'An internal server error occurred. Please contact system support.' : exception.message;
       code = exception.name || 'ERROR';
 
       // Log stack details for troubleshooting server failures
       this.logger.error(`Unhandled Exception [${requestId}] at ${request.method} ${request.url}: ${exception.message}`, exception.stack);
     } else {
+      const isProduction = process.env.NODE_ENV === 'production';
+      message = isProduction ? 'An unexpected server error occurred.' : 'Unknown exception occurred.';
       this.logger.error(`Unhandled Unknown Exception [${requestId}] at ${request.method} ${request.url}: ${JSON.stringify(exception)}`);
     }
 

@@ -11,13 +11,14 @@ import { SuperAdminService } from './superadmin.service';
 import { CreatePlanDto, createPlanSchema } from './dto/create-plan.dto';
 import { createSocietySchema } from './dto/create-society.dto';
 import { SupabaseAuthGuard } from '@core/auth/supabase.guard';
+import { SuperAdminGuard } from '@core/auth/superadmin.guard';
 import { RolesGuard } from '@core/auth/roles.guard';
 import { RequirePermissions } from '@core/auth/permissions.decorator';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 
 @ApiTags('Super Admin Control')
 @ApiBearerAuth()
-@UseGuards(SupabaseAuthGuard, RolesGuard)
+@UseGuards(SupabaseAuthGuard, SuperAdminGuard, RolesGuard)
 @Controller('superadmin')
 export class SuperAdminController {
   constructor(private readonly superAdminService: SuperAdminService) {}

@@ -14,6 +14,7 @@ import { SocietyService } from './society.service';
 import { CreateSocietyDto, createSocietySchema } from './dto/create-society.dto';
 import { UpdateSocietyDto, updateSocietySchema } from './dto/update-society.dto';
 import { SupabaseAuthGuard } from '@core/auth/supabase.guard';
+import { SuperAdminGuard } from '@core/auth/superadmin.guard';
 import { TenantGuard } from '@core/tenant/tenant.guard';
 import { RolesGuard } from '@core/auth/roles.guard';
 import { RequirePermissions } from '@core/auth/permissions.decorator';
@@ -27,6 +28,7 @@ export class SocietyController {
   constructor(private readonly societyService: SocietyService) {}
 
   @ApiOperation({ summary: 'Create a new society (Super Admin scope)' })
+  @UseGuards(SuperAdminGuard)
   @Post()
   async create(@Body() body: any, @Req() req: any) {
     // Custom validate payload schema using Zod
@@ -39,6 +41,7 @@ export class SocietyController {
   }
 
   @ApiOperation({ summary: 'List all societies (Super Admin scope)' })
+  @UseGuards(SuperAdminGuard)
   @Get()
   async findAll() {
     const list = await this.societyService.findAll();

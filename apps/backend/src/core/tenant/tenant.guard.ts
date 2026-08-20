@@ -7,22 +7,30 @@ import {
   Inject, 
   Optional 
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ClsService } from 'nestjs-cls';
 import { DRIZZLE_PROVIDER, DrizzleDB } from '@core/database/database.module';
-import { subscriptions } from '../../../database/schema';
-import { eq } from 'drizzle-orm';
+import { subscriptions, userSocieties, roles } from '../../../database/schema';
+import { eq, and } from 'drizzle-orm';
 
 /**
  * TenantGuard ensures that every tenant-scoped request has a resolved tenant context.
- * It reads the 'x-tenant-id' header from the incoming request, checks subscription validity,
- * and injects the tenant ID into AsyncLocalStorage via CLS.
+ * It reads the 'x-tenant-id' header, checks subscription validity, ensures the authenticated
+ * user actually has access to this tenant, and injects the tenant ID into AsyncLocalStorage via CLS.
  */
 @Injectable()
 export class TenantGuard implements CanActivate {
+  private isDevAuth: boolean;
+
   constructor(
     private readonly cls: ClsService,
+    private readonly configService: ConfigService,
     @Optional() @Inject(DRIZZLE_PROVIDER) private readonly db?: DrizzleDB,
-  ) {}
+  ) {
+    const isDev = this.configService.get<string>('DEV_AUTH') === 'true';
+    const isNotProd = this.configService.get<string>('NODE_ENV') !== 'production';
+    this.isDevAuth = isDev && isNotProd;
+  }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
@@ -38,10 +46,48 @@ export class TenantGuard implements CanActivate {
       throw new BadRequestException('Invalid x-tenant-id header format. Must be a valid UUIDv4.');
     }
 
-    // Check subscription status if database is available
+    // Check database constraints
     if (this.db) {
+      const user = request.user;
+
+      // 1. If user is authenticated, ensure they belong to this society (unless SuperAdmin)
+      if (user && user.id && !this.isDevAuth) {
+        const membership = await this.db
+          .select({
+            roleName: roles.name,
+          })
+          .from(userSocieties)
+          .innerJoin(roles, eq(userSocieties.roleId, roles.id))
+          .where(
+            and(
+              eq(userSocieties.userId, user.id),
+              eq(userSocieties.societyId, tenantId),
+            ),
+          )
+          .limit(1);
+
+        if (!membership || membership.length === 0) {
+          // Check if user is a global SuperAdmin
+          const isGlobalSuperAdmin = await this.db
+            .select({ id: userSocieties.id })
+            .from(userSocieties)
+            .innerJoin(roles, eq(userSocieties.roleId, roles.id))
+            .where(
+              and(
+                eq(userSocieties.userId, user.id),
+                eq(roles.name, 'SUPER_ADMIN'),
+              ),
+            )
+            .limit(1);
+
+          if (!isGlobalSuperAdmin || isGlobalSuperAdmin.length === 0) {
+            throw new ForbiddenException('You do not have access to this society workspace.');
+          }
+        }
+      }
+
+      // 2. Check subscription status
       const path = request.url || '';
-      // Allow reading subscription status route itself so admins/users can see status & banner
       const isSubscriptionStatusRoute = path.includes('/subscription');
 
       if (!isSubscriptionStatusRoute) {

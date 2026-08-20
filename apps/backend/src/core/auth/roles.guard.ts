@@ -21,7 +21,9 @@ export class RolesGuard implements CanActivate {
     private readonly configService: ConfigService,
     @Inject(DRIZZLE_PROVIDER) private readonly db: DrizzleDB,
   ) {
-    this.isDevAuth = this.configService.get<string>('DEV_AUTH') === 'true';
+    const isDev = this.configService.get<string>('DEV_AUTH') === 'true';
+    const isNotProd = this.configService.get<string>('NODE_ENV') !== 'production';
+    this.isDevAuth = isDev && isNotProd;
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {

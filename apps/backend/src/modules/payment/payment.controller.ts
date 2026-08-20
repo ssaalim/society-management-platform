@@ -5,6 +5,7 @@ import {
   Body, 
   Param, 
   Query,
+  Headers,
   UseGuards, 
   Req 
 } from '@nestjs/common';
@@ -51,9 +52,15 @@ export class PaymentController {
 
   @ApiOperation({ summary: 'Razorpay webhook transaction listener' })
   @Post('webhook')
-  async capturePaymentWebhook(@Body() body: any) {
-    // Standard mock capture parameters
-    const result = await this.paymentService.capturePaymentWebhook(body);
+  async capturePaymentWebhook(
+    @Body() body: any,
+    @Headers('x-razorpay-signature') signature?: string,
+  ) {
+    const payload = {
+      ...body,
+      razorpaySignature: signature || body.razorpaySignature || '',
+    };
+    const result = await this.paymentService.capturePaymentWebhook(payload);
     return {
       success: true,
       data: result,

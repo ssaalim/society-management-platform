@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { LoggerModule } from 'nestjs-pino';
-import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { ClsModule } from 'nestjs-cls';
 import { DatabaseModule } from '@core/database/database.module';
 import { UserModule } from './modules/user/user.module';
@@ -45,7 +46,7 @@ import { SearchModule } from './modules/search/search.module';
     }),
     ThrottlerModule.forRoot([{
       ttl: 60000,
-      limit: 100,
+      limit: 120, // 120 requests per minute per IP
     }]),
     ClsModule.forRoot({
       global: true,
@@ -85,6 +86,11 @@ import { SearchModule } from './modules/search/search.module';
     SearchModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}

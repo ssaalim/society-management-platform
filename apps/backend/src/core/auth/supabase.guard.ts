@@ -20,14 +20,14 @@ export class SupabaseAuthGuard implements CanActivate {
     private readonly configService: ConfigService,
     @Optional() private readonly cls?: ClsService,
   ) {
-    this.isDevMode = this.configService.get<string>('DEV_AUTH') === 'true';
+    const isDev = this.configService.get<string>('DEV_AUTH') === 'true';
+    const isNotProd = this.configService.get<string>('NODE_ENV') !== 'production';
+    this.isDevMode = isDev && isNotProd;
     this.devAuthGuard = new DevAuthGuard(configService, cls);
 
-    if (!this.isDevMode) {
-      const supabaseUrl = this.configService.get<string>('SUPABASE_URL') || 'https://your-supabase-project.supabase.co';
-      const supabaseAnonKey = this.configService.get<string>('SUPABASE_ANON_KEY') || 'your-supabase-anon-key';
-      this.supabase = createClient(supabaseUrl, supabaseAnonKey);
-    }
+    const supabaseUrl = this.configService.get<string>('SUPABASE_URL') || 'https://your-supabase-project.supabase.co';
+    const supabaseAnonKey = this.configService.get<string>('SUPABASE_ANON_KEY') || 'your-supabase-anon-key';
+    this.supabase = createClient(supabaseUrl, supabaseAnonKey);
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {

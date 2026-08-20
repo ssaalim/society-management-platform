@@ -1,8 +1,10 @@
-import { Injectable, NotFoundException, Inject, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, Inject, BadRequestException, Optional } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PaymentRepository } from './payment.repository';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { RefundPaymentDto } from './dto/refund-payment.dto';
 import { DRIZZLE_PROVIDER, DrizzleDB } from '@core/database/database.module';
+import * as crypto from 'crypto';
 import { 
   auditLogs, 
   receipts, 
@@ -17,6 +19,7 @@ export class PaymentService {
   constructor(
     private readonly paymentRepository: PaymentRepository,
     @Inject(DRIZZLE_PROVIDER) private readonly db: DrizzleDB,
+    @Optional() private readonly configService?: ConfigService,
   ) {}
 
   /**
@@ -49,7 +52,7 @@ export class PaymentService {
   }
 
   /**
-   * Captures online payments capture events (Mocking Razorpay capturing webhook).
+   * Captures online payments capture events (Razorpay webhook verification).
    */
   async capturePaymentWebhook(payload: {
     billId: string;
@@ -58,6 +61,23 @@ export class PaymentService {
     razorpaySignature: string;
     amount: number;
   }, executorId?: string) {
+    const isProduction = this.configService?.get<string>('NODE_ENV') === 'production';
+    const webhookSecret = this.configService?.get<string>('RAZORPAY_WEBHOOK_SECRET') || this.configService?.get<string>('RAZORPAY_KEY_SECRET');
+
+    // In production or when webhookSecret is configured, verify HMAC signature
+    if (webhookSecret && payload.razorpayOrderId && payload.razorpayPaymentId) {
+      const generatedSignature = crypto
+        .createHmac('sha256', webhookSecret)
+        .update(`${payload.razorpayOrderId}|${payload.razorpayPaymentId}`)
+        .digest('hex');
+
+      if (payload.razorpaySignature && payload.razorpaySignature !== generatedSignature) {
+        throw new BadRequestException('Invalid Razorpay payment signature.');
+      }
+    } else if (isProduction && !webhookSecret) {
+      throw new BadRequestException('Razorpay webhook secret is not configured in production.');
+    }
+
     const activeTenantId = this.paymentRepository['activeTenantId'];
 
     const bill = await this.db.query.maintenanceBills.findFirst({

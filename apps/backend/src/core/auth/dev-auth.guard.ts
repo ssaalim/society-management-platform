@@ -16,6 +16,12 @@ export class DevAuthGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    const isProduction = this.configService.get<string>('NODE_ENV') === 'production';
+    if (isProduction) {
+      // Dev auth is strictly forbidden in production
+      return false;
+    }
+
     const request = context.switchToHttp().getRequest();
 
     // Try x-dev-user-id header first
