@@ -6,9 +6,44 @@ import { apiClient } from '../../../lib/api/client';
 import { 
   BookOpen, Search, ShieldAlert, Plus, Calculator, Settings, Receipt, Loader2, 
   CheckCircle, AlertCircle, FileText, Scale, Banknote, Wallet, Landmark, Coins, 
-  History, Layers, Building, Eye, X, Filter 
+  History, Layers, Building, Eye, X, Filter, Printer, FileCheck, Scissors 
 } from 'lucide-react';
 import { useParams } from 'next/navigation';
+
+type VoucherPrintFormat = 'a4_voucher' | 'thermal_pos' | 'a5_voucher' | 'compact_remittance';
+
+function numberToWordsINR(amount: number): string {
+  if (!amount || isNaN(amount) || amount <= 0) return 'Zero Rupees Only';
+  const units = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+  const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+
+  const convertGroup = (n: number): string => {
+    if (n === 0) return '';
+    if (n < 20) return units[n];
+    if (n < 100) return `${tens[Math.floor(n / 10)]} ${units[n % 10]}`.trim();
+    return `${units[Math.floor(n / 100)]} Hundred ${convertGroup(n % 100)}`.trim();
+  };
+
+  const integer = Math.floor(amount);
+  const decimals = Math.round((amount - integer) * 100);
+
+  const crore = Math.floor(integer / 10000000);
+  const lakh = Math.floor((integer % 10000000) / 100000);
+  const thousand = Math.floor((integer % 100000) / 1000);
+  const remainder = integer % 1000;
+
+  let str = '';
+  if (crore) str += `${convertGroup(crore)} Crore `;
+  if (lakh) str += `${convertGroup(lakh)} Lakh `;
+  if (thousand) str += `${convertGroup(thousand)} Thousand `;
+  if (remainder) str += convertGroup(remainder);
+
+  str = str.trim() ? `${str.trim()} Rupees` : '';
+  if (decimals > 0) {
+    str += ` and ${convertGroup(decimals)} Paise`;
+  }
+  return `${str.trim()} Only`;
+}
 
 interface TrialBalanceLine {
   ledgerId: string;
@@ -102,6 +137,32 @@ export default function AccountingDashboardPage() {
 
   // View Voucher Detail Modal state
   const [selectedVoucherForModal, setSelectedVoucherForModal] = useState<VoucherItem | null>(null);
+
+  // Multi-Format Print Voucher state
+  const [printVoucherData, setPrintVoucherData] = useState<{
+    voucherNumber: string;
+    type: string;
+    date: string;
+    narration?: string;
+    totalAmount: number | string;
+    vendorName?: string;
+    lines?: VoucherLine[];
+  } | null>(null);
+  const [voucherPrintFormat, setVoucherPrintFormat] = useState<VoucherPrintFormat>('a4_voucher');
+
+  const handlePrintVoucher = () => {
+    document.body.classList.add('print-voucher-only');
+    document.body.classList.add(`print-format-${voucherPrintFormat}`);
+
+    const cleanup = () => {
+      document.body.classList.remove('print-voucher-only');
+      document.body.classList.remove(`print-format-${voucherPrintFormat}`);
+      window.removeEventListener('afterprint', cleanup);
+    };
+    window.addEventListener('afterprint', cleanup);
+    window.print();
+    setTimeout(cleanup, 2500);
+  };
 
   // Journal Voucher Form state
   const [voucherNo, setVoucherNo] = useState<string>(`JV-${Date.now()}`);
@@ -286,27 +347,27 @@ export default function AccountingDashboardPage() {
   });
 
   return (
-    <main className="relative flex min-h-screen flex-col items-center justify-start overflow-x-hidden w-full py-8 px-4 sm:px-6 md:px-8 lg:px-10">
+    <main className="relative flex min-h-screen flex-col items-center justify-start overflow-x-hidden w-full py-4 sm:py-5 px-3 sm:px-5 lg:px-6">
       {/* Background Grids */}
       <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
 
-      <div className="w-full max-w-[1450px] mx-auto space-y-8 z-10">
+      <div className="w-full max-w-[1600px] mx-auto space-y-3.5 z-10">
         
         {/* Header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <BookOpen className="h-8 w-8 text-indigo-400" />
+        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+          <div className="flex items-center gap-2.5">
+            <BookOpen className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
             <div>
-              <h2 className="text-2xl font-bold tracking-tight text-slate-100">Accounting Ledger & Bookkeeping</h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Capture vendor bills, track expenditures, inspect voucher registers & balance sheets</p>
+              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Accounting Ledger & Bookkeeping</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Capture vendor bills, track expenditures, inspect voucher registers & balance sheets</p>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1.5">
             <button
               onClick={() => setActiveTab('expenditure')}
-              className={`rounded-lg border py-2 px-3 text-xs font-semibold transition-all ${
-                activeTab === 'expenditure' ? 'bg-indigo-600 border-indigo-500 text-slate-100' : 'border-slate-800 bg-slate-950/60 text-slate-300 hover:bg-slate-900'
+              className={`rounded-lg border py-1.5 px-2.5 text-xs font-semibold transition-all ${
+                activeTab === 'expenditure' ? 'bg-indigo-600 border-indigo-500 text-white shadow-xs' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900'
               }`}
             >
               Expenditure & Bills
@@ -314,8 +375,8 @@ export default function AccountingDashboardPage() {
 
             <button
               onClick={() => setActiveTab('vouchers')}
-              className={`rounded-lg border py-2 px-3 text-xs font-semibold transition-all ${
-                activeTab === 'vouchers' ? 'bg-indigo-600 border-indigo-500 text-slate-100' : 'border-slate-800 bg-slate-950/60 text-slate-300 hover:bg-slate-900'
+              className={`rounded-lg border py-1.5 px-2.5 text-xs font-semibold transition-all ${
+                activeTab === 'vouchers' ? 'bg-indigo-600 border-indigo-500 text-white shadow-xs' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900'
               }`}
             >
               Voucher Registers
@@ -323,8 +384,8 @@ export default function AccountingDashboardPage() {
 
             <button
               onClick={() => setActiveTab('trial')}
-              className={`rounded-lg border py-2 px-3 text-xs font-semibold transition-all ${
-                activeTab === 'trial' ? 'bg-indigo-600 border-indigo-500 text-slate-100' : 'border-slate-800 bg-slate-950/60 text-slate-300 hover:bg-slate-900'
+              className={`rounded-lg border py-1.5 px-2.5 text-xs font-semibold transition-all ${
+                activeTab === 'trial' ? 'bg-indigo-600 border-indigo-500 text-white shadow-xs' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900'
               }`}
             >
               Trial Balance
@@ -332,8 +393,8 @@ export default function AccountingDashboardPage() {
 
             <button
               onClick={() => setActiveTab('income')}
-              className={`rounded-lg border py-2 px-3 text-xs font-semibold transition-all ${
-                activeTab === 'income' ? 'bg-indigo-600 border-indigo-500 text-slate-100' : 'border-slate-800 bg-slate-950/60 text-slate-300 hover:bg-slate-900'
+              className={`rounded-lg border py-1.5 px-2.5 text-xs font-semibold transition-all ${
+                activeTab === 'income' ? 'bg-indigo-600 border-indigo-500 text-white shadow-xs' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900'
               }`}
             >
               Income & Expenditure
@@ -341,8 +402,8 @@ export default function AccountingDashboardPage() {
 
             <button
               onClick={() => setActiveTab('balance')}
-              className={`rounded-lg border py-2 px-3 text-xs font-semibold transition-all ${
-                activeTab === 'balance' ? 'bg-indigo-600 border-indigo-500 text-slate-100' : 'border-slate-800 bg-slate-950/60 text-slate-300 hover:bg-slate-900'
+              className={`rounded-lg border py-1.5 px-2.5 text-xs font-semibold transition-all ${
+                activeTab === 'balance' ? 'bg-indigo-600 border-indigo-500 text-white shadow-xs' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900'
               }`}
             >
               Balance Sheet
@@ -350,18 +411,18 @@ export default function AccountingDashboardPage() {
 
             <button
               onClick={() => setActiveTab('bank_accounts')}
-              className={`rounded-lg border py-2 px-3 text-xs font-semibold transition-all flex items-center gap-1.5 ${
-                activeTab === 'bank_accounts' ? 'bg-indigo-600 border-indigo-500 text-slate-100' : 'border-slate-800 bg-slate-950/60 text-slate-300 hover:bg-slate-900'
+              className={`rounded-lg border py-1.5 px-2.5 text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                activeTab === 'bank_accounts' ? 'bg-indigo-600 border-indigo-500 text-white shadow-xs' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900'
               }`}
             >
-              <Landmark className="h-3.5 w-3.5" /> Society Bank Accounts
+              <Landmark className="h-3.5 w-3.5" /> Bank Accounts
             </button>
 
             {isManagementRole && (
               <button
                 onClick={() => setActiveTab('voucher')}
-                className={`rounded-lg border py-2 px-3 text-xs font-semibold transition-all flex items-center gap-1 ${
-                  activeTab === 'voucher' ? 'bg-indigo-600 border-indigo-500 text-slate-100' : 'border-slate-800 bg-slate-950/60 text-slate-300 hover:bg-slate-900'
+                className={`rounded-lg border py-1.5 px-2.5 text-xs font-semibold transition-all flex items-center gap-1 ${
+                  activeTab === 'voucher' ? 'bg-indigo-600 border-indigo-500 text-white shadow-xs' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900'
                 }`}
               >
                 <Plus className="h-3.5 w-3.5" /> Journal Entry
@@ -372,10 +433,10 @@ export default function AccountingDashboardPage() {
 
         {message && (
           <div
-            className={`rounded-lg border p-4 text-sm flex items-center gap-2 ${
+            className={`rounded-xl border p-3 text-sm flex items-center gap-2 shadow-xs ${
               message.type === 'success'
-                ? 'bg-emerald-950/30 border-emerald-900/50 text-emerald-400'
-                : 'bg-red-950/30 border-red-900/50 text-red-400'
+                ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400'
+                : 'bg-rose-50 dark:bg-red-950/30 border-rose-200 dark:border-red-900/50 text-rose-700 dark:text-red-400'
             }`}
           >
             {message.type === 'success' ? <CheckCircle className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
@@ -385,8 +446,8 @@ export default function AccountingDashboardPage() {
 
         {/* Dynamic Views */}
         {isLoading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="h-8 w-8 text-indigo-500 animate-spin" />
+          <div className="flex justify-center py-16">
+            <Loader2 className="h-7 w-7 text-indigo-500 animate-spin" />
           </div>
         ) : (
           <>
@@ -400,43 +461,43 @@ export default function AccountingDashboardPage() {
               const totalLiquid = cashInHand + bankBalance;
 
               return (
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
-                  <div className="rounded-xl border border-emerald-900/50 bg-emerald-950/20 p-4 space-y-1">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 mb-3.5">
+                  <div className="rounded-xl border border-emerald-200 dark:border-emerald-900/50 bg-emerald-50/80 dark:bg-emerald-950/20 p-3 sm:p-3.5 space-y-0.5 shadow-xs">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">Cash In Hand</span>
-                      <Banknote className="h-5 w-5 text-emerald-400" />
+                      <span className="text-xs font-bold text-emerald-800 dark:text-emerald-400 uppercase tracking-wider">Cash In Hand</span>
+                      <Banknote className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                     </div>
-                    <span className="block text-2xl font-black text-slate-100">₹ {cashInHand.toLocaleString('en-IN')}</span>
-                    <span className="block text-[10px] text-emerald-300/80">Petty Cash Chest & Cash Receipts</span>
+                    <span className="block text-xl font-black text-slate-900 dark:text-slate-100">₹ {cashInHand.toLocaleString('en-IN')}</span>
+                    <span className="block text-[10px] font-medium text-emerald-900/80 dark:text-emerald-300/80">Petty Cash Chest & Cash Receipts</span>
                   </div>
 
-                  <div className="rounded-xl border border-indigo-900/50 bg-indigo-950/20 p-4 space-y-1">
+                  <div className="rounded-xl border border-indigo-200 dark:border-indigo-900/50 bg-indigo-50/80 dark:bg-indigo-950/20 p-3 sm:p-3.5 space-y-0.5 shadow-xs">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-indigo-400 uppercase tracking-wider">Bank Balance</span>
-                      <Landmark className="h-5 w-5 text-indigo-400" />
+                      <span className="text-xs font-bold text-indigo-800 dark:text-indigo-400 uppercase tracking-wider">Bank Balance</span>
+                      <Landmark className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
                     </div>
-                    <span className="block text-2xl font-black text-slate-100">₹ {bankBalance.toLocaleString('en-IN')}</span>
-                    <span className="block text-[10px] text-indigo-300/80">SBI & HDFC Bank Accounts</span>
+                    <span className="block text-xl font-black text-slate-900 dark:text-slate-100">₹ {bankBalance.toLocaleString('en-IN')}</span>
+                    <span className="block text-[10px] font-medium text-indigo-900/80 dark:text-indigo-300/80">SBI & HDFC Bank Accounts</span>
                   </div>
 
-                  <div className="rounded-xl border border-cyan-900/50 bg-cyan-950/20 p-4 space-y-1">
+                  <div className="rounded-xl border border-cyan-200 dark:border-cyan-900/50 bg-cyan-50/80 dark:bg-cyan-950/20 p-3 sm:p-3.5 space-y-0.5 shadow-xs">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-cyan-400 uppercase tracking-wider">Total Liquid Reserve</span>
-                      <Wallet className="h-5 w-5 text-cyan-400" />
+                      <span className="text-xs font-bold text-cyan-800 dark:text-cyan-400 uppercase tracking-wider">Total Liquid Reserve</span>
+                      <Wallet className="h-4 w-4 text-cyan-600 dark:text-cyan-400" />
                     </div>
-                    <span className="block text-2xl font-black text-slate-100">₹ {totalLiquid.toLocaleString('en-IN')}</span>
-                    <span className="block text-[10px] text-cyan-300/80">Cash in Hand + Bank Accounts</span>
+                    <span className="block text-xl font-black text-slate-900 dark:text-slate-100">₹ {totalLiquid.toLocaleString('en-IN')}</span>
+                    <span className="block text-[10px] font-medium text-cyan-900/80 dark:text-cyan-300/80">Cash in Hand + Bank Accounts</span>
                   </div>
 
-                  <div className="rounded-xl border border-amber-900/50 bg-amber-950/20 p-4 space-y-1">
+                  <div className="rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-50/80 dark:bg-amber-950/20 p-3 sm:p-3.5 space-y-0.5 shadow-xs">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-amber-400 uppercase tracking-wider">Net Surplus</span>
-                      <Coins className="h-5 w-5 text-amber-400" />
+                      <span className="text-xs font-bold text-amber-800 dark:text-amber-400 uppercase tracking-wider">Net Surplus</span>
+                      <Coins className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                     </div>
-                    <span className="block text-2xl font-black text-slate-100">
+                    <span className="block text-xl font-black text-slate-900 dark:text-slate-100">
                       ₹ {incomeSummary ? incomeSummary.surplus.toLocaleString('en-IN') : '0'}
                     </span>
-                    <span className="block text-[10px] text-amber-300/80">Retained Operating Surplus</span>
+                    <span className="block text-[10px] font-medium text-amber-900/80 dark:text-amber-300/80">Retained Operating Surplus</span>
                   </div>
                 </div>
               );
@@ -444,69 +505,89 @@ export default function AccountingDashboardPage() {
 
             {/* TAB 1: Expenditure & Vendor Bills */}
             {activeTab === 'expenditure' && (
-              <div className="space-y-6">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-slate-950/40 border border-slate-800 p-4 rounded-xl">
+              <div className="space-y-3.5">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 p-3 rounded-xl">
                   <div>
-                    <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider">Expenditure & Vendor Bills Log</h3>
-                    <p className="text-xs text-slate-500">Capture vendor invoices for repairs, utilities, security guard agency, AMC payouts</p>
+                    <h3 className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider">Expenditure & Vendor Bills Log</h3>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">Capture vendor invoices for repairs, utilities, security guard agency, AMC payouts</p>
                   </div>
                   {isManagementRole && (
                     <button
                       onClick={() => setIsExpenseModalOpen(true)}
-                      className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-md"
+                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-xs"
                     >
-                      <Plus className="h-4 w-4" /> Record New Expenditure Bill
+                      <Plus className="h-3.5 w-3.5" /> Record Expenditure Bill
                     </button>
                   )}
                 </div>
 
                 {/* Filter Search */}
                 <div className="relative w-full sm:w-80">
-                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
+                  <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
                   <input
                     type="text"
                     placeholder="Search bill number or vendor..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-800 bg-slate-900/60 text-xs text-slate-200 focus:outline-none focus:border-slate-700"
+                    className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 text-xs text-slate-900 dark:text-slate-200 focus:outline-none focus:border-indigo-600"
                   />
                 </div>
 
                 {/* Expenses Table */}
-                <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/20">
+                <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/20 shadow-xs">
                   <table className="w-full text-left text-xs border-collapse whitespace-nowrap">
                     <thead>
-                      <tr className="bg-black/60 text-slate-500 dark:text-slate-400 font-semibold border-b border-slate-800">
-                        <th className="p-4">Bill Invoice No</th>
-                        <th className="p-4">Vendor / Service Provider</th>
-                        <th className="p-4">Bill Date</th>
-                        <th className="p-4 text-right">Amount (₹)</th>
-                        <th className="p-4">Payment Status</th>
-                        <th className="p-4">Linked Voucher No</th>
+                      <tr className="bg-slate-50 dark:bg-black/60 text-slate-700 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800 text-[10px] uppercase">
+                        <th className="px-3.5 py-2.5">Bill Invoice No</th>
+                        <th className="px-3.5 py-2.5">Vendor / Service Provider</th>
+                        <th className="px-3.5 py-2.5">Bill Date</th>
+                        <th className="px-3.5 py-2.5 text-right">Amount (₹)</th>
+                        <th className="px-3.5 py-2.5">Payment Status</th>
+                        <th className="px-3.5 py-2.5">Linked Voucher No</th>
+                        <th className="px-3.5 py-2.5 text-right">Print Option</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-800/40">
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40">
                       {filteredExpenses.map((exp) => (
-                        <tr key={exp.id} className="text-slate-300 hover:bg-slate-900/10 transition-colors">
-                          <td className="p-4 font-mono font-bold text-slate-200">{exp.billNumber}</td>
-                          <td className="p-4 font-semibold text-indigo-300">{exp.vendorName || 'General Vendor'}</td>
-                          <td className="p-4 text-slate-500 dark:text-slate-400">{exp.date}</td>
-                          <td className="p-4 text-right font-mono font-bold text-slate-100">
+                        <tr key={exp.id} className="text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900/10 transition-colors">
+                          <td className="px-3.5 py-2.5 font-mono font-bold text-slate-900 dark:text-slate-200">{exp.billNumber}</td>
+                          <td className="px-3.5 py-2.5 font-semibold text-indigo-700 dark:text-indigo-300">{exp.vendorName || 'General Vendor'}</td>
+                          <td className="px-3.5 py-2.5 text-slate-500 dark:text-slate-400">{exp.date}</td>
+                          <td className="px-3.5 py-2.5 text-right font-mono font-bold text-slate-900 dark:text-slate-100">
                             ₹ {Number(exp.amount).toLocaleString('en-IN')}
                           </td>
-                          <td className="p-4">
+                          <td className="px-3.5 py-2.5">
                             <span
-                              className={`text-[10px] font-bold border rounded-full px-2.5 py-1 uppercase tracking-wider ${
+                              className={`text-[10px] font-bold border rounded-full px-2 py-0.5 uppercase tracking-wider ${
                                 exp.status === 'PAID'
-                                  ? 'bg-emerald-950/30 border-emerald-900/50 text-emerald-400'
-                                  : 'bg-red-950/30 border-red-900/50 text-red-400'
+                                  ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-400'
+                                  : 'bg-rose-50 dark:bg-red-950/30 border-rose-200 dark:border-red-900/50 text-rose-800 dark:text-red-400'
                               }`}
                             >
                               {exp.status}
                             </span>
                           </td>
-                          <td className="p-4 font-mono text-xs text-indigo-400 font-semibold">
+                          <td className="px-3.5 py-2.5 font-mono text-xs text-indigo-600 dark:text-indigo-400 font-semibold">
                             {exp.voucherNumber || 'N/A'}
+                          </td>
+                          <td className="px-3.5 py-2.5 text-right">
+                            <button
+                              onClick={() => setPrintVoucherData({
+                                voucherNumber: exp.voucherNumber || exp.billNumber,
+                                type: 'PAYMENT',
+                                date: exp.date,
+                                narration: `Expense Bill payment for ${exp.vendorName || 'Vendor'} (${exp.billNumber})`,
+                                totalAmount: exp.amount,
+                                vendorName: exp.vendorName,
+                                lines: [
+                                  { id: '1', ledgerName: `${exp.vendorName || 'Vendor'} (Sundry Creditor)`, type: 'DEBIT', amount: exp.amount },
+                                  { id: '2', ledgerName: 'Society Bank / Cash Account', type: 'CREDIT', amount: exp.amount },
+                                ]
+                              })}
+                              className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 hover:text-emerald-900 dark:hover:text-emerald-300 border border-emerald-200 dark:border-emerald-900/50 bg-emerald-50 dark:bg-emerald-950/30 px-2.5 py-1 rounded-lg transition active:scale-95 shadow-2xs cursor-pointer"
+                            >
+                              <Printer className="h-3 w-3" /> Print Voucher
+                            </button>
                           </td>
                         </tr>
                       ))}
@@ -518,52 +599,58 @@ export default function AccountingDashboardPage() {
 
             {/* TAB 2: Voucher Registers */}
             {activeTab === 'vouchers' && (
-              <div className="space-y-6">
-                <div className="bg-slate-950/40 border border-slate-800 p-4 rounded-xl">
-                  <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider">Accounting Voucher Registers Log</h3>
-                  <p className="text-xs text-slate-500">Audit trail of all double-entry Receipts, Payments, and Journal vouchers</p>
+              <div className="space-y-3.5">
+                <div className="bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 p-3 rounded-xl">
+                  <h3 className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider">Accounting Voucher Registers Log</h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Audit trail of all double-entry Receipts, Payments, and Journal vouchers</p>
                 </div>
 
-                <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/20">
+                <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/20 shadow-xs">
                   <table className="w-full text-left text-xs border-collapse whitespace-nowrap">
                     <thead>
-                      <tr className="bg-black/60 text-slate-500 dark:text-slate-400 font-semibold border-b border-slate-800">
-                        <th className="p-4">Voucher Number</th>
-                        <th className="p-4">Voucher Type</th>
-                        <th className="p-4">Posting Date</th>
-                        <th className="p-4">Narration Details</th>
-                        <th className="p-4 text-right">Voucher Total (₹)</th>
-                        <th className="p-4 text-right">Action</th>
+                      <tr className="bg-slate-50 dark:bg-black/60 text-slate-700 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800 text-[10px] uppercase">
+                        <th className="px-3.5 py-2.5">Voucher Number</th>
+                        <th className="px-3.5 py-2.5">Voucher Type</th>
+                        <th className="px-3.5 py-2.5">Posting Date</th>
+                        <th className="px-3.5 py-2.5">Narration Details</th>
+                        <th className="px-3.5 py-2.5 text-right">Voucher Total (₹)</th>
+                        <th className="px-3.5 py-2.5 text-right">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-800/40">
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40">
                       {vouchersList.map((v) => (
-                        <tr key={v.id} className="text-slate-300 hover:bg-slate-900/10 transition-colors">
-                          <td className="p-4 font-mono font-bold text-indigo-400">{v.voucherNumber}</td>
-                          <td className="p-4">
+                        <tr key={v.id} className="text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900/10 transition-colors">
+                          <td className="px-3.5 py-2.5 font-mono font-bold text-indigo-700 dark:text-indigo-400">{v.voucherNumber}</td>
+                          <td className="px-3.5 py-2.5">
                             <span
-                              className={`text-[10px] font-bold border rounded-full px-2.5 py-1 uppercase tracking-wider ${
+                              className={`text-[10px] font-bold border rounded-full px-2 py-0.5 uppercase tracking-wider ${
                                 v.type === 'RECEIPT'
-                                  ? 'bg-emerald-950/30 border-emerald-900/50 text-emerald-400'
+                                  ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-400'
                                   : v.type === 'PAYMENT'
-                                  ? 'bg-amber-950/30 border-amber-900/50 text-amber-400'
-                                  : 'bg-indigo-950/30 border-indigo-900/50 text-indigo-400'
+                                  ? 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/50 text-amber-800 dark:text-amber-400'
+                                  : 'bg-indigo-50 dark:bg-indigo-950/30 border-indigo-200 dark:border-indigo-900/50 text-indigo-800 dark:text-indigo-400'
                               }`}
                             >
                               {v.type}
                             </span>
                           </td>
-                          <td className="p-4 text-slate-500 dark:text-slate-400">{v.date}</td>
-                          <td className="p-4 text-slate-300 max-w-xs truncate">{v.narration || 'N/A'}</td>
-                          <td className="p-4 text-right font-mono font-bold text-slate-100">
+                          <td className="px-3.5 py-2.5 text-slate-500 dark:text-slate-400">{v.date}</td>
+                          <td className="px-3.5 py-2.5 text-slate-700 dark:text-slate-300 max-w-xs truncate">{v.narration || 'N/A'}</td>
+                          <td className="px-3.5 py-2.5 text-right font-mono font-bold text-slate-900 dark:text-slate-100">
                             ₹ {Number(v.totalAmount || 0).toLocaleString('en-IN')}
                           </td>
-                          <td className="p-4 text-right">
+                          <td className="px-3.5 py-2.5 text-right flex items-center justify-end gap-1.5">
                             <button
                               onClick={() => setSelectedVoucherForModal(v)}
-                              className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-400 hover:text-indigo-300 border border-indigo-900/50 bg-indigo-950/30 px-2.5 py-1 rounded-md"
+                              className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-700 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 border border-indigo-200 dark:border-indigo-900/50 bg-indigo-50 dark:bg-indigo-950/30 px-2 py-0.5 rounded-md cursor-pointer"
                             >
-                              <Eye className="h-3.5 w-3.5" /> View Lines
+                              <Eye className="h-3 w-3" /> View Lines
+                            </button>
+                            <button
+                              onClick={() => setPrintVoucherData(v)}
+                              className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 dark:text-emerald-400 hover:text-emerald-900 dark:hover:text-emerald-300 border border-emerald-200 dark:border-emerald-900/50 bg-emerald-50 dark:bg-emerald-950/30 px-2 py-0.5 rounded-md transition active:scale-95 cursor-pointer shadow-2xs"
+                            >
+                              <Printer className="h-3 w-3" /> Print
                             </button>
                           </td>
                         </tr>
@@ -576,18 +663,18 @@ export default function AccountingDashboardPage() {
 
             {/* TAB 3: Trial Balance */}
             {activeTab === 'trial' && (
-              <div className="space-y-6">
-                <div className="flex justify-between items-center bg-slate-950/40 border border-slate-800 p-4 rounded-xl">
+              <div className="space-y-3.5">
+                <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 p-3 rounded-xl">
                   <div>
-                    <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider">Statement of Trial Balance</h3>
-                    <p className="text-xs text-slate-500">Mathematical validation summarizing all double-entry debit and credit lines</p>
+                    <h3 className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider">Statement of Trial Balance</h3>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">Mathematical validation summarizing all double-entry debit and credit lines</p>
                   </div>
                   {trialTotals && (
-                    <div className="flex items-center gap-3">
-                      <span className={`text-[10px] font-semibold border rounded-full px-2.5 py-1 uppercase tracking-wider ${
+                    <div className="flex items-center gap-2">
+                      <span className={`text-[10px] font-semibold border rounded-full px-2 py-0.5 uppercase tracking-wider ${
                         trialTotals.isBalanced 
-                          ? 'bg-emerald-950/30 border-emerald-900/50 text-emerald-400'
-                          : 'bg-red-950/30 border-red-900/50 text-red-400'
+                          ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-400'
+                          : 'bg-rose-50 dark:bg-red-950/30 border-rose-200 dark:border-red-900/50 text-rose-800 dark:text-red-400'
                       }`}>
                         {trialTotals.isBalanced ? 'Balanced Book' : 'Out of Balance'}
                       </span>
@@ -595,40 +682,40 @@ export default function AccountingDashboardPage() {
                   )}
                 </div>
 
-                <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/20">
+                <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/20 shadow-xs">
                   <table className="w-full text-left text-xs border-collapse whitespace-nowrap">
                     <thead>
-                      <tr className="bg-black/60 text-slate-500 dark:text-slate-400 font-semibold border-b border-slate-800">
-                        <th className="p-4">Ledger Account Code Name</th>
-                        <th className="p-4">Group Classification</th>
-                        <th className="p-4 text-right">Debit (₹)</th>
-                        <th className="p-4 text-right">Credit (₹)</th>
-                        <th className="p-4 text-right">Net Balance (₹)</th>
+                      <tr className="bg-slate-50 dark:bg-black/60 text-slate-700 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800 text-[10px] uppercase">
+                        <th className="px-3.5 py-2.5">Ledger Account Code Name</th>
+                        <th className="px-3.5 py-2.5">Group Classification</th>
+                        <th className="px-3.5 py-2.5 text-right">Debit (₹)</th>
+                        <th className="px-3.5 py-2.5 text-right">Credit (₹)</th>
+                        <th className="px-3.5 py-2.5 text-right">Net Balance (₹)</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-800/40">
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40">
                       {trialList.map((row) => (
-                        <tr key={row.ledgerId} className="text-slate-300 hover:bg-slate-900/10 transition-colors">
-                          <td className="p-4 font-bold text-slate-200">
+                        <tr key={row.ledgerId} className="text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900/10 transition-colors">
+                          <td className="px-3.5 py-2.5 font-bold text-slate-900 dark:text-slate-200">
                             {row.ledgerCode ? (
-                              <span className="font-mono text-indigo-400 font-semibold mr-1.5">[{row.ledgerCode}]</span>
+                              <span className="font-mono text-indigo-700 dark:text-indigo-400 font-semibold mr-1.5">[{row.ledgerCode}]</span>
                             ) : null}
                             {row.ledgerName}
                           </td>
-                          <td className="p-4 text-slate-500">{row.ledgerGroup}</td>
-                          <td className="p-4 text-right font-mono">₹ {row.debit.toLocaleString('en-IN')}</td>
-                          <td className="p-4 text-right font-mono">₹ {row.credit.toLocaleString('en-IN')}</td>
-                          <td className="p-4 text-right font-mono font-bold text-indigo-400">
+                          <td className="px-3.5 py-2.5 text-slate-500">{row.ledgerGroup}</td>
+                          <td className="px-3.5 py-2.5 text-right font-mono text-slate-900 dark:text-slate-200">₹ {row.debit.toLocaleString('en-IN')}</td>
+                          <td className="px-3.5 py-2.5 text-right font-mono text-slate-900 dark:text-slate-200">₹ {row.credit.toLocaleString('en-IN')}</td>
+                          <td className="px-3.5 py-2.5 text-right font-mono font-bold text-indigo-700 dark:text-indigo-400">
                             ₹ {row.netBalance.toLocaleString('en-IN')}
                           </td>
                         </tr>
                       ))}
                       {trialTotals && (
-                        <tr className="bg-slate-950/50 font-bold border-t border-slate-800">
-                          <td className="p-4 text-slate-200" colSpan={2}>Grand Ledger Totals</td>
-                          <td className="p-4 text-right font-mono text-emerald-400">₹ {trialTotals.debit.toLocaleString('en-IN')}</td>
-                          <td className="p-4 text-right font-mono text-emerald-400">₹ {trialTotals.credit.toLocaleString('en-IN')}</td>
-                          <td className="p-4 text-right font-mono text-slate-500 dark:text-slate-400">0.00</td>
+                        <tr className="bg-slate-50 dark:bg-slate-950/50 font-bold border-t border-slate-200 dark:border-slate-800">
+                          <td className="px-3.5 py-2.5 text-slate-900 dark:text-slate-200" colSpan={2}>Grand Ledger Totals</td>
+                          <td className="px-3.5 py-2.5 text-right font-mono text-emerald-700 dark:text-emerald-400">₹ {trialTotals.debit.toLocaleString('en-IN')}</td>
+                          <td className="px-3.5 py-2.5 text-right font-mono text-emerald-700 dark:text-emerald-400">₹ {trialTotals.credit.toLocaleString('en-IN')}</td>
+                          <td className="px-3.5 py-2.5 text-right font-mono text-slate-500 dark:text-slate-400">0.00</td>
                         </tr>
                       )}
                     </tbody>
@@ -639,34 +726,34 @@ export default function AccountingDashboardPage() {
 
             {/* TAB 4: Income & Expenditure */}
             {activeTab === 'income' && (
-              <div className="space-y-6">
-                <div className="bg-slate-950/40 border border-slate-800 p-4 rounded-xl">
-                  <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider">Statement of Income & Expenditure</h3>
-                  <p className="text-xs text-slate-500">Summary of revenue inflows vs operational expenditure outflows</p>
+              <div className="space-y-3.5">
+                <div className="bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 p-3 rounded-xl">
+                  <h3 className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider">Statement of Income & Expenditure</h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Summary of revenue inflows vs operational expenditure outflows</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                   {/* Income */}
-                  <div className="border border-slate-800 rounded-xl bg-slate-950/20 p-5 space-y-4">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-400 border-b border-slate-800/40 pb-2">Revenue Inflows (Income)</h4>
-                    <ul className="divide-y divide-slate-800/40 text-xs text-slate-300">
+                  <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-950/20 p-3.5 sm:p-4 space-y-3 shadow-xs">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 border-b border-slate-200 dark:border-slate-800/40 pb-2">Revenue Inflows (Income)</h4>
+                    <ul className="divide-y divide-slate-100 dark:divide-slate-800/40 text-xs text-slate-700 dark:text-slate-300">
                       {incomeList.map((row) => (
-                        <li key={row.ledgerId} className="flex justify-between py-2.5">
+                        <li key={row.ledgerId} className="flex justify-between py-2">
                           <span>{row.ledgerName}</span>
-                          <span className="font-mono font-bold text-slate-200">₹ {row.credit.toLocaleString('en-IN')}</span>
+                          <span className="font-mono font-bold text-slate-900 dark:text-slate-200">₹ {row.credit.toLocaleString('en-IN')}</span>
                         </li>
                       ))}
                     </ul>
                   </div>
 
                   {/* Expenses */}
-                  <div className="border border-slate-800 rounded-xl bg-slate-950/20 p-5 space-y-4">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-red-400 border-b border-slate-800/40 pb-2">Operational Outflows (Expenditure)</h4>
-                    <ul className="divide-y divide-slate-800/40 text-xs text-slate-300">
+                  <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-950/20 p-3.5 sm:p-4 space-y-3 shadow-xs">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-rose-700 dark:text-red-400 border-b border-slate-200 dark:border-slate-800/40 pb-2">Operational Outflows (Expenditure)</h4>
+                    <ul className="divide-y divide-slate-100 dark:divide-slate-800/40 text-xs text-slate-700 dark:text-slate-300">
                       {expenseList.map((row) => (
-                        <li key={row.ledgerId} className="flex justify-between py-2.5">
+                        <li key={row.ledgerId} className="flex justify-between py-2">
                           <span>{row.ledgerName}</span>
-                          <span className="font-mono font-bold text-slate-200">₹ {row.debit.toLocaleString('en-IN')}</span>
+                          <span className="font-mono font-bold text-slate-900 dark:text-slate-200">₹ {row.debit.toLocaleString('en-IN')}</span>
                         </li>
                       ))}
                     </ul>
@@ -674,20 +761,20 @@ export default function AccountingDashboardPage() {
                 </div>
 
                 {incomeSummary && (
-                  <div className="border border-slate-800 rounded-xl bg-indigo-950/20 border-indigo-900/50 p-6 flex flex-col md:flex-row md:justify-between md:items-center gap-4 text-xs text-slate-300">
-                    <div className="flex gap-6">
+                  <div className="border border-indigo-200 dark:border-indigo-900/50 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/20 p-3.5 sm:p-4 flex flex-col md:flex-row md:justify-between md:items-center gap-3 text-xs text-slate-700 dark:text-slate-300 shadow-xs">
+                    <div className="flex gap-4 sm:gap-6">
                       <div>
-                        <span className="text-slate-500 block mb-1">Total Income Summary</span>
-                        <span className="text-lg font-bold text-slate-200">₹ {incomeSummary.totalIncome.toLocaleString('en-IN')}</span>
+                        <span className="text-slate-500 dark:text-slate-400 block mb-0.5 text-[11px]">Total Income Summary</span>
+                        <span className="text-base font-bold text-slate-900 dark:text-slate-200">₹ {incomeSummary.totalIncome.toLocaleString('en-IN')}</span>
                       </div>
                       <div>
-                        <span className="text-slate-500 block mb-1">Total Expenses Summary</span>
-                        <span className="text-lg font-bold text-slate-200">₹ {incomeSummary.totalExpenses.toLocaleString('en-IN')}</span>
+                        <span className="text-slate-500 dark:text-slate-400 block mb-0.5 text-[11px]">Total Expenses Summary</span>
+                        <span className="text-base font-bold text-slate-900 dark:text-slate-200">₹ {incomeSummary.totalExpenses.toLocaleString('en-IN')}</span>
                       </div>
                     </div>
                     <div>
-                      <span className="text-slate-500 block mb-1">Net Accounting Surplus</span>
-                      <span className="text-xl font-black text-emerald-400">₹ {incomeSummary.surplus.toLocaleString('en-IN')}</span>
+                      <span className="text-slate-500 dark:text-slate-400 block mb-0.5 text-[11px]">Net Accounting Surplus</span>
+                      <span className="text-lg font-black text-emerald-700 dark:text-emerald-400">₹ {incomeSummary.surplus.toLocaleString('en-IN')}</span>
                     </div>
                   </div>
                 )}
@@ -696,44 +783,44 @@ export default function AccountingDashboardPage() {
 
             {/* TAB 5: Balance Sheet */}
             {activeTab === 'balance' && (
-              <div className="space-y-6">
-                <div className="bg-slate-950/40 border border-slate-800 p-4 rounded-xl">
-                  <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider">Statement of Balance Sheet</h3>
-                  <p className="text-xs text-slate-500">Asset valuation collections compared side-by-side with liabilities, reserves, & surplus</p>
+              <div className="space-y-3.5">
+                <div className="bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 p-3 rounded-xl">
+                  <h3 className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider">Statement of Balance Sheet</h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Asset valuation collections compared side-by-side with liabilities, reserves, & surplus</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                   {/* Assets */}
-                  <div className="border border-slate-800 rounded-xl bg-slate-950/20 p-5 space-y-4">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-400 border-b border-slate-800/40 pb-2">Assets (Property & Receivables)</h4>
-                    <ul className="divide-y divide-slate-800/40 text-xs text-slate-300">
+                  <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-950/20 p-3.5 sm:p-4 space-y-3 shadow-xs">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-400 border-b border-slate-200 dark:border-slate-800/40 pb-2">Assets (Property & Receivables)</h4>
+                    <ul className="divide-y divide-slate-100 dark:divide-slate-800/40 text-xs text-slate-700 dark:text-slate-300">
                       {assetList.map((row) => (
-                        <li key={row.ledgerId} className="flex justify-between py-2.5">
+                        <li key={row.ledgerId} className="flex justify-between py-2">
                           <span>
-                            {row.ledgerCode ? <span className="font-mono text-indigo-400 font-semibold mr-1.5">[{row.ledgerCode}]</span> : null}
+                            {row.ledgerCode ? <span className="font-mono text-indigo-700 dark:text-indigo-400 font-semibold mr-1.5">[{row.ledgerCode}]</span> : null}
                             {row.ledgerName}
                           </span>
-                          <span className="font-mono font-bold text-slate-200">₹ {Math.abs(row.netBalance).toLocaleString('en-IN')}</span>
+                          <span className="font-mono font-bold text-slate-900 dark:text-slate-200">₹ {Math.abs(row.netBalance).toLocaleString('en-IN')}</span>
                         </li>
                       ))}
                     </ul>
                   </div>
 
                   {/* Liabilities */}
-                  <div className="border border-slate-800 rounded-xl bg-slate-950/20 p-5 space-y-4">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-400 border-b border-slate-800/40 pb-2">Liabilities, Capital & Reserves</h4>
-                    <ul className="divide-y divide-slate-800/40 text-xs text-slate-300">
+                  <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-950/20 p-3.5 sm:p-4 space-y-3 shadow-xs">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-400 border-b border-slate-200 dark:border-slate-800/40 pb-2">Liabilities, Capital & Reserves</h4>
+                    <ul className="divide-y divide-slate-100 dark:divide-slate-800/40 text-xs text-slate-700 dark:text-slate-300">
                       {liabilityList.map((row) => (
-                        <li key={row.ledgerId} className="flex justify-between py-2.5">
+                        <li key={row.ledgerId} className="flex justify-between py-2">
                           <span>
-                            {row.ledgerCode ? <span className="font-mono text-indigo-400 font-semibold mr-1.5">[{row.ledgerCode}]</span> : null}
+                            {row.ledgerCode ? <span className="font-mono text-indigo-700 dark:text-indigo-400 font-semibold mr-1.5">[{row.ledgerCode}]</span> : null}
                             {row.ledgerName}
                           </span>
-                          <span className="font-mono font-bold text-slate-200">₹ {Math.abs(row.netBalance).toLocaleString('en-IN')}</span>
+                          <span className="font-mono font-bold text-slate-900 dark:text-slate-200">₹ {Math.abs(row.netBalance).toLocaleString('en-IN')}</span>
                         </li>
                       ))}
                       {incomeSummary && (
-                        <li className="flex justify-between py-2.5 font-bold text-emerald-400 bg-emerald-950/20 px-2 rounded-lg border border-emerald-900/40">
+                        <li className="flex justify-between py-2 font-bold text-emerald-800 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20 px-2 rounded-lg border border-emerald-200 dark:border-emerald-900/40">
                           <span>Current Year Operating Surplus</span>
                           <span className="font-mono">₹ {incomeSummary.surplus.toLocaleString('en-IN')}</span>
                         </li>
@@ -743,15 +830,100 @@ export default function AccountingDashboardPage() {
                 </div>
 
                 {balanceSummary && (
-                  <div className="border border-slate-800 rounded-xl bg-indigo-950/20 border-indigo-900/50 p-6 flex justify-between items-center text-xs text-slate-300">
+                  <div className="border border-indigo-200 dark:border-indigo-900/50 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/20 p-3.5 sm:p-4 flex justify-between items-center text-xs text-slate-700 dark:text-slate-300 shadow-xs">
                     <div>
-                      <span className="text-slate-500 block mb-1">Total Assets Valuation</span>
-                      <span className="text-lg font-bold text-slate-200">₹ {balanceSummary.totalAssets.toLocaleString('en-IN')}</span>
+                      <span className="text-slate-500 dark:text-slate-400 block mb-0.5 text-[11px]">Total Assets Valuation</span>
+                      <span className="text-base font-bold text-slate-900 dark:text-slate-200">₹ {balanceSummary.totalAssets.toLocaleString('en-IN')}</span>
                     </div>
                     <div>
-                      <span className="text-slate-500 block mb-1">Total Liabilities & Equity Reserves</span>
-                      <span className="text-lg font-bold text-slate-200">₹ {balanceSummary.totalLiabilities.toLocaleString('en-IN')}</span>
+                      <span className="text-slate-500 dark:text-slate-400 block mb-0.5 text-[11px]">Total Liabilities & Equity Reserves</span>
+                      <span className="text-base font-bold text-slate-900 dark:text-slate-200">₹ {balanceSummary.totalLiabilities.toLocaleString('en-IN')}</span>
                     </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* TAB 6: Bank Accounts Configuration */}
+            {activeTab === 'bank_accounts' && (
+              <div className="space-y-3.5">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2.5 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 p-3 rounded-xl shadow-xs">
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                      <Landmark className="h-4 w-4 text-emerald-600 dark:text-emerald-400" /> Society Bank Accounts
+                    </h3>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      Manage official society bank accounts for dues collections, vendor payments, and financial auditing.
+                    </p>
+                  </div>
+                  {isManagementRole && (
+                    <button
+                      onClick={() => setIsAddBankModalOpen(true)}
+                      className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white py-1.5 px-3 text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-all"
+                    >
+                      <Plus className="h-3.5 w-3.5" /> Add Bank Account
+                    </button>
+                  )}
+                </div>
+
+                {bankAccountsList.length === 0 ? (
+                  <div className="text-center py-16 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-950/40">
+                    <Landmark className="h-8 w-8 text-slate-400 dark:text-slate-500 mx-auto mb-2" />
+                    <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300">No bank accounts configured yet</h4>
+                    <p className="text-xs text-slate-500 max-w-sm mx-auto mt-0.5">
+                      Click 'Add Bank Account' to configure society bank accounts for accounting ledger tracking.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {bankAccountsList.map((acc: any) => (
+                      <div 
+                        key={acc.id} 
+                        className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 p-3.5 sm:p-4 space-y-3 hover:border-slate-300 dark:hover:border-slate-700 transition-all flex flex-col justify-between shadow-xs"
+                      >
+                        <div className="space-y-2">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">{acc.bankName}</h4>
+                              <p className="text-xs text-slate-500 dark:text-slate-400 font-mono mt-0.5">A/C: {acc.accountNumber}</p>
+                            </div>
+                            {acc.isDefault ? (
+                              <span className="text-[10px] font-extrabold bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                Primary Default
+                              </span>
+                            ) : (
+                              <span className="text-[10px] font-semibold bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded-full uppercase">
+                                Secondary
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2 text-xs border-t border-b border-slate-100 dark:border-slate-800/60 py-2.5 mt-2 text-slate-600 dark:text-slate-400">
+                            <div>
+                              <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-semibold">IFSC Code</span>
+                              <span className="font-mono text-slate-900 dark:text-slate-200 font-bold">{acc.ifsc}</span>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-semibold">Account Type</span>
+                              <span className="text-slate-800 dark:text-slate-200 font-semibold">{acc.type || 'SAVINGS'}</span>
+                            </div>
+                            {acc.branchName && (
+                              <div className="col-span-2">
+                                <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-semibold">Branch</span>
+                                <span className="text-slate-700 dark:text-slate-300">{acc.branchName}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="pt-1 flex items-center justify-between">
+                          <span className="text-xs text-slate-500 dark:text-slate-400">Opening Balance:</span>
+                          <span className="text-sm font-bold text-slate-900 dark:text-slate-100 font-mono">
+                            ₹{Number(acc.openingBalance || 0).toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
@@ -759,59 +931,62 @@ export default function AccountingDashboardPage() {
 
             {/* TAB 6: Post Journal Entry */}
             {activeTab === 'voucher' && (
-              <form onSubmit={handlePostVoucher} className="space-y-6 bg-slate-950/20 border border-slate-800 p-8 rounded-xl max-w-4xl">
-                <div>
-                  <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Post Double-Entry Journal Entry</h3>
-                  <p className="text-xs text-slate-500">Record journal lines manually. Total debits must equal total credits.</p>
+              <form onSubmit={handlePostVoucher} className="space-y-6 bg-white dark:bg-slate-950/20 border border-slate-200 dark:border-slate-800 p-6 sm:p-8 rounded-xl shadow-xs max-w-4xl">
+                <div className="bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 p-4 rounded-xl">
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                    <BookOpen className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                    Post Double-Entry Journal Entry
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Record journal lines manually. Total debits must equal total credits.</p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs text-slate-500 dark:text-slate-400 font-medium">Voucher Number</label>
+                    <label className="text-xs text-slate-700 dark:text-slate-300 font-semibold">Voucher Number</label>
                     <input
                       type="text"
                       value={voucherNo}
                       onChange={(e) => setVoucherNo(e.target.value)}
-                      className="w-full mt-1 p-2 rounded bg-slate-900 border border-slate-800 text-xs font-mono text-slate-200"
+                      className="w-full mt-1 p-2.5 rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900/60 text-xs font-mono text-slate-900 dark:text-slate-200 focus:border-indigo-600 focus:outline-none"
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs text-slate-500 dark:text-slate-400 font-medium">Voucher Date</label>
+                    <label className="text-xs text-slate-700 dark:text-slate-300 font-semibold">Voucher Date</label>
                     <input
                       type="date"
                       value={voucherDate}
                       onChange={(e) => setVoucherDate(e.target.value)}
-                      className="w-full mt-1 p-2 rounded bg-slate-900 border border-slate-800 text-xs text-slate-200"
+                      className="w-full mt-1 p-2.5 rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900/60 text-xs text-slate-900 dark:text-slate-200 focus:border-indigo-600 focus:outline-none"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-xs text-slate-500 dark:text-slate-400 font-medium">Narration Summary</label>
+                  <label className="text-xs text-slate-700 dark:text-slate-300 font-semibold">Narration Summary</label>
                   <input
                     type="text"
                     placeholder="Enter journal description..."
                     value={narration}
                     onChange={(e) => setNarration(e.target.value)}
-                    className="w-full mt-1 p-2 rounded bg-slate-900 border border-slate-800 text-xs text-slate-200"
+                    className="w-full mt-1 p-2.5 rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900/60 text-xs text-slate-900 dark:text-slate-200 focus:border-indigo-600 focus:outline-none"
                   />
                 </div>
 
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-xs font-bold text-indigo-400 uppercase tracking-wider">Journal Lines</span>
+                    <span className="text-xs font-bold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider">Journal Lines</span>
                     <button
                       type="button"
                       onClick={() => setVoucherLines([...voucherLines, { ledgerId: '', type: 'DEBIT', amount: 0 }])}
-                      className="text-xs text-indigo-400 hover:underline flex items-center gap-1"
+                      className="text-xs text-indigo-700 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 font-semibold flex items-center gap-1"
                     >
                       <Plus className="h-3.5 w-3.5" /> Add Line Item
                     </button>
                   </div>
 
                   {voucherLines.map((line, idx) => (
-                    <div key={idx} className="flex items-center gap-3 bg-slate-950/40 p-3 border border-slate-800 rounded-lg">
+                    <div key={idx} className="flex items-center gap-3 bg-slate-50 dark:bg-slate-950/40 p-3 border border-slate-200 dark:border-slate-800 rounded-lg">
                       <select
                         value={line.ledgerId}
                         onChange={(e) => {
@@ -819,7 +994,7 @@ export default function AccountingDashboardPage() {
                           updated[idx].ledgerId = e.target.value;
                           setVoucherLines(updated);
                         }}
-                        className="flex-1 p-2 rounded bg-slate-900 border border-slate-800 text-xs text-slate-300"
+                        className="flex-1 p-2 rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-slate-200"
                       >
                         <option value="">Select Ledger Account...</option>
                         {trialList.map((l) => (
@@ -836,7 +1011,7 @@ export default function AccountingDashboardPage() {
                           updated[idx].type = e.target.value as 'DEBIT' | 'CREDIT';
                           setVoucherLines(updated);
                         }}
-                        className="w-28 p-2 rounded bg-slate-900 border border-slate-800 text-xs text-slate-300 font-bold"
+                        className="w-28 p-2 rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-slate-200 font-bold"
                       >
                         <option value="DEBIT">DEBIT</option>
                         <option value="CREDIT">CREDIT</option>
@@ -851,7 +1026,7 @@ export default function AccountingDashboardPage() {
                           updated[idx].amount = Number(e.target.value);
                           setVoucherLines(updated);
                         }}
-                        className="w-32 p-2 rounded bg-slate-900 border border-slate-800 text-xs font-mono text-slate-200"
+                        className="w-32 p-2 rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-mono text-slate-900 dark:text-slate-200"
                       />
                     </div>
                   ))}
@@ -860,7 +1035,7 @@ export default function AccountingDashboardPage() {
                 <button
                   type="submit"
                   disabled={isProcessing}
-                  className="w-full py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 font-bold text-xs text-white shadow-lg flex items-center justify-center gap-2"
+                  className="w-full py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 font-bold text-xs text-white shadow-md shadow-indigo-600/20 flex items-center justify-center gap-2"
                 >
                   {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Commit Journal Voucher Posting'}
                 </button>
@@ -1312,11 +1487,23 @@ export default function AccountingDashboardPage() {
             </div>
 
             {/* Footer */}
-            <div className="p-6 border-t border-slate-800 bg-slate-950 flex justify-end gap-2">
+            <div className="p-6 border-t border-slate-800 bg-slate-950 flex justify-between items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const v = selectedVoucherForModal;
+                  setSelectedVoucherForModal(null);
+                  setPrintVoucherData(v);
+                }}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white py-2 px-4 text-xs font-bold shadow-md transition active:scale-95 cursor-pointer"
+              >
+                <Printer className="h-3.5 w-3.5" /> Print This Voucher
+              </button>
+
               <button
                 type="button"
                 onClick={() => setSelectedVoucherForModal(null)}
-                className="rounded-lg border border-slate-800 bg-slate-950/60 py-2 px-6 text-xs font-semibold text-slate-500 hover:bg-slate-900 transition-all shadow-sm"
+                className="rounded-lg border border-slate-800 bg-slate-950/60 py-2 px-6 text-xs font-semibold text-slate-500 hover:bg-slate-900 transition-all shadow-sm cursor-pointer"
               >
                 Close
               </button>
@@ -1324,6 +1511,382 @@ export default function AccountingDashboardPage() {
           </div>
         </div>
       )}
+
+      {/* MODAL 3: Multi-Format Print Voucher & Expense Modal */}
+      {printVoucherData && (() => {
+        const societyName = activeSociety?.societyName || 'Housing Co-Operative Society';
+        const totalNum = Number(printVoucherData.totalAmount || 0);
+
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setPrintVoucherData(null)} />
+            
+            {/* Modal Panel */}
+            <div className="relative w-full max-w-4xl bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[92vh]">
+
+              {/* Header with Format Selector & Action (no-print) */}
+              <div className="no-print flex-shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 sm:p-5 border-b border-slate-800 bg-slate-900/90 backdrop-blur-sm">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-xl bg-indigo-600/20 border border-indigo-500/30">
+                    <Printer className="h-5 w-5 text-indigo-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
+                      Print Voucher: <span className="font-mono text-indigo-400">{printVoucherData.voucherNumber}</span>
+                    </h3>
+                    <p className="text-[11px] text-slate-400">Choose printable layout and send to printer</p>
+                  </div>
+                </div>
+
+                {/* Format Pills */}
+                <div className="grid grid-cols-2 sm:flex sm:items-center gap-1 bg-slate-950/80 p-1 rounded-xl border border-slate-800">
+                  {[
+                    { key: 'a4_voucher', label: 'A4 Voucher', icon: FileText },
+                    { key: 'thermal_pos', label: 'Thermal (80mm)', icon: Receipt },
+                    { key: 'a5_voucher', label: 'A5 Slip', icon: FileCheck },
+                    { key: 'compact_remittance', label: 'Audit Card', icon: Scissors },
+                  ].map((fmt) => {
+                    const IconComp = fmt.icon;
+                    const isActive = voucherPrintFormat === fmt.key;
+                    return (
+                      <button
+                        key={fmt.key}
+                        type="button"
+                        onClick={() => setVoucherPrintFormat(fmt.key as VoucherPrintFormat)}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition-all cursor-pointer ${
+                          isActive
+                            ? 'bg-indigo-600 text-white shadow-xs'
+                            : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                        }`}
+                      >
+                        <IconComp className="h-3 w-3" />
+                        {fmt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handlePrintVoucher}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-md active:scale-95 transition cursor-pointer"
+                  >
+                    <Printer className="h-3.5 w-3.5" /> Print
+                  </button>
+                  <button
+                    onClick={() => setPrintVoucherData(null)}
+                    className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition cursor-pointer"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Scrollable Document Preview Body */}
+              <div className="p-4 sm:p-6 overflow-y-auto bg-slate-900/40 flex justify-center">
+                <div id="voucher-printable-frame" className="w-full">
+                  
+                  {/* FORMAT 1: A4 VOUCHER */}
+                  {voucherPrintFormat === 'a4_voucher' && (
+                    <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-6 sm:p-8 space-y-6 text-slate-800 dark:text-slate-200 shadow-sm">
+                      {/* Society Header */}
+                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <Building className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                            <h2 className="text-lg font-black uppercase text-slate-900 dark:text-slate-100">{societyName}</h2>
+                          </div>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Housing Co-Operative Society Ltd. • Accounting Division</p>
+                        </div>
+                        <div className="text-left sm:text-right space-y-1">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 block">
+                            OFFICIAL ACCOUNTING VOUCHER
+                          </span>
+                          <h3 className="text-lg font-extrabold text-slate-900 dark:text-slate-100 font-mono">{printVoucherData.voucherNumber}</h3>
+                          <span className="inline-block text-[10px] font-bold border rounded-full px-3 py-0.5 uppercase bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300">
+                            {printVoucherData.type} VOUCHER
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Meta Details */}
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-xs bg-slate-50 dark:bg-slate-900/60 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800">
+                        <div>
+                          <span className="text-slate-500 dark:text-slate-400 block text-[10px] uppercase">Posting Date</span>
+                          <span className="font-bold text-slate-900 dark:text-slate-100">{printVoucherData.date}</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-500 dark:text-slate-400 block text-[10px] uppercase">Payee / Entity</span>
+                          <span className="font-bold text-slate-900 dark:text-slate-100">{printVoucherData.vendorName || 'Society General Account'}</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-500 dark:text-slate-400 block text-[10px] uppercase">Voucher Total</span>
+                          <span className="font-extrabold text-slate-900 dark:text-slate-100 font-mono text-sm">₹ {totalNum.toLocaleString('en-IN')}</span>
+                        </div>
+                      </div>
+
+                      {/* Line Breakdown Table */}
+                      <div className="space-y-2">
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Double-Entry Particulars</h4>
+                        <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+                          <table className="w-full text-left text-xs border-collapse whitespace-nowrap">
+                            <thead>
+                              <tr className="bg-slate-100 dark:bg-black/60 text-slate-700 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800">
+                                <th className="p-3">Ledger Account Head</th>
+                                <th className="p-3">Entry Type</th>
+                                <th className="p-3 text-right">Debit (₹)</th>
+                                <th className="p-3 text-right">Credit (₹)</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-200 dark:divide-slate-800/40">
+                              {printVoucherData.lines && printVoucherData.lines.length > 0 ? (
+                                printVoucherData.lines.map((line, idx) => (
+                                  <tr key={idx} className="text-slate-800 dark:text-slate-200">
+                                    <td className="p-3 font-medium">
+                                      {line.ledgerCode ? <span className="font-mono text-indigo-600 dark:text-indigo-400 mr-1">[{line.ledgerCode}]</span> : null}
+                                      {line.ledgerName}
+                                    </td>
+                                    <td className="p-3">
+                                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded border uppercase ${
+                                        line.type === 'DEBIT' ? 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400' : 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400'
+                                      }`}>
+                                        {line.type}
+                                      </span>
+                                    </td>
+                                    <td className="p-3 text-right font-mono font-semibold">
+                                      {line.type === 'DEBIT' ? `₹ ${Number(line.amount).toLocaleString('en-IN')}` : '-'}
+                                    </td>
+                                    <td className="p-3 text-right font-mono font-semibold">
+                                      {line.type === 'CREDIT' ? `₹ ${Number(line.amount).toLocaleString('en-IN')}` : '-'}
+                                    </td>
+                                  </tr>
+                                ))
+                              ) : (
+                                <tr className="text-slate-800 dark:text-slate-200">
+                                  <td className="p-3 font-medium">{printVoucherData.vendorName || 'Sundry Creditors / Expense Head'}</td>
+                                  <td className="p-3"><span className="text-[10px] font-bold px-2 py-0.5 rounded border uppercase bg-red-50 dark:bg-red-950/40 border-red-200 text-red-700">DEBIT</span></td>
+                                  <td className="p-3 text-right font-mono font-semibold">₹ {totalNum.toLocaleString('en-IN')}</td>
+                                  <td className="p-3 text-right font-mono font-semibold">-</td>
+                                </tr>
+                              )}
+                              <tr className="bg-slate-50 dark:bg-slate-900/60 font-bold border-t border-slate-200 dark:border-slate-800">
+                                <td colSpan={2} className="p-3 text-slate-900 dark:text-slate-100">Total Double-Entry Balanced</td>
+                                <td className="p-3 text-right font-mono text-slate-900 dark:text-slate-100">₹ {totalNum.toLocaleString('en-IN')}</td>
+                                <td className="p-3 text-right font-mono text-slate-900 dark:text-slate-100">₹ {totalNum.toLocaleString('en-IN')}</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+
+                      {/* Narration & Rupees in Words */}
+                      <div className="bg-slate-50 dark:bg-slate-900/40 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2 text-xs">
+                        <p><span className="font-bold text-slate-700 dark:text-slate-300">Amount in Words:</span> <span className="italic font-semibold text-slate-900 dark:text-slate-100">{numberToWordsINR(totalNum)}</span></p>
+                        <p><span className="font-bold text-slate-700 dark:text-slate-300">Narration / Remarks:</span> <span className="text-slate-600 dark:text-slate-400">{printVoucherData.narration || 'Being amount posted to society accounting books.'}</span></p>
+                      </div>
+
+                      {/* Three-tier Signatures */}
+                      <div className="pt-6 border-t border-slate-200 dark:border-slate-800 grid grid-cols-3 gap-4 text-center text-xs">
+                        <div>
+                          <div className="h-10 border-b border-slate-400 dark:border-slate-600 mx-auto w-3/4 mb-1" />
+                          <p className="font-bold text-slate-800 dark:text-slate-200">Prepared By</p>
+                          <p className="text-[10px] text-slate-400">Accountant / Manager</p>
+                        </div>
+                        <div>
+                          <div className="h-10 border-b border-slate-400 dark:border-slate-600 mx-auto w-3/4 mb-1" />
+                          <p className="font-bold text-slate-800 dark:text-slate-200">Verified By</p>
+                          <p className="text-[10px] text-slate-400">Internal Auditor</p>
+                        </div>
+                        <div>
+                          <div className="h-10 border-b border-slate-400 dark:border-slate-600 mx-auto w-3/4 mb-1" />
+                          <p className="font-bold text-slate-800 dark:text-slate-200">Authorized Signatory</p>
+                          <p className="text-[10px] text-slate-400">Hon. Treasurer / Secretary</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* FORMAT 2: THERMAL POS (80mm) */}
+                  {voucherPrintFormat === 'thermal_pos' && (
+                    <div className="w-[320px] max-w-full mx-auto bg-white text-slate-900 font-mono text-[11px] p-5 border border-dashed border-slate-400 rounded-xl shadow-md space-y-3 select-none">
+                      <div className="text-center space-y-0.5 border-b border-dashed border-slate-400 pb-2">
+                        <h3 className="font-black text-xs uppercase tracking-wider">{societyName}</h3>
+                        <p className="text-[9px] text-slate-600">Accounting Payout Slip</p>
+                        <p className="font-bold text-[10px] uppercase tracking-widest pt-1">*** {printVoucherData.type} VOUCHER ***</p>
+                      </div>
+
+                      <div className="space-y-0.5 text-[10px] border-b border-dashed border-slate-400 pb-2">
+                        <div className="flex justify-between"><span>Voucher No:</span><span className="font-bold">{printVoucherData.voucherNumber}</span></div>
+                        <div className="flex justify-between"><span>Date:</span><span>{printVoucherData.date}</span></div>
+                        <div className="flex justify-between"><span>Payee:</span><span className="font-bold truncate max-w-[150px]">{printVoucherData.vendorName || 'General Account'}</span></div>
+                      </div>
+
+                      <div className="space-y-1 text-[10px] border-b border-dashed border-slate-400 pb-2">
+                        <div className="flex justify-between font-bold border-b border-slate-300 pb-0.5">
+                          <span>HEAD / PARTICULARS</span>
+                          <span>AMT</span>
+                        </div>
+                        {printVoucherData.lines && printVoucherData.lines.length > 0 ? (
+                          printVoucherData.lines.map((l, i) => (
+                            <div key={i} className="flex justify-between">
+                              <span className="truncate max-w-[180px]">{l.ledgerName} ({l.type})</span>
+                              <span>{Number(l.amount).toFixed(2)}</span>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="flex justify-between">
+                            <span className="truncate max-w-[180px]">{printVoucherData.vendorName || 'Expense Payout'}</span>
+                            <span>{totalNum.toFixed(2)}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="space-y-0.5 text-[10px] border-b border-dashed border-slate-400 pb-2">
+                        <div className="flex justify-between font-black text-xs">
+                          <span>TOTAL VOUCHER:</span>
+                          <span>₹ {totalNum.toFixed(2)}</span>
+                        </div>
+                        <p className="text-[9px] text-slate-600 pt-1">Narration: {printVoucherData.narration || 'Expense payment'}</p>
+                      </div>
+
+                      {/* Barcode & Signature */}
+                      <div className="text-center pt-2 space-y-2">
+                        <svg className="h-6 w-44 mx-auto text-slate-900" viewBox="0 0 100 24" preserveAspectRatio="none">
+                          <rect x="0" y="0" width="2.5" height="24" fill="currentColor" />
+                          <rect x="5" y="0" width="1.5" height="24" fill="currentColor" />
+                          <rect x="8" y="0" width="3.5" height="24" fill="currentColor" />
+                          <rect x="14" y="0" width="1.5" height="24" fill="currentColor" />
+                          <rect x="18" y="0" width="4.5" height="24" fill="currentColor" />
+                          <rect x="25" y="0" width="2" height="24" fill="currentColor" />
+                          <rect x="30" y="0" width="3.5" height="24" fill="currentColor" />
+                          <rect x="36" y="0" width="1.5" height="24" fill="currentColor" />
+                          <rect x="42" y="0" width="4" height="24" fill="currentColor" />
+                          <rect x="48" y="0" width="2.5" height="24" fill="currentColor" />
+                          <rect x="54" y="0" width="3.5" height="24" fill="currentColor" />
+                          <rect x="62" y="0" width="1.5" height="24" fill="currentColor" />
+                          <rect x="68" y="0" width="3" height="24" fill="currentColor" />
+                          <rect x="74" y="0" width="4.5" height="24" fill="currentColor" />
+                          <rect x="82" y="0" width="2" height="24" fill="currentColor" />
+                          <rect x="87" y="0" width="3" height="24" fill="currentColor" />
+                          <rect x="94" y="0" width="2" height="24" fill="currentColor" />
+                        </svg>
+                        <p className="text-[8px] text-slate-500 font-mono">{printVoucherData.voucherNumber}</p>
+                        <div className="flex justify-between items-end pt-3 text-[9px]">
+                          <span>Cashier: _____________</span>
+                          <span>Receiver: _____________</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* FORMAT 3: A5 VOUCHER SLIP */}
+                  {voucherPrintFormat === 'a5_voucher' && (
+                    <div className="w-full max-w-2xl mx-auto bg-amber-50/30 dark:bg-slate-900 border-2 border-indigo-900/30 dark:border-indigo-500/40 p-6 rounded-2xl shadow-md space-y-4 text-slate-800 dark:text-slate-200">
+                      <div className="text-center border-b-2 border-indigo-900/20 dark:border-indigo-500/30 pb-3 space-y-0.5">
+                        <h3 className="text-base font-black uppercase tracking-wider text-indigo-900 dark:text-indigo-400">{societyName}</h3>
+                        <div className="inline-block bg-indigo-100 dark:bg-indigo-950/80 text-indigo-800 dark:text-indigo-300 font-extrabold text-[10px] px-3 py-0.5 rounded-full border border-indigo-300 dark:border-indigo-800 uppercase tracking-widest mt-1">
+                          {printVoucherData.type} PAYMENT VOUCHER SLIP
+                        </div>
+                      </div>
+
+                      <div className="flex justify-between text-xs font-semibold">
+                        <span>Voucher No: <span className="font-mono text-indigo-700 dark:text-indigo-300 font-bold">{printVoucherData.voucherNumber}</span></span>
+                        <span>Date: <span className="font-mono">{printVoucherData.date}</span></span>
+                      </div>
+
+                      <div className="bg-white/80 dark:bg-slate-950/60 p-4 rounded-xl border border-indigo-100 dark:border-slate-800 space-y-2.5 text-xs leading-relaxed">
+                        <p>
+                          Paid to / Received for: <span className="font-extrabold text-slate-900 dark:text-slate-100 underline decoration-indigo-400">{printVoucherData.vendorName || 'Society Expenditure Head'}</span>
+                        </p>
+                        <p>
+                          The sum of Rupees <span className="font-bold text-slate-900 dark:text-slate-100 italic bg-amber-100/60 dark:bg-amber-950/40 px-2 py-0.5 rounded">{numberToWordsINR(totalNum)}</span>
+                        </p>
+                        <p>
+                          Account Head & Narration: <span className="font-semibold text-slate-700 dark:text-slate-300">{printVoucherData.narration || 'General society maintenance expense voucher.'}</span>
+                        </p>
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
+                        <div className="inline-flex items-center gap-2 bg-indigo-900 text-white font-mono px-4 py-2 rounded-xl text-base font-black shadow-sm">
+                          <span>AMOUNT:</span>
+                          <span>₹ {totalNum.toLocaleString('en-IN')}</span>
+                        </div>
+
+                        <div className="flex items-center gap-6 text-center text-xs">
+                          <div className="border border-dashed border-slate-400 p-2 rounded-lg text-[9px] text-slate-400 uppercase">
+                            [ SOCIETY SEAL ]
+                          </div>
+                          <div>
+                            <div className="h-8 border-b border-slate-400 w-24 mb-1" />
+                            <span className="font-bold text-[10px]">Accountant</span>
+                          </div>
+                          <div>
+                            <div className="h-8 border-b border-slate-400 w-24 mb-1" />
+                            <span className="font-bold text-[10px]">Treasurer</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* FORMAT 4: COMPACT AUDIT CARD (4x6") */}
+                  {voucherPrintFormat === 'compact_remittance' && (
+                    <div className="w-full max-w-xl mx-auto bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-2xl shadow-md overflow-hidden text-slate-800 dark:text-slate-200">
+                      <div className="p-5 space-y-3 bg-gradient-to-br from-slate-50 to-indigo-50/30 dark:from-slate-950 dark:to-indigo-950/20">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h3 className="font-black text-sm uppercase text-indigo-900 dark:text-indigo-400">{societyName}</h3>
+                            <p className="text-[10px] text-slate-500">Double-Entry Accounting Verification Card</p>
+                          </div>
+                          <div className="text-right font-mono text-xs">
+                            <span className="text-[9px] text-slate-400 block uppercase">Voucher ID</span>
+                            <span className="font-bold text-slate-900 dark:text-slate-100">{printVoucherData.voucherNumber}</span>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 text-xs pt-1">
+                          <div>
+                            <span className="text-[10px] text-slate-500 block uppercase">Payee / Account</span>
+                            <p className="font-bold text-slate-900 dark:text-slate-100 truncate">{printVoucherData.vendorName || 'Sundry Creditor'}</p>
+                            <p className="text-slate-500 text-[10px]">Date: {printVoucherData.date}</p>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-[10px] text-slate-500 block uppercase">Voucher Amount</span>
+                            <p className="text-base font-black text-slate-900 dark:text-slate-100">₹ {totalNum.toLocaleString('en-IN')}</p>
+                            <p className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold uppercase">{printVoucherData.type} ENTRY</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="p-5 space-y-3 bg-white dark:bg-slate-900 text-xs border-t border-slate-200 dark:border-slate-800">
+                        <div className="space-y-1">
+                          <span className="text-slate-400 block text-[9px] uppercase font-bold">Narration / Account Ledger</span>
+                          <p className="text-slate-700 dark:text-slate-300 font-medium">{printVoucherData.narration || 'Accounting entry posted.'}</p>
+                        </div>
+
+                        <div className="flex justify-between items-end pt-4 text-[10px]">
+                          <div>
+                            <span className="text-[9px] text-slate-400 block">Ledger Verification Status</span>
+                            <span className="font-bold text-emerald-600 dark:text-emerald-400">✓ Audited & Posted</span>
+                          </div>
+                          <div className="text-center">
+                            <div className="w-28 border-b border-slate-400 mb-0.5" />
+                            <span className="text-[9px] font-semibold">Auditor Signature</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                </div>
+              </div>
+
+            </div>
+          </div>
+        );
+      })()}
     </main>
   );
 }
+

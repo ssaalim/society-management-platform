@@ -4,6 +4,38 @@
 
 @layer base {
   :root {
+    --background: 210 40% 98%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+
+    --radius: 0.75rem;
+  }
+
+  .dark {
     --background: 224 71% 4%;
     --foreground: 213 31% 91%;
 
@@ -31,8 +63,6 @@
     --border: 216 34% 17%;
     --input: 216 34% 17%;
     --ring: 212.7 26.8% 83.9%;
-
-    --radius: 0.75rem;
   }
 }
 
@@ -240,47 +270,79 @@ html.light .bg-slate-100.text-slate-600 {
   font-weight: 600 !important;
 }
 
+html.light [class*="bg-emerald-950"],
 html.light .bg-emerald-950\/30,
+html.light .bg-emerald-950\/40,
 html.light .bg-emerald-900\/50,
 html.light .bg-emerald-50 {
-  background-color: #ffffff !important;
-  border: 1px solid #a7f3d0 !important;
-  color: #047857 !important;
+  background-color: #f0fdf4 !important;
+  border-color: #bbf7d0 !important;
+  color: #166534 !important;
   font-weight: 600 !important;
 }
 
+html.light [class*="text-emerald-300"],
+html.light [class*="text-emerald-400"] {
+  color: #15803d !important;
+}
+
+html.light [class*="bg-red-950"],
+html.light [class*="bg-rose-950"],
 html.light .bg-red-950\/30,
+html.light .bg-red-950\/40,
 html.light .bg-red-900\/50,
-html.light .bg-red-50 {
-  background-color: #ffffff !important;
-  border: 1px solid #fca5a5 !important;
-  color: #b91c1c !important;
+html.light .bg-red-50,
+html.light .bg-rose-50 {
+  background-color: #fff1f2 !important;
+  border-color: #fecdd3 !important;
+  color: #9f1239 !important;
   font-weight: 600 !important;
 }
 
+html.light [class*="text-red-300"],
+html.light [class*="text-red-400"],
+html.light [class*="text-rose-300"],
+html.light [class*="text-rose-400"] {
+  color: #be123c !important;
+}
+
+html.light [class*="bg-amber-950"],
 html.light .bg-amber-950\/30,
+html.light .bg-amber-950\/40,
 html.light .bg-amber-900\/50,
 html.light .bg-amber-50 {
-  background-color: #ffffff !important;
-  border: 1px solid #fde68a !important;
-  color: #b45309 !important;
+  background-color: #fffbeb !important;
+  border-color: #fde68a !important;
+  color: #92400e !important;
   font-weight: 600 !important;
 }
 
+html.light [class*="text-amber-300"],
+html.light [class*="text-amber-400"] {
+  color: #b45309 !important;
+}
+
+html.light [class*="bg-sky-950"],
 html.light .bg-sky-950\/30,
+html.light .bg-sky-950\/40,
 html.light .bg-sky-900\/50,
 html.light .bg-sky-50 {
-  background-color: #ffffff !important;
-  border: 1px solid #bae6fd !important;
+  background-color: #f0f9ff !important;
+  border-color: #bae6fd !important;
   color: #0369a1 !important;
   font-weight: 600 !important;
+}
+
+html.light [class*="text-sky-300"],
+html.light [class*="text-sky-400"] {
+  color: #0284c7 !important;
 }
 
 html.light .bg-violet-950\/30,
 html.light .bg-violet-900\/50,
 html.light .bg-violet-50 {
-  background-color: #ffffff !important;
-  border: 1px solid #ddd6fe !important;
+  background-color: #f5f3ff !important;
+  border-color: #ddd6fe !important;
   color: #6d28d9 !important;
   font-weight: 600 !important;
 }
@@ -533,4 +595,252 @@ html.light .modal-history-box {
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(148, 163, 184, 0.6);
+}
+
+/* 15. Print Media Isolation for Digital ID Card & Invoices */
+@media print {
+  /* Hide all generic chrome & non-printable elements */
+  nav,
+  aside,
+  header,
+  .no-print,
+  button:not(.printable-target button),
+  a[href^="/"] {
+    display: none !important;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+  }
+
+  /* Digital ID Card Isolation */
+  body.print-id-card-only {
+    background: #ffffff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: 100vh !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  body.print-id-card-only * {
+    visibility: hidden !important;
+  }
+
+  body.print-id-card-only #printable-id-card,
+  body.print-id-card-only #printable-id-card * {
+    visibility: visible !important;
+  }
+
+  body.print-id-card-only #printable-id-card {
+    position: fixed !important;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    box-shadow: none !important;
+    border: 2px solid #6366f1 !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    margin: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body.print-id-card-only #printable-id-card .text-slate-900,
+  body.print-id-card-only #printable-id-card .text-slate-800 {
+    color: #0f172a !important;
+  }
+
+  /* Invoice Print Frame Isolation */
+  body.print-invoice-only {
+    background: #ffffff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  body.print-invoice-only * {
+    visibility: hidden !important;
+  }
+
+  body.print-invoice-only #invoice-print-frame,
+  body.print-invoice-only #invoice-print-frame * {
+    visibility: visible !important;
+  }
+
+  /* Default A4 Invoice Layout */
+  body.print-invoice-only #invoice-print-frame {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 16px 20px !important;
+    border: 1px solid #cbd5e1 !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    box-shadow: none !important;
+    border-radius: 8px !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Format: Thermal POS Receipt (80mm Roll) */
+  body.print-format-thermal_pos #invoice-print-frame {
+    width: 78mm !important;
+    max-width: 78mm !important;
+    margin: 0 auto !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    padding: 8px !important;
+    border: 1px dashed #94a3b8 !important;
+    border-radius: 0 !important;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+    font-size: 11px !important;
+  }
+
+  /* Format: Official A5 Voucher Slip */
+  body.print-format-a5_voucher #invoice-print-frame {
+    width: 100% !important;
+    max-width: 195mm !important;
+    margin: 0 auto !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    padding: 16px !important;
+    border: 2px solid #312e81 !important;
+    border-radius: 8px !important;
+  }
+
+  /* Format: Compact Remittance Card */
+  body.print-format-compact_remittance #invoice-print-frame {
+    width: 100% !important;
+    max-width: 155mm !important;
+    margin: 0 auto !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    padding: 14px !important;
+    border: 1px solid #94a3b8 !important;
+    border-radius: 6px !important;
+  }
+
+  body.print-invoice-only #invoice-print-frame .bg-slate-900\/60,
+  body.print-invoice-only #invoice-print-frame .bg-slate-950\/40,
+  body.print-invoice-only #invoice-print-frame .bg-slate-950\/50,
+  body.print-invoice-only #invoice-print-frame .bg-black\/60 {
+    background-color: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+    color: #0f172a !important;
+  }
+
+  body.print-invoice-only #invoice-print-frame th,
+  body.print-invoice-only #invoice-print-frame td,
+  body.print-invoice-only #invoice-print-frame p,
+  body.print-invoice-only #invoice-print-frame span,
+  body.print-invoice-only #invoice-print-frame h3,
+  body.print-invoice-only #invoice-print-frame h4 {
+    color: #0f172a !important;
+  }
+
+  body.print-invoice-only #invoice-print-frame .text-emerald-700,
+  body.print-invoice-only #invoice-print-frame .text-emerald-600,
+  body.print-invoice-only #invoice-print-frame .text-emerald-400 {
+    color: #166534 !important;
+  }
+
+  body.print-invoice-only #invoice-print-frame .text-amber-700,
+  body.print-invoice-only #invoice-print-frame .text-amber-600,
+  body.print-invoice-only #invoice-print-frame .text-amber-400 {
+    color: #b45309 !important;
+  }
+
+  body.print-invoice-only #invoice-print-frame .text-rose-700,
+  body.print-invoice-only #invoice-print-frame .text-rose-600,
+  body.print-invoice-only #invoice-print-frame .text-rose-400 {
+    color: #be123c !important;
+  }
+
+  body.print-invoice-only #invoice-print-frame .text-indigo-700,
+  body.print-invoice-only #invoice-print-frame .text-indigo-600,
+  body.print-invoice-only #invoice-print-frame .text-indigo-400 {
+    color: #4338ca !important;
+  }
+
+  /* Voucher & Expense Print Frame Isolation */
+  body.print-voucher-only {
+    background: #ffffff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  body.print-voucher-only * {
+    visibility: hidden !important;
+  }
+
+  body.print-voucher-only #voucher-printable-frame,
+  body.print-voucher-only #voucher-printable-frame * {
+    visibility: visible !important;
+  }
+
+  body.print-voucher-only #voucher-printable-frame {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 16px 20px !important;
+    border: 1px solid #cbd5e1 !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    box-shadow: none !important;
+    border-radius: 8px !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body.print-voucher-only.print-format-thermal_pos #voucher-printable-frame {
+    width: 78mm !important;
+    max-width: 78mm !important;
+    margin: 0 auto !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    padding: 8px !important;
+    border: 1px dashed #94a3b8 !important;
+    border-radius: 0 !important;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+    font-size: 11px !important;
+  }
+
+  body.print-voucher-only.print-format-a5_voucher #voucher-printable-frame {
+    width: 100% !important;
+    max-width: 195mm !important;
+    margin: 0 auto !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    padding: 16px !important;
+    border: 2px solid #312e81 !important;
+    border-radius: 8px !important;
+  }
+
+  body.print-voucher-only.print-format-compact_remittance #voucher-printable-frame {
+    width: 100% !important;
+    max-width: 155mm !important;
+    margin: 0 auto !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    padding: 14px !important;
+    border: 1px solid #94a3b8 !important;
+    border-radius: 6px !important;
+  }
+
+  body.print-voucher-only #voucher-printable-frame th,
+  body.print-voucher-only #voucher-printable-frame td,
+  body.print-voucher-only #voucher-printable-frame p,
+  body.print-voucher-only #voucher-printable-frame span,
+  body.print-voucher-only #voucher-printable-frame h3,
+  body.print-voucher-only #voucher-printable-frame h4 {
+    color: #0f172a !important;
+  }
 }

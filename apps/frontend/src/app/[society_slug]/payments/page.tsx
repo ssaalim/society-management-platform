@@ -111,39 +111,39 @@ export default function PaymentsCheckoutPage() {
   };
 
   return (
-    <main className="relative flex min-h-screen flex-col items-center justify-start overflow-x-hidden w-full py-8 px-4 sm:px-6 md:px-8 lg:px-10">
+    <main className="relative flex min-h-screen flex-col items-center justify-start overflow-x-hidden w-full py-4 sm:py-5 px-3 sm:px-5 lg:px-6">
       {/* Background Grids */}
       <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
 
-      <div className="w-full max-w-[1450px] mx-auto space-y-8 z-10">
+      <div className="w-full max-w-[1600px] mx-auto space-y-3.5 z-10">
         
         {/* Header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <Receipt className="h-8 w-8 text-indigo-400" />
+        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+          <div className="flex items-center gap-2.5">
+            <Receipt className="h-6 w-6 text-indigo-500 dark:text-indigo-400" />
             <div>
-              <h2 className="text-2xl font-bold tracking-tight text-slate-100">Payments Ledger</h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Track checkouts, clear online captured webhooks, and issue cancellations or refunds</p>
+              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Payments Ledger</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Track checkouts, clear online captured webhooks, and issue cancellations or refunds</p>
             </div>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <label className="flex items-center cursor-pointer">
               <div className="relative">
                 <input type="checkbox" className="sr-only" checked={showMyPayments} onChange={(e) => setShowMyPayments(e.target.checked)} />
-                <div className={`block w-9 h-5 rounded-full transition-colors ${showMyPayments ? 'bg-indigo-600' : 'bg-slate-700'}`}></div>
-                <div className={`dot absolute left-1 top-1 bg-white w-3 h-3 rounded-full transition-transform ${showMyPayments ? 'translate-x-4' : ''}`}></div>
+                <div className={`block w-8 h-4.5 rounded-full transition-colors ${showMyPayments ? 'bg-indigo-600' : 'bg-slate-700'}`}></div>
+                <div className={`dot absolute left-0.5 top-0.5 bg-white w-3.5 h-3.5 rounded-full transition-transform ${showMyPayments ? 'translate-x-3.5' : ''}`}></div>
               </div>
-              <div className="ml-2 text-xs font-bold text-slate-300">Show My Payments</div>
+              <div className="ml-2 text-xs font-semibold text-slate-700 dark:text-slate-300">Show My Payments</div>
             </label>
           </div>
         </div>
 
         {message && (
           <div
-            className={`rounded-lg border p-4 text-sm flex items-center gap-2 ${
+            className={`rounded-xl border p-3 text-sm flex items-center gap-2 shadow-xs ${
               message.type === 'success'
-                ? 'bg-emerald-950/30 border-emerald-900/50 text-emerald-400'
-                : 'bg-red-950/30 border-red-900/50 text-red-400'
+                ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-400'
+                : 'bg-rose-50 dark:bg-red-950/30 border-rose-200 dark:border-red-900/50 text-rose-800 dark:text-red-400'
             }`}
           >
             {message.type === 'success' ? <CheckCircle className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
@@ -152,51 +152,51 @@ export default function PaymentsCheckoutPage() {
         )}
 
         {isLoading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="h-8 w-8 text-indigo-500 animate-spin" />
+          <div className="flex justify-center py-16">
+            <Loader2 className="h-7 w-7 text-indigo-500 animate-spin" />
           </div>
         ) : receiptsList.length === 0 ? (
-          <div className="text-center py-12 border border-dashed border-slate-800 rounded-xl space-y-3">
-            <ShieldAlert className="h-10 w-10 text-slate-500 mx-auto" />
-            <h3 className="text-md font-semibold text-slate-300">No payment receipts logged</h3>
+          <div className="text-center py-16 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl space-y-2">
+            <ShieldAlert className="h-8 w-8 text-slate-400 dark:text-slate-500 mx-auto" />
+            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">No payment receipts logged</h3>
             <p className="text-xs text-slate-500 max-w-xs mx-auto">No online or bank clearing records mapped for this society.</p>
           </div>
         ) : (
           /* Receipts Log List */
-          <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/20">
+          <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/20 shadow-xs">
             <table className="w-full text-left text-xs border-collapse whitespace-nowrap">
               <thead>
-                <tr className="bg-black/60 text-slate-500 dark:text-slate-400 font-semibold border-b border-slate-800">
-                  <th className="p-4">Receipt Number</th>
-                  <th className="p-4">Flat Number</th>
-                  <th className="p-4">Invoice Ref</th>
-                  <th className="p-4">Date</th>
-                  <th className="p-4">Payment Mode</th>
-                  <th className="p-4">Txn ID / Ref</th>
-                  <th className="p-4">Amount Cleared (₹)</th>
-                  <th className="p-4">Status</th>
-                  <th className="p-4 text-right">Actions</th>
+                <tr className="bg-slate-50 dark:bg-black/60 text-slate-700 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800 text-[10px] uppercase">
+                  <th className="px-3.5 py-2.5">Receipt Number</th>
+                  <th className="px-3.5 py-2.5">Flat Number</th>
+                  <th className="px-3.5 py-2.5">Invoice Ref</th>
+                  <th className="px-3.5 py-2.5">Date</th>
+                  <th className="px-3.5 py-2.5">Payment Mode</th>
+                  <th className="px-3.5 py-2.5">Txn ID / Ref</th>
+                  <th className="px-3.5 py-2.5">Amount Cleared (₹)</th>
+                  <th className="px-3.5 py-2.5">Status</th>
+                  <th className="px-3.5 py-2.5 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/40">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40">
                 {receiptsList.map((rec) => (
-                  <tr key={rec.id} className="text-slate-300 hover:bg-slate-900/10 transition-colors">
-                    <td className="p-4 font-mono text-slate-500 dark:text-slate-400">{rec.receiptNumber}</td>
-                    <td className="p-4 font-bold text-slate-200">Flat {rec.flatNumber}</td>
-                    <td className="p-4 text-slate-500 dark:text-slate-400">{rec.billNumber}</td>
-                    <td className="p-4 text-slate-500 dark:text-slate-400">{rec.paymentDate}</td>
-                    <td className="p-4 text-slate-500 dark:text-slate-400">
-                      <span className="text-[10px] font-black border border-indigo-900 bg-indigo-950/40 text-indigo-400 rounded-full px-2 py-0.5">
+                  <tr key={rec.id} className="text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900/10 transition-colors">
+                    <td className="px-3.5 py-2.5 font-mono font-bold text-slate-900 dark:text-slate-200">{rec.receiptNumber}</td>
+                    <td className="px-3.5 py-2.5 font-semibold text-slate-900 dark:text-slate-200">Flat {rec.flatNumber}</td>
+                    <td className="px-3.5 py-2.5 font-mono text-slate-500">{rec.billNumber}</td>
+                    <td className="px-3.5 py-2.5 text-slate-500">{rec.paymentDate.substring(0, 10)}</td>
+                    <td className="px-3.5 py-2.5">
+                      <span className="text-[10px] font-bold border border-indigo-200 dark:border-indigo-900 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 rounded-full px-2 py-0.5">
                         {rec.paymentMode}
                       </span>
                     </td>
-                    <td className="p-4 font-mono text-slate-500">{rec.referenceNumber || '-'}</td>
-                    <td className="p-4 font-bold text-slate-200">₹ {Number(rec.amountPaid).toLocaleString('en-IN')}</td>
-                    <td className="p-4">
+                    <td className="px-3.5 py-2.5 font-mono text-slate-500">{rec.referenceNumber || '-'}</td>
+                    <td className="px-3.5 py-2.5 font-bold text-slate-900 dark:text-slate-200">₹ {Number(rec.amountPaid).toLocaleString('en-IN')}</td>
+                    <td className="px-3.5 py-2.5">
                       <div className="flex flex-col gap-1">
-                        <span className={`text-[10px] font-semibold border rounded-full px-2.5 py-1 uppercase tracking-wider w-max ${
+                        <span className={`text-[10px] font-semibold border rounded-full px-2.5 py-0.5 uppercase tracking-wider w-max ${
                           rec.status === 'CLEARED'
-                            ? 'bg-emerald-950/30 border-emerald-900/50 text-emerald-400'
+                            ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400'
                             : rec.status === 'REFUNDED'
                             ? 'bg-amber-950/30 border-amber-900/50 text-amber-400'
                             : rec.status === 'REVIEW'

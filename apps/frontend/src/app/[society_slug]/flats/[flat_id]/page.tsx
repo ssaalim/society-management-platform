@@ -209,11 +209,11 @@ export default function FlatDetailPage() {
   }
 
   return (
-    <main className="relative flex min-h-screen flex-col items-center justify-start overflow-x-hidden w-full py-8 px-4 sm:px-6 md:px-8 lg:px-10">
+    <main className="relative flex min-h-screen flex-col items-center justify-start overflow-x-hidden w-full py-4 sm:py-5 px-3 sm:px-5 lg:px-6">
       {/* Background Grids */}
       <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
 
-      <div className="w-full max-w-[1450px] mx-auto space-y-8 z-10">
+      <div className="w-full max-w-[1600px] mx-auto space-y-6 z-10">
         
         {/* Back navigation */}
         <Link
@@ -273,14 +273,18 @@ export default function FlatDetailPage() {
 
         {message && (
           <div
-            className={`rounded-lg border p-4 text-sm flex items-center gap-2 ${
+            className={`rounded-xl border p-3 text-xs font-semibold flex items-center gap-2.5 shadow-xs ${
               message.type === 'success'
-                ? 'bg-emerald-950/30 border-emerald-900/50 text-emerald-400'
-                : 'bg-red-950/30 border-red-900/50 text-red-400'
+                ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/60 text-emerald-800 dark:text-emerald-300'
+                : 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900/60 text-rose-800 dark:text-rose-300'
             }`}
           >
-            {message.type === 'success' ? <CheckCircle className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
-            {message.text}
+            {message.type === 'success' ? (
+              <CheckCircle className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+            ) : (
+              <AlertCircle className="h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400" />
+            )}
+            <span>{message.text}</span>
           </div>
         )}
 

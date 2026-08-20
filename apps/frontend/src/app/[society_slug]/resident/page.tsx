@@ -391,26 +391,25 @@ export default function ResidentDashboardPage() {
   }
 
   return (
-    <main className="relative flex min-h-screen flex-col items-center justify-start overflow-x-hidden w-full py-8 px-4 sm:px-6 md:px-8 lg:px-10">
+    <main className="relative flex min-h-screen flex-col items-center justify-start overflow-x-hidden w-full py-4 sm:py-5 px-3 sm:px-5 lg:px-6">
       {/* Background Grids */}
       <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
-
-      <div className="w-full max-w-[1450px] mx-auto space-y-8 z-10">
+      <div className="w-full max-w-[1600px] mx-auto space-y-3.5 z-10">
         
         {/* Header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <User className="h-8 w-8 text-indigo-400" />
+        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+          <div className="flex items-center gap-2.5">
+            <User className="h-6 w-6 text-indigo-500 dark:text-indigo-400" />
             <div>
-              <h2 className="text-2xl font-bold tracking-tight text-slate-100">Resident Self-Service Portal</h2>
-              <p className="text-xs text-slate-400">Manage gate clearances, register vehicles, access shared circulars, and cast ballot votes</p>
+              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Resident Self-Service Portal</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Manage gate clearances, register vehicles, access shared circulars, and cast ballot votes</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 flex-wrap">
             <button
               onClick={() => setIsAddVehicleOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow transition-all"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-xs transition-all"
             >
               <Plus className="h-3.5 w-3.5" /> Add Vehicle
             </button>
@@ -418,13 +417,13 @@ export default function ResidentDashboardPage() {
               <>
                 <button
                   onClick={() => setIsAddDocOpen(true)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold transition-all"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-semibold transition-all shadow-xs"
                 >
                   <Plus className="h-3.5 w-3.5" /> Publish Circular
                 </button>
                 <button
                   onClick={() => setIsCreatePollOpen(true)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold shadow transition-all"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold shadow-xs transition-all"
                 >
                   <Vote className="h-3.5 w-3.5" /> Create Proposal
                 </button>
@@ -435,10 +434,10 @@ export default function ResidentDashboardPage() {
 
         {message && (
           <div
-            className={`rounded-lg border p-4 text-sm flex items-center gap-2 ${
+            className={`rounded-xl border p-3 text-sm flex items-center gap-2 shadow-xs ${
               message.type === 'success'
-                ? 'bg-emerald-950/30 border-emerald-900/50 text-emerald-400'
-                : 'bg-red-950/30 border-red-900/50 text-red-400'
+                ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-400'
+                : 'bg-rose-50 dark:bg-red-950/30 border-rose-200 dark:border-red-900/50 text-rose-800 dark:text-red-400'
             }`}
           >
             {message.type === 'success' ? <CheckCircle className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
@@ -447,27 +446,27 @@ export default function ResidentDashboardPage() {
         )}
 
         {/* Dashboard Grid Details */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
           
           {/* Outstanding Assessment Card */}
-          <div className="border border-slate-800 rounded-xl bg-slate-950/20 p-6 space-y-4 flex flex-col justify-between">
+          <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-950/20 p-3.5 sm:p-4 space-y-3 flex flex-col justify-between shadow-xs">
             <div>
               <div className="flex items-center justify-between">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">My Maintenance Balance</h3>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">My Maintenance Balance</h3>
                 {dashboardData?.flatNumber && (
-                  <span className="text-[10px] bg-slate-900 border border-slate-800 text-indigo-400 px-2 py-0.5 rounded-full font-bold">
+                  <span className="text-[10px] bg-indigo-50 dark:bg-slate-900 border border-indigo-200 dark:border-slate-800 text-indigo-700 dark:text-indigo-400 px-2 py-0.5 rounded-full font-bold">
                     Flat {dashboardData.flatNumber}
                   </span>
                 )}
               </div>
-              <div className="flex items-baseline gap-2 mt-3">
-                <span className="text-3xl font-black text-slate-100">
+              <div className="flex items-baseline gap-2 mt-2">
+                <span className="text-2xl font-black text-slate-900 dark:text-slate-100">
                   ₹ {Number(dashboardData?.outstanding || 0).toLocaleString('en-IN')}
                 </span>
                 {Number(dashboardData?.outstanding || 0) > 0 ? (
-                  <span className="text-xs text-red-400 font-bold">Due</span>
+                  <span className="text-xs text-rose-500 dark:text-red-400 font-bold">Due</span>
                 ) : (
-                  <span className="text-xs text-emerald-400 font-bold">All Cleared</span>
+                  <span className="text-xs text-emerald-600 dark:text-emerald-400 font-bold">All Cleared</span>
                 )}
               </div>
               <p className="text-xs text-slate-500 mt-2">

@@ -140,29 +140,29 @@ Please note the details regarding ${noticeDetails}.
   };
 
   return (
-    <main className="relative flex min-h-screen flex-col items-center justify-start overflow-x-hidden w-full py-8 px-4 sm:px-6 md:px-8 lg:px-10">
+    <main className="relative flex min-h-screen flex-col items-center justify-start overflow-x-hidden w-full py-4 sm:py-5 px-3 sm:px-5 lg:px-6">
       {/* Background Grids */}
       <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
 
-      <div className="w-full max-w-[1450px] mx-auto space-y-8 z-10">
+      <div className="w-full max-w-[1600px] mx-auto space-y-3.5 z-10">
         
         {/* Header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <Bot className="h-8 w-8 text-indigo-400" />
+        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+          <div className="flex items-center gap-2.5">
+            <Bot className="h-6 w-6 text-indigo-500 dark:text-indigo-400" />
             <div>
-              <h2 className="text-2xl font-bold tracking-tight text-slate-100">AI Assistant & Analytics</h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Summarize meeting transcripts, forecast collections, detect voucher anomalies, and parse invoice OCR metadata</p>
+              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">AI Assistant & Analytics</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Summarize meeting transcripts, forecast collections, detect voucher anomalies, and parse invoice OCR metadata</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {['chat', 'notices', 'predictive', 'ocr'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab as any)}
-                className={`rounded-lg border py-2 px-4 text-xs font-semibold uppercase tracking-wider transition-all ${
-                  activeTab === tab ? 'bg-indigo-600 border-indigo-500 text-slate-100' : 'border-slate-800 bg-slate-950/60 text-slate-300 hover:bg-slate-900'
+                className={`rounded-lg border py-1.5 px-2.5 text-xs font-semibold uppercase tracking-wider transition-all ${
+                  activeTab === tab ? 'bg-indigo-600 border-indigo-500 text-white shadow-xs' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900'
                 }`}
               >
                 {tab}
@@ -172,10 +172,10 @@ Please note the details regarding ${noticeDetails}.
         </div>
 
         {activeTab === 'chat' && (
-          <div className="border border-slate-800 rounded-xl bg-slate-950/20 p-6 flex flex-col h-[500px]">
-            <div className="flex items-center gap-2 border-b border-slate-800/40 pb-4 mb-4">
-              <Bot className="h-5 w-5 text-indigo-400" />
-              <span className="text-xs font-bold text-slate-200 uppercase">Resident RAG Chatbot</span>
+          <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-950/20 p-4 flex flex-col h-[500px] shadow-xs">
+            <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800/40 pb-3 mb-3">
+              <Bot className="h-4 w-4 text-indigo-500 dark:text-indigo-400" />
+              <span className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase">Resident RAG Chatbot</span>
             </div>
 
             <div className="flex-1 overflow-y-auto space-y-4 pr-2 text-xs">

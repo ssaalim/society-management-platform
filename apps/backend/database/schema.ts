@@ -1024,3 +1024,37 @@ export const systemLogs = pgTable('system_logs', {
   message: text('message').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
+
+// ==========================================
+// CUSTOM SQL REPORT BUILDER
+// ==========================================
+
+// Custom Report Definitions (created by SUPER_ADMIN / SOCIETY_ADMIN)
+export const customReports = pgTable('custom_reports', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  societyId: uuid('society_id').references(() => societies.id, { onDelete: 'cascade' }).notNull(),
+  name: varchar('name', { length: 255 }).notNull(),
+  description: text('description'),
+  sqlQuery: text('sql_query').notNull(),
+  // JSONB array: [{key, label, type: 'text'|'date'|'date_range'|'in_list'}]
+  parameters: jsonb('parameters').default([]).notNull(),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdBy: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
+  updatedBy: uuid('updated_by').references(() => users.id, { onDelete: 'set null' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
+}, (table) => ({
+  idxCustomReportsSociety: index('idx_custom_reports_society').on(table.societyId),
+}));
+
+// Per-User Favorites for Custom Reports
+export const customReportFavorites = pgTable('custom_report_favorites', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  reportId: uuid('report_id').references(() => customReports.id, { onDelete: 'cascade' }).notNull(),
+  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  societyId: uuid('society_id').references(() => societies.id, { onDelete: 'cascade' }).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  idxCustomReportFavoritesUser: index('idx_custom_report_fav_user').on(table.userId, table.societyId),
+}));

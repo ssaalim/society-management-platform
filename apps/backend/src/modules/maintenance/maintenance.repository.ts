@@ -15,7 +15,8 @@ import {
   flatOwners,
   owners,
   flatTenants,
-  tenants
+  tenants,
+  users
 } from '../../../database/schema';
 import { DRIZZLE_PROVIDER, DrizzleDB } from '@core/database/database.module';
 import { ClsService } from 'nestjs-cls';
@@ -111,6 +112,46 @@ export class MaintenanceRepository extends TenantBaseRepository<typeof maintenan
     const remainingBalance = Math.max(0, invoiceTotal - totalPaid);
     const lastPayment = formattedReceipts.length > 0 ? formattedReceipts[0] : null;
 
+    // Fetch primary owner details
+    const ownerRecords = await this.db
+      .select({
+        name: users.name,
+        email: users.email,
+        mobile: users.mobile,
+      })
+      .from(flatOwners)
+      .innerJoin(owners, eq(flatOwners.ownerId, owners.id))
+      .innerJoin(users, eq(owners.userId, users.id))
+      .where(
+        and(
+          eq(flatOwners.flatId, details.bill.flatId),
+          eq(flatOwners.isCurrent, true)
+        )
+      )
+      .limit(1);
+
+    // Fetch active tenant details if rented
+    const tenantRecords = await this.db
+      .select({
+        name: users.name,
+        email: users.email,
+        mobile: users.mobile,
+      })
+      .from(flatTenants)
+      .innerJoin(tenants, eq(flatTenants.tenantId, tenants.id))
+      .innerJoin(users, eq(tenants.userId, users.id))
+      .where(
+        and(
+          eq(flatTenants.flatId, details.bill.flatId),
+          eq(flatTenants.isActive, true)
+        )
+      )
+      .limit(1);
+
+    const primaryOwner = ownerRecords.length > 0 ? ownerRecords[0] : null;
+    const activeTenant = tenantRecords.length > 0 ? tenantRecords[0] : null;
+    const billedToName = primaryOwner?.name || activeTenant?.name || null;
+
     return {
       ...details.bill,
       amount: details.bill.totalAmount,
@@ -124,6 +165,12 @@ export class MaintenanceRepository extends TenantBaseRepository<typeof maintenan
       floorNumber: details.floorNumber,
       wingName: details.wingName,
       buildingName: details.buildingName,
+      ownerName: primaryOwner?.name || null,
+      ownerMobile: primaryOwner?.mobile || null,
+      ownerEmail: primaryOwner?.email || null,
+      tenantName: activeTenant?.name || null,
+      tenantMobile: activeTenant?.mobile || null,
+      billedToName,
       items: items.map((i) => ({ ...i, name: i.name || 'Maintenance Line Item' })),
       receipts: billReceipts,
     };

@@ -345,64 +345,64 @@ export default function FlatsListingPage() {
   };
 
   return (
-    <main className="relative flex min-h-screen flex-col items-center justify-start overflow-x-hidden w-full py-8 px-4 sm:px-6 md:px-8 lg:px-10">
+    <main className="relative flex min-h-screen flex-col items-center justify-start overflow-x-hidden w-full py-4 sm:py-5 px-3 sm:px-5 lg:px-6">
       {/* Background Grids */}
       <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
 
-      <div className="w-full max-w-[1450px] mx-auto space-y-8 z-10">
+      <div className="w-full max-w-[1600px] mx-auto space-y-3.5 z-10">
         
         {/* Header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <Building className="h-8 w-8 text-indigo-400" />
+        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+          <div className="flex items-center gap-2.5">
+            <Building className="h-6 w-6 text-indigo-500 dark:text-indigo-400" />
             <div>
-              <h2 className="text-2xl font-bold tracking-tight text-slate-100">
+              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
                 {isOwner ? 'My Housing Unit' : 'Flats Roster & Master Config'}
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 {isOwner ? 'View your assigned flat unit properties, layout, and occupancy details' : 'Configure housing layout units, sizes, owners & occupancy status'}
               </p>
             </div>
           </div>
           {isManagementRole && (
-            <div className="flex items-center gap-3">
-              <div className="flex items-center bg-slate-950/60 border border-slate-800 rounded-lg p-1">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <div className="flex items-center bg-slate-100 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-lg p-0.5">
                 <button
                   onClick={() => setViewMode('grid')}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${viewMode === 'grid' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 dark:text-slate-400 hover:text-slate-200'}`}
+                  className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all ${viewMode === 'grid' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'}`}
                 >
                   Grid
                 </button>
                 <button
                   onClick={() => setViewMode('list')}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${viewMode === 'list' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 dark:text-slate-400 hover:text-slate-200'}`}
+                  className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all ${viewMode === 'list' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'}`}
                 >
                   List
                 </button>
               </div>
               <button
                 onClick={() => setIsManageTypesModalOpen(true)}
-                className="rounded-lg border border-slate-700 bg-slate-100 dark:bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 px-3 text-xs font-semibold transition-all flex items-center gap-2 shadow-md"
+                className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 py-1.5 px-2.5 text-xs font-semibold transition-all flex items-center gap-1.5 shadow-xs"
               >
-                <Layers className="h-4 w-4 text-indigo-400" /> Unit Types
+                <Layers className="h-3.5 w-3.5 text-indigo-500 dark:text-indigo-400" /> Unit Types
               </button>
               <Link
                 href={`/${society_slug}/flats/layout`}
-                className="rounded-lg border border-slate-700 bg-slate-100 dark:bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 px-3 text-xs font-semibold transition-all flex items-center gap-2 shadow-md"
+                className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 py-1.5 px-2.5 text-xs font-semibold transition-all flex items-center gap-1.5 shadow-xs"
               >
-                <Settings2 className="h-4 w-4" /> Layout Settings
+                <Settings2 className="h-3.5 w-3.5" /> Layout Settings
               </Link>
               <button
                 onClick={() => setShowBulkUpload(true)}
-                className="rounded-lg border border-slate-700 bg-slate-100 dark:bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 px-3 text-xs font-semibold transition-all flex items-center gap-2 shadow-md"
+                className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 py-1.5 px-2.5 text-xs font-semibold transition-all flex items-center gap-1.5 shadow-xs"
               >
-                <Upload className="h-4 w-4" /> Import Bulk
+                <Upload className="h-3.5 w-3.5" /> Import Bulk
               </button>
               <button
                 onClick={() => setIsAddFlatModalOpen(true)}
-                className="rounded-lg bg-indigo-600 hover:bg-indigo-700 text-slate-100 py-2 px-4 text-xs font-semibold transition-all flex items-center gap-2 shadow-md"
+                className="rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white py-1.5 px-3 text-xs font-semibold transition-all flex items-center gap-1.5 shadow-xs"
               >
-                <Plus className="h-4 w-4" /> Add Flat Master Entry
+                <Plus className="h-3.5 w-3.5" /> Add Flat
               </button>
             </div>
           )}
@@ -410,16 +410,16 @@ export default function FlatsListingPage() {
 
         {/* Filters Panel - Only for Management */}
         {!isOwner && (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-5 bg-slate-950/40 border border-slate-800 p-4 rounded-xl">
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-5 bg-white dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 p-3 rounded-xl shadow-xs">
             {/* Search by Number */}
             <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
+              <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
               <input
                 type="text"
                 placeholder="Search Flat No..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2 pl-10 pr-4 text-sm text-slate-200 placeholder-slate-600 focus:border-slate-700 focus:outline-none"
+                className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 py-2 pl-9 pr-3 text-xs text-slate-900 dark:text-slate-200 placeholder-slate-400 focus:border-indigo-600 focus:outline-none"
               />
             </div>
 
@@ -428,7 +428,7 @@ export default function FlatsListingPage() {
               <select
                 value={buildingFilter}
                 onChange={(e) => setBuildingFilter(e.target.value)}
-                className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2 px-3.5 text-sm text-slate-500 dark:text-slate-400 focus:border-slate-700 focus:outline-none appearance-none"
+                className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 py-2 px-3 text-xs text-slate-700 dark:text-slate-300 focus:border-indigo-600 focus:outline-none"
               >
                 <option value="">All Towers</option>
                 {buildingsList.map((b) => (
@@ -497,50 +497,50 @@ export default function FlatsListingPage() {
           </div>
         ) : viewMode === 'list' ? (
           /* List View of Flats */
-          <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/40">
-            <table className="w-full text-left text-sm text-slate-500 dark:text-slate-400 whitespace-nowrap">
-              <thead className="bg-slate-900 text-xs uppercase text-slate-300">
+          <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/40 shadow-xs">
+            <table className="w-full text-left text-xs text-slate-600 dark:text-slate-400 whitespace-nowrap">
+              <thead className="bg-slate-50 dark:bg-slate-900/50 text-[10px] uppercase font-semibold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-800">
                 <tr>
-                  <th className="px-4 py-3 font-medium">Flat</th>
-                  <th className="px-4 py-3 font-medium">Building & Wing</th>
-                  <th className="px-4 py-3 font-medium">Details</th>
-                  <th className="px-4 py-3 font-medium">Occupancy</th>
-                  <th className="px-4 py-3 font-medium text-right">Actions</th>
+                  <th className="px-3.5 py-2.5 font-semibold">Flat</th>
+                  <th className="px-3.5 py-2.5 font-semibold">Building & Wing</th>
+                  <th className="px-3.5 py-2.5 font-semibold">Details</th>
+                  <th className="px-3.5 py-2.5 font-semibold">Occupancy</th>
+                  <th className="px-3.5 py-2.5 font-semibold text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
                 {flatsList.map((flat) => {
                   const statusColors = {
-                    VACANT: 'bg-slate-900 border-slate-800 text-slate-500 dark:text-slate-400',
-                    OWNER_OCCUPIED: 'bg-emerald-950/30 border-emerald-900/50 text-emerald-400',
-                    TENANT_OCCUPIED: 'bg-indigo-950/40 border-indigo-900/50 text-indigo-400',
+                    VACANT: 'bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400',
+                    OWNER_OCCUPIED: 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400',
+                    TENANT_OCCUPIED: 'bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-900/50 text-indigo-700 dark:text-indigo-400',
                   };
                   const statusKey = (flat.occupancyStatus || 'VACANT') as keyof typeof statusColors;
                   const badgeStyle = statusColors[statusKey] || statusColors.VACANT;
 
                   return (
-                    <tr key={flat.id} className="hover:bg-slate-900/30 transition-colors">
-                      <td className="px-4 py-4 font-bold text-slate-200">
+                    <tr key={flat.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/30 transition-colors">
+                      <td className="px-3.5 py-2.5 font-bold text-slate-900 dark:text-slate-200 text-xs">
                         {flat.number}
                         <div className="text-[10px] font-normal text-slate-500">Floor {flat.floorNumber}</div>
                       </td>
-                      <td className="px-4 py-4">
-                        <div className="text-slate-300 font-medium">{flat.buildingName}</div>
-                        <div className="text-xs text-slate-500">Wing {flat.wingName}</div>
+                      <td className="px-3.5 py-2.5">
+                        <div className="text-slate-800 dark:text-slate-300 font-medium text-xs">{flat.buildingName}</div>
+                        <div className="text-[11px] text-slate-500">Wing {flat.wingName}</div>
                       </td>
-                      <td className="px-4 py-4">
-                        <div className="text-slate-300">{flat.flatType}</div>
-                        <div className="text-xs text-slate-500">{flat.sqftArea} SqFt</div>
+                      <td className="px-3.5 py-2.5">
+                        <div className="text-slate-800 dark:text-slate-300 text-xs">{flat.flatType}</div>
+                        <div className="text-[11px] text-slate-500 font-mono">{flat.sqftArea} SqFt</div>
                       </td>
-                      <td className="px-4 py-4">
-                        <span className={`text-[10px] font-semibold border rounded-full px-2.5 py-1 uppercase tracking-wider ${badgeStyle}`}>
+                      <td className="px-3.5 py-2.5">
+                        <span className={`text-[10px] font-semibold border rounded-full px-2 py-0.5 uppercase tracking-wider ${badgeStyle}`}>
                           {(flat.occupancyStatus || 'VACANT').replace('_', ' ')}
                         </span>
                       </td>
-                      <td className="px-4 py-4 text-right">
+                      <td className="px-3.5 py-2.5 text-right">
                         <Link
                           href={`/${society_slug}/flats/${flat.id}`}
-                          className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-all"
+                          className="inline-flex items-center gap-1 font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 border border-indigo-200 dark:border-indigo-800/60 px-2.5 py-1 rounded-lg text-xs transition-all"
                         >
                           {isOwner ? 'View' : 'Manage'} <ArrowRight className="h-3 w-3" />
                         </Link>
@@ -553,19 +553,18 @@ export default function FlatsListingPage() {
           </div>
         ) : (
           /* Grid of Flats */
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {flatsList.map((flat) => {
-              // Color badges based on occupancy status
               const statusColors = {
-                VACANT: 'bg-slate-900 border-slate-800 text-slate-500 dark:text-slate-400',
-                OWNER_OCCUPIED: 'bg-emerald-950/30 border-emerald-900/50 text-emerald-400',
-                TENANT_OCCUPIED: 'bg-indigo-950/40 border-indigo-900/50 text-indigo-400',
+                VACANT: 'bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400',
+                OWNER_OCCUPIED: 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400',
+                TENANT_OCCUPIED: 'bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-900/50 text-indigo-700 dark:text-indigo-400',
               };
 
               return (
                 <div 
                   key={flat.id} 
-                  className="rounded-xl border border-slate-800 bg-slate-950/20 p-5 hover:bg-slate-900/30 transition-all flex flex-col justify-between space-y-4"
+                  className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/20 p-3.5 hover:bg-slate-50 dark:hover:bg-slate-900/30 transition-all flex flex-col justify-between space-y-2.5 shadow-xs"
                 >
                   {(() => {
                     const statusKey = (flat.occupancyStatus || 'VACANT') as keyof typeof statusColors;
@@ -573,31 +572,31 @@ export default function FlatsListingPage() {
                     return (
                       <div className="flex items-start justify-between">
                         <div>
-                          <h4 className="text-lg font-bold text-slate-200">Flat {flat.number}</h4>
+                          <h4 className="text-base font-bold text-slate-900 dark:text-slate-200">Flat {flat.number}</h4>
                           <p className="text-xs text-slate-500">{flat.buildingName} • {flat.wingName} • Floor {flat.floorNumber}</p>
                         </div>
-                        <span className={`text-[10px] font-semibold border rounded-full px-2.5 py-1 uppercase tracking-wider ${badgeStyle}`}>
+                        <span className={`text-[10px] font-semibold border rounded-full px-2 py-0.5 uppercase tracking-wider ${badgeStyle}`}>
                           {(flat.occupancyStatus || 'VACANT').replace('_', ' ')}
                         </span>
                       </div>
                     );
                   })()}
 
-                  <div className="grid grid-cols-2 gap-2 text-xs text-slate-500 dark:text-slate-400 border-t border-b border-slate-800/40 py-2.5">
+                  <div className="grid grid-cols-2 gap-2 text-xs text-slate-500 dark:text-slate-400 border-t border-b border-slate-100 dark:border-slate-800/40 py-2">
                     <div>
-                      <span className="text-slate-600 block">Unit Type</span>
-                      <span className="font-semibold text-slate-300">{flat.flatType}</span>
+                      <span className="text-slate-500 text-[11px] block">Unit Type</span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-300">{flat.flatType}</span>
                     </div>
                     <div>
-                      <span className="text-slate-600 block">Super Area</span>
-                      <span className="font-semibold text-slate-300">{flat.sqftArea} SqFt</span>
+                      <span className="text-slate-500 text-[11px] block">Super Area</span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-300">{flat.sqftArea} SqFt</span>
                     </div>
                   </div>
 
                   <div className="flex justify-end">
                     <Link
                       href={`/${society_slug}/flats/${flat.id}`}
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-all"
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-all"
                     >
                       {isOwner ? 'View Unit Details' : 'Manage Unit'} <ArrowRight className="h-3 w-3" />
                     </Link>

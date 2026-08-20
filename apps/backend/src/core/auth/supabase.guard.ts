@@ -1,6 +1,7 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable, UnauthorizedException, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { ClsService } from 'nestjs-cls';
 import { DevAuthGuard } from './dev-auth.guard';
 
 /**
@@ -15,9 +16,12 @@ export class SupabaseAuthGuard implements CanActivate {
   private devAuthGuard: DevAuthGuard;
   private isDevMode: boolean;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    @Optional() private readonly cls?: ClsService,
+  ) {
     this.isDevMode = this.configService.get<string>('DEV_AUTH') === 'true';
-    this.devAuthGuard = new DevAuthGuard(configService);
+    this.devAuthGuard = new DevAuthGuard(configService, cls);
 
     if (!this.isDevMode) {
       const supabaseUrl = this.configService.get<string>('SUPABASE_URL') || 'https://your-supabase-project.supabase.co';
@@ -56,6 +60,10 @@ export class SupabaseAuthGuard implements CanActivate {
       role: user.role,
       userMetadata: user.user_metadata,
     };
+
+    if (this.cls) {
+      this.cls.set('userId', user.id);
+    }
 
     return true;
   }

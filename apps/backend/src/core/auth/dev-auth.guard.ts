@@ -1,5 +1,6 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { ClsService } from 'nestjs-cls';
 
 /**
  * Development-only auth guard that bypasses Supabase JWT verification.
@@ -9,7 +10,10 @@ import { ConfigService } from '@nestjs/config';
  */
 @Injectable()
 export class DevAuthGuard implements CanActivate {
-  constructor(private readonly configService: ConfigService) {}
+  constructor(
+    private readonly configService: ConfigService,
+    @Optional() private readonly cls?: ClsService,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
@@ -37,6 +41,10 @@ export class DevAuthGuard implements CanActivate {
       role: 'authenticated',
       userMetadata: {},
     };
+
+    if (this.cls) {
+      this.cls.set('userId', userId);
+    }
 
     return true;
   }

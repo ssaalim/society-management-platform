@@ -375,67 +375,67 @@ export default function ComplaintManagementPage() {
   const closedCount = ticketsList.filter((t) => t.status === 'CLOSED').length;
 
   return (
-    <main className="relative flex min-h-screen flex-col items-center justify-start overflow-x-hidden w-full py-8 px-4 sm:px-6 md:px-8 lg:px-10">
+    <main className="relative flex min-h-screen flex-col items-center justify-start overflow-x-hidden w-full py-4 sm:py-5 px-3 sm:px-5 lg:px-6">
       {/* Background Grids */}
       <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
 
-      <div className="w-full max-w-[1450px] mx-auto space-y-8 z-10">
+      <div className="w-full max-w-[1600px] mx-auto space-y-3.5 z-10">
         
         {/* Header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <MessageSquare className="h-8 w-8 text-indigo-400" />
+        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+          <div className="flex items-center gap-2.5">
+            <MessageSquare className="h-6 w-6 text-indigo-500 dark:text-indigo-400" />
             <div>
-              <h2 className="text-2xl font-bold tracking-tight text-slate-100">Complaints & Tickets Center</h2>
-              <p className="text-xs text-slate-400">Raise maintenance tickets, assign technicians, manage society staff team, and track resolutions</p>
+              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Complaints & Tickets Center</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Raise maintenance tickets, assign technicians, manage society staff team, and track resolutions</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {isManagementRole && (
               <button
                 onClick={() => setIsStaffManagerOpen(true)}
-                className="flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900 hover:bg-slate-800 text-slate-200 py-2.5 px-3.5 text-xs font-semibold shadow transition-all"
+                className="flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 py-1.5 px-2.5 text-xs font-semibold shadow-xs transition-all"
               >
-                <Users className="h-4 w-4 text-sky-400" /> Staff & Technicians ({staffList.length})
+                <Users className="h-3.5 w-3.5 text-sky-500 dark:text-sky-400" /> Staff & Technicians ({staffList.length})
               </button>
             )}
 
             <button
               onClick={() => setIsCreateOpen(true)}
-              className="flex items-center gap-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-slate-100 py-2.5 px-4 text-xs font-semibold shadow transition-all"
+              className="flex items-center gap-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white py-1.5 px-3 text-xs font-semibold shadow-xs transition-all"
             >
-              <Plus className="h-4 w-4" /> Raise Complaint
+              <Plus className="h-3.5 w-3.5" /> Raise Complaint
             </button>
           </div>
         </div>
 
         {/* Metrics Bar */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="rounded-xl border border-slate-800 bg-slate-950/40 p-4">
-            <span className="text-xs text-slate-400 font-semibold">Open Complaints</span>
-            <p className="text-2xl font-black text-amber-400 mt-1">{openCount}</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/40 p-3 shadow-xs">
+            <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">Open Complaints</span>
+            <p className="text-xl font-black text-amber-500 dark:text-amber-400 mt-0.5">{openCount}</p>
           </div>
-          <div className="rounded-xl border border-slate-800 bg-slate-950/40 p-4">
-            <span className="text-xs text-slate-400 font-semibold">Assigned & In-Progress</span>
-            <p className="text-2xl font-black text-sky-400 mt-1">{assignedCount}</p>
+          <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/40 p-3 shadow-xs">
+            <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">Assigned & Active</span>
+            <p className="text-xl font-black text-sky-500 dark:text-sky-400 mt-0.5">{assignedCount}</p>
           </div>
-          <div className="rounded-xl border border-slate-800 bg-slate-950/40 p-4">
-            <span className="text-xs text-slate-400 font-semibold">Resolved (Pending Feedback)</span>
-            <p className="text-2xl font-black text-emerald-400 mt-1">{resolvedCount}</p>
+          <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/40 p-3 shadow-xs">
+            <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">Resolved</span>
+            <p className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5">{resolvedCount}</p>
           </div>
-          <div className="rounded-xl border border-slate-800 bg-slate-950/40 p-4">
-            <span className="text-xs text-slate-400 font-semibold">Closed & Rated</span>
-            <p className="text-2xl font-black text-slate-300 mt-1">{closedCount}</p>
+          <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/40 p-3 shadow-xs">
+            <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">Closed & Rated</span>
+            <p className="text-xl font-black text-slate-700 dark:text-slate-300 mt-0.5">{closedCount}</p>
           </div>
         </div>
 
         {message && (
           <div
-            className={`rounded-lg border p-4 text-sm flex items-center gap-2 ${
+            className={`rounded-xl border p-3 text-sm flex items-center gap-2 shadow-xs ${
               message.type === 'success'
-                ? 'bg-emerald-950/30 border-emerald-900/50 text-emerald-400'
-                : 'bg-red-950/30 border-red-900/50 text-red-400'
+                ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-400'
+                : 'bg-rose-50 dark:bg-red-950/30 border-rose-200 dark:border-red-900/50 text-rose-800 dark:text-red-400'
             }`}
           >
             {message.type === 'success' ? <CheckCircle className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
@@ -444,15 +444,15 @@ export default function ComplaintManagementPage() {
         )}
 
         {/* Search & Filters */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 bg-slate-950/40 border border-slate-800 p-4 rounded-xl">
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3 bg-white dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 p-3 rounded-xl shadow-xs">
           <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
+            <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
             <input
               type="text"
               placeholder="Search by title, flat, assignee..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2.5 pl-9 pr-3.5 text-sm text-slate-200 focus:border-indigo-600 focus:outline-none"
+              className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 py-2 pl-9 pr-3 text-xs text-slate-900 dark:text-slate-200 focus:border-indigo-600 focus:outline-none"
             />
           </div>
 
@@ -460,7 +460,7 @@ export default function ComplaintManagementPage() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-indigo-600 focus:outline-none"
+              className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 py-2 px-3 text-xs text-slate-700 dark:text-slate-300 focus:border-indigo-600 focus:outline-none"
             >
               <option value="">All Statuses</option>
               <option value="OPEN">Open</option>
@@ -474,7 +474,7 @@ export default function ComplaintManagementPage() {
             <select
               value={priorityFilter}
               onChange={(e) => setPriorityFilter(e.target.value)}
-              className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-indigo-600 focus:outline-none"
+              className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 py-2 px-3 text-xs text-slate-700 dark:text-slate-300 focus:border-indigo-600 focus:outline-none"
             >
               <option value="">All Priorities</option>
               <option value="LOW">Low Priority</option>
@@ -488,37 +488,41 @@ export default function ComplaintManagementPage() {
         {/* Tickets Grid */}
         {isLoading ? (
           <div className="flex justify-center py-16">
-            <Loader2 className="h-8 w-8 text-indigo-500 animate-spin" />
+            <Loader2 className="h-7 w-7 text-indigo-500 animate-spin" />
           </div>
         ) : filteredTickets.length === 0 ? (
-          <div className="text-center py-16 border border-dashed border-slate-800 rounded-xl space-y-3">
-            <ShieldAlert className="h-10 w-10 text-slate-500 mx-auto" />
-            <h3 className="text-md font-semibold text-slate-300">No complaint tickets found</h3>
+          <div className="text-center py-16 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl space-y-2">
+            <ShieldAlert className="h-8 w-8 text-slate-400 dark:text-slate-500 mx-auto" />
+            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">No complaint tickets found</h3>
             <p className="text-xs text-slate-500 max-w-xs mx-auto">No tickets match the selected filters or query.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5">
             {filteredTickets.map((ticket) => (
-              <div key={ticket.id} className="border border-slate-800 bg-slate-950/30 p-6 rounded-2xl space-y-4 text-xs text-slate-300 relative flex flex-col justify-between">
+              <div key={ticket.id} className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/30 p-3.5 sm:p-4 rounded-xl space-y-3 text-xs text-slate-700 dark:text-slate-300 relative flex flex-col justify-between shadow-xs">
                 
                 <div className="space-y-3">
                   {/* Meta Badges */}
                   <div className="flex justify-between items-start gap-2">
                     <div className="flex flex-wrap items-center gap-1.5">
                       <span className={`text-[10px] font-bold border rounded-full px-2.5 py-0.5 uppercase tracking-wider ${
-                        ticket.priority === 'HIGH' || ticket.priority === 'URGENT'
-                          ? 'bg-red-950/40 border-red-900/60 text-red-400'
-                          : 'bg-indigo-950/40 border-indigo-900/60 text-indigo-400'
+                        ticket.priority === 'URGENT'
+                          ? 'bg-rose-50 dark:bg-red-950/40 border-rose-200 dark:border-red-900/60 text-rose-800 dark:text-red-400'
+                          : ticket.priority === 'HIGH'
+                          ? 'bg-orange-50 dark:bg-orange-950/40 border-orange-200 dark:border-orange-900/60 text-orange-800 dark:text-orange-400'
+                          : ticket.priority === 'MEDIUM'
+                          ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900/60 text-amber-800 dark:text-amber-400'
+                          : 'bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-900/60 text-indigo-800 dark:text-indigo-400'
                       }`}>
                         {ticket.priority}
                       </span>
                       {ticket.flatNumber && (
-                        <span className="text-[10px] font-semibold bg-slate-900 border border-slate-800 text-slate-300 px-2 py-0.5 rounded-full flex items-center gap-1">
-                          <Building className="h-3 w-3 text-indigo-400" /> Flat {ticket.flatNumber}
+                        <span className="text-[10px] font-semibold bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded-full flex items-center gap-1">
+                          <Building className="h-3 w-3 text-indigo-600 dark:text-indigo-400" /> Flat {ticket.flatNumber}
                         </span>
                       )}
                       {ticket.escalationLevel > 0 && (
-                        <span className="text-[10px] font-bold border border-amber-900/50 bg-amber-950/40 text-amber-400 rounded-full px-2.5 py-0.5 uppercase">
+                        <span className="text-[10px] font-bold border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-400 rounded-full px-2.5 py-0.5 uppercase">
                           Escalated Lvl {ticket.escalationLevel}
                         </span>
                       )}
@@ -526,12 +530,12 @@ export default function ComplaintManagementPage() {
 
                     <span className={`text-[10px] font-bold border rounded-full px-2.5 py-0.5 uppercase tracking-wider ${
                       ticket.status === 'CLOSED'
-                        ? 'bg-emerald-950/40 border-emerald-800 text-emerald-400'
+                        ? 'bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-400'
                         : ticket.status === 'RESOLVED'
-                        ? 'bg-teal-950/40 border-teal-800 text-teal-300'
+                        ? 'bg-emerald-50 dark:bg-teal-950/40 border-emerald-200 dark:border-teal-800 text-emerald-800 dark:text-teal-300'
                         : ticket.status === 'ASSIGNED'
-                        ? 'bg-sky-950/40 border-sky-800 text-sky-300'
-                        : 'bg-amber-950/40 border-amber-800 text-amber-400'
+                        ? 'bg-sky-50 dark:bg-sky-950/40 border-sky-200 dark:border-sky-800 text-sky-800 dark:text-sky-300'
+                        : 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-400'
                     }`}>
                       {ticket.status}
                     </span>
@@ -539,19 +543,19 @@ export default function ComplaintManagementPage() {
 
                   {/* Title & Description */}
                   <div>
-                    <h4 className="text-base font-bold text-slate-100">{ticket.title}</h4>
-                    <p className="text-slate-400 text-xs mt-1 leading-relaxed">{ticket.description}</p>
+                    <h4 className="text-base font-bold text-slate-900 dark:text-slate-100">{ticket.title}</h4>
+                    <p className="text-slate-600 dark:text-slate-400 text-xs mt-1 leading-relaxed">{ticket.description}</p>
                   </div>
 
                   {/* Raised By & Assigned Info */}
-                  <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800/60 text-[11px]">
-                    <div className="flex items-center gap-1.5 text-slate-400">
-                      <User className="h-3.5 w-3.5 text-slate-500" />
-                      <span>Raised by: <strong>{ticket.raisedByName || 'Resident'}</strong></span>
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100 dark:border-slate-800/60 text-[11px]">
+                    <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400">
+                      <User className="h-3.5 w-3.5 text-slate-400" />
+                      <span>Raised by: <strong className="text-slate-800 dark:text-slate-200">{ticket.raisedByName || 'Resident'}</strong></span>
                     </div>
 
                     {ticket.assignedStaffName ? (
-                      <div className="flex items-center gap-1.5 text-sky-400 bg-sky-950/30 border border-sky-900/40 px-2 py-0.5 rounded-lg">
+                      <div className="flex items-center gap-1.5 text-sky-700 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-900/40 px-2 py-0.5 rounded-lg">
                         <Wrench className="h-3 w-3" />
                         <span>Assigned to: <strong>{ticket.assignedStaffName}</strong></span>
                       </div>
@@ -666,14 +670,14 @@ export default function ComplaintManagementPage() {
       {/* ========================================== */}
       {isCreateOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-150">
-          <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-950 p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
-                <MessageSquare className="h-5 w-5 text-indigo-400" /> Raise Complaint Ticket
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <MessageSquare className="h-5 w-5 text-indigo-600 dark:text-indigo-400" /> Raise Complaint Ticket
               </h3>
               <button
                 onClick={() => setIsCreateOpen(false)}
-                className="text-slate-500 hover:text-slate-300 p-1"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -681,24 +685,24 @@ export default function ComplaintManagementPage() {
 
             <form onSubmit={handleCreateComplaint} className="space-y-4 text-xs">
               <div>
-                <label className="text-slate-300 font-semibold">Issue Title *</label>
+                <label className="text-slate-700 dark:text-slate-300 font-semibold">Issue Title *</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Lift A stuck between 4th & 5th floor / Water pipeline leak"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  className="w-full mt-1.5 rounded-lg border border-slate-800 bg-slate-900/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-indigo-600 focus:outline-none"
+                  className="w-full mt-1.5 rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900/60 py-2.5 px-3.5 text-sm text-slate-900 dark:text-slate-200 focus:border-indigo-600 focus:outline-none"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-slate-300 font-semibold">Tag Flat / Unit</label>
+                  <label className="text-slate-700 dark:text-slate-300 font-semibold">Tag Flat / Unit</label>
                   <select
                     value={selectedFlatId}
                     onChange={(e) => setSelectedFlatId(e.target.value)}
-                    className="w-full mt-1.5 rounded-lg border border-slate-800 bg-slate-900/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-indigo-600 focus:outline-none"
+                    className="w-full mt-1.5 rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900/60 py-2.5 px-3.5 text-sm text-slate-900 dark:text-slate-200 focus:border-indigo-600 focus:outline-none"
                   >
                     <option value="">-- Auto-Detect My Flat / Common Area --</option>
                     {flatsList.map((f) => (
@@ -710,11 +714,11 @@ export default function ComplaintManagementPage() {
                 </div>
 
                 <div>
-                  <label className="text-slate-300 font-semibold">Urgency / Priority Level</label>
+                  <label className="text-slate-700 dark:text-slate-300 font-semibold">Urgency / Priority Level</label>
                   <select
                     value={newPriority}
                     onChange={(e) => setNewPriority(e.target.value)}
-                    className="w-full mt-1.5 rounded-lg border border-slate-800 bg-slate-900/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-indigo-600 focus:outline-none"
+                    className="w-full mt-1.5 rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900/60 py-2.5 px-3.5 text-sm text-slate-900 dark:text-slate-200 focus:border-indigo-600 focus:outline-none"
                   >
                     <option value="LOW">🟢 Low (Cosmetic / General maintenance)</option>
                     <option value="MEDIUM">🔵 Medium (Standard Repair)</option>
@@ -725,22 +729,22 @@ export default function ComplaintManagementPage() {
               </div>
 
               <div>
-                <label className="text-slate-300 font-semibold">Detailed Description *</label>
+                <label className="text-slate-700 dark:text-slate-300 font-semibold">Detailed Description *</label>
                 <textarea
                   required
                   rows={4}
                   placeholder="Provide complete breakdown details, location, and severity..."
                   value={newDescription}
                   onChange={(e) => setNewDescription(e.target.value)}
-                  className="w-full mt-1.5 rounded-lg border border-slate-800 bg-slate-900/60 py-2 px-3 text-sm text-slate-200 focus:border-indigo-600 focus:outline-none"
+                  className="w-full mt-1.5 rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900/60 py-2 px-3 text-sm text-slate-900 dark:text-slate-200 focus:border-indigo-600 focus:outline-none"
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => setIsCreateOpen(false)}
-                  className="px-4 py-2 rounded-lg border border-slate-800 text-slate-400 hover:bg-slate-900"
+                  className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900"
                 >
                   Cancel
                 </button>
@@ -762,37 +766,37 @@ export default function ComplaintManagementPage() {
       {/* ========================================== */}
       {activeAssignTicket && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-150">
-          <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-950 p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
-                <UserCheck className="h-5 w-5 text-sky-400" /> Assign Staff to Ticket
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <UserCheck className="h-5 w-5 text-sky-600 dark:text-sky-400" /> Assign Staff to Ticket
               </h3>
               <button
                 onClick={() => {
                   setActiveAssignTicket(null);
                   setIsInlineAddStaff(false);
                 }}
-                className="text-slate-500 hover:text-slate-300 p-1"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
             <form onSubmit={handleAssignSubmit} className="space-y-4 text-xs">
-              <div className="bg-slate-900/50 border border-slate-800 p-3 rounded-lg">
-                <p className="text-[11px] text-slate-400">Assigning for:</p>
-                <p className="font-bold text-slate-200 mt-0.5">{activeAssignTicket.title}</p>
+              <div className="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 p-3 rounded-lg">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">Assigning for:</p>
+                <p className="font-bold text-slate-900 dark:text-slate-200 mt-0.5">{activeAssignTicket.title}</p>
               </div>
 
               {!isInlineAddStaff ? (
                 <>
                   <div>
                     <div className="flex items-center justify-between">
-                      <label className="text-slate-300 font-semibold">Select Society Staff Member</label>
+                      <label className="text-slate-700 dark:text-slate-300 font-semibold">Select Society Staff Member</label>
                       <button
                         type="button"
                         onClick={() => setIsInlineAddStaff(true)}
-                        className="text-[11px] text-sky-400 hover:text-sky-300 font-semibold flex items-center gap-1"
+                        className="text-[11px] text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 font-semibold flex items-center gap-1"
                       >
                         <Plus className="h-3 w-3" /> Register New Staff
                       </button>
@@ -803,7 +807,7 @@ export default function ComplaintManagementPage() {
                         setSelectedStaffId(e.target.value);
                         if (e.target.value) setCustomStaffName('');
                       }}
-                      className="w-full mt-1.5 rounded-lg border border-slate-800 bg-slate-900/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-sky-600 focus:outline-none"
+                      className="w-full mt-1.5 rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900/60 py-2.5 px-3.5 text-sm text-slate-900 dark:text-slate-200 focus:border-sky-600 focus:outline-none"
                     >
                       <option value="">-- Choose from staff roster --</option>
                       {staffList.map((s) => (
@@ -815,7 +819,7 @@ export default function ComplaintManagementPage() {
                   </div>
 
                   <div>
-                    <label className="text-slate-300 font-semibold">Or Enter Custom Technician / Vendor Name</label>
+                    <label className="text-slate-700 dark:text-slate-300 font-semibold">Or Enter Custom Technician / Vendor Name</label>
                     <input
                       type="text"
                       placeholder="e.g. Otis Elevator AMC Technician / Suresh Electrician"
@@ -824,54 +828,54 @@ export default function ComplaintManagementPage() {
                         setCustomStaffName(e.target.value);
                         if (e.target.value) setSelectedStaffId('');
                       }}
-                      className="w-full mt-1.5 rounded-lg border border-slate-800 bg-slate-900/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-sky-600 focus:outline-none"
+                      className="w-full mt-1.5 rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900/60 py-2.5 px-3.5 text-sm text-slate-900 dark:text-slate-200 focus:border-sky-600 focus:outline-none"
                     />
                   </div>
                 </>
               ) : (
                 /* Inline Staff Registration Form */
-                <div className="bg-sky-950/20 border border-sky-900/40 p-4 rounded-xl space-y-3">
+                <div className="bg-sky-50 dark:bg-sky-950/20 border border-sky-200 dark:border-sky-900/40 p-4 rounded-xl space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-sky-300 text-xs flex items-center gap-1.5">
+                    <span className="font-bold text-sky-800 dark:text-sky-300 text-xs flex items-center gap-1.5">
                       <Users className="h-4 w-4" /> Quick Register Staff Member
                     </span>
                     <button
                       type="button"
                       onClick={() => setIsInlineAddStaff(false)}
-                      className="text-[10px] text-slate-400 hover:text-slate-200"
+                      className="text-[10px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
                     >
                       Back to list
                     </button>
                   </div>
 
                   <div>
-                    <label className="text-slate-300 font-semibold">Full Name *</label>
+                    <label className="text-slate-700 dark:text-slate-300 font-semibold">Full Name *</label>
                     <input
                       type="text"
                       placeholder="e.g. Ramesh Kumar"
                       value={staffForm.name}
                       onChange={(e) => setStaffForm({ ...staffForm, name: e.target.value })}
-                      className="w-full mt-1 rounded-lg border border-slate-800 bg-slate-900/80 py-2 px-3 text-sm text-slate-200 focus:border-sky-600 focus:outline-none"
+                      className="w-full mt-1 rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900/80 py-2 px-3 text-sm text-slate-900 dark:text-slate-200 focus:border-sky-600 focus:outline-none"
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="text-slate-300 font-semibold">Mobile *</label>
+                      <label className="text-slate-700 dark:text-slate-300 font-semibold">Mobile *</label>
                       <input
                         type="text"
                         placeholder="9876543210"
                         value={staffForm.mobile}
                         onChange={(e) => setStaffForm({ ...staffForm, mobile: e.target.value })}
-                        className="w-full mt-1 rounded-lg border border-slate-800 bg-slate-900/80 py-2 px-3 text-sm text-slate-200 focus:border-sky-600 focus:outline-none"
+                        className="w-full mt-1 rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900/80 py-2 px-3 text-sm text-slate-900 dark:text-slate-200 focus:border-sky-600 focus:outline-none"
                       />
                     </div>
                     <div>
-                      <label className="text-slate-300 font-semibold">Role / Trade</label>
+                      <label className="text-slate-700 dark:text-slate-300 font-semibold">Role / Trade</label>
                       <select
                         value={staffForm.role}
                         onChange={(e) => setStaffForm({ ...staffForm, role: e.target.value })}
-                        className="w-full mt-1 rounded-lg border border-slate-800 bg-slate-900/80 py-2 px-3 text-sm text-slate-200 focus:border-sky-600 focus:outline-none"
+                        className="w-full mt-1 rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900/80 py-2 px-3 text-sm text-slate-900 dark:text-slate-200 focus:border-sky-600 focus:outline-none"
                       >
                         <option value="ELECTRICIAN">Electrician</option>
                         <option value="PLUMBER">Plumber</option>
@@ -897,14 +901,14 @@ export default function ComplaintManagementPage() {
                 </div>
               )}
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => {
                     setActiveAssignTicket(null);
                     setIsInlineAddStaff(false);
                   }}
-                  className="px-4 py-2 rounded-lg border border-slate-800 text-slate-400 hover:bg-slate-900"
+                  className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900"
                 >
                   Cancel
                 </button>
@@ -926,42 +930,42 @@ export default function ComplaintManagementPage() {
       {/* ========================================== */}
       {activeResolveTicket && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-150">
-          <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-950 p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
-                <Wrench className="h-5 w-5 text-teal-400" /> Record Resolution Comments
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <Wrench className="h-5 w-5 text-teal-600 dark:text-teal-400" /> Record Resolution Comments
               </h3>
               <button
                 onClick={() => setActiveResolveTicket(null)}
-                className="text-slate-500 hover:text-slate-300 p-1"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
             <form onSubmit={handleResolveSubmit} className="space-y-4 text-xs">
-              <div className="bg-slate-900/50 border border-slate-800 p-3 rounded-lg">
-                <p className="text-[11px] text-slate-400">Resolving:</p>
-                <p className="font-bold text-slate-200 mt-0.5">{activeResolveTicket.title}</p>
+              <div className="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 p-3 rounded-lg">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">Resolving:</p>
+                <p className="font-bold text-slate-900 dark:text-slate-200 mt-0.5">{activeResolveTicket.title}</p>
               </div>
 
               <div>
-                <label className="text-slate-300 font-semibold">Resolution Comments & Action Taken *</label>
+                <label className="text-slate-700 dark:text-slate-300 font-semibold">Resolution Comments & Action Taken *</label>
                 <textarea
                   required
                   rows={4}
                   placeholder="Detail the root cause and actions taken (e.g. Replaced faulty relay in elevator panel, tested operational for 30 mins)..."
                   value={resolutionComment}
                   onChange={(e) => setResolutionComment(e.target.value)}
-                  className="w-full mt-1.5 rounded-lg border border-slate-800 bg-slate-900/60 py-2 px-3 text-sm text-slate-200 focus:border-teal-600 focus:outline-none"
+                  className="w-full mt-1.5 rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900/60 py-2 px-3 text-sm text-slate-900 dark:text-slate-200 focus:border-teal-600 focus:outline-none"
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => setActiveResolveTicket(null)}
-                  className="px-4 py-2 rounded-lg border border-slate-800 text-slate-400 hover:bg-slate-900"
+                  className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900"
                 >
                   Cancel
                 </button>
@@ -983,25 +987,25 @@ export default function ComplaintManagementPage() {
       {/* ========================================== */}
       {activeFeedbackTicket && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-150">
-          <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-950 p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
-                <Star className="h-5 w-5 text-amber-400 fill-amber-400" /> Resident Feedback & Review
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <Star className="h-5 w-5 text-amber-500 fill-amber-400" /> Resident Feedback & Review
               </h3>
               <button
                 onClick={() => setActiveFeedbackTicket(null)}
-                className="text-slate-500 hover:text-slate-300 p-1"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
             <form onSubmit={handleFeedbackSubmit} className="space-y-4 text-xs">
-              <div className="bg-slate-900/50 border border-slate-800 p-3 rounded-lg">
-                <p className="text-[11px] text-slate-400">Closing Ticket:</p>
-                <p className="font-bold text-slate-200 mt-0.5">{activeFeedbackTicket.title}</p>
+              <div className="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 p-3 rounded-lg">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">Closing Ticket:</p>
+                <p className="font-bold text-slate-900 dark:text-slate-200 mt-0.5">{activeFeedbackTicket.title}</p>
                 {activeFeedbackTicket.resolutionComment && (
-                  <p className="text-[11px] text-emerald-300 mt-1 italic">
+                  <p className="text-[11px] text-emerald-700 dark:text-emerald-300 mt-1 italic">
                     Resolution: "{activeFeedbackTicket.resolutionComment}"
                   </p>
                 )}
@@ -1009,46 +1013,46 @@ export default function ComplaintManagementPage() {
 
               {/* Star Rating Selection */}
               <div>
-                <label className="text-slate-300 font-semibold block mb-1.5">Satisfaction Rating</label>
+                <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1.5">Satisfaction Rating</label>
                 <div className="flex items-center gap-2">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <button
                       type="button"
                       key={star}
                       onClick={() => setFeedbackRating(star)}
-                      className="p-1.5 rounded-lg hover:bg-slate-900 transition-all"
+                      className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-900 transition-all"
                     >
                       <Star
                         className={`h-6 w-6 ${
                           star <= feedbackRating
                             ? 'text-amber-400 fill-amber-400'
-                            : 'text-slate-600'
+                            : 'text-slate-300 dark:text-slate-600'
                         }`}
                       />
                     </button>
                   ))}
-                  <span className="text-xs text-amber-400 font-bold ml-2">
+                  <span className="text-xs text-amber-600 dark:text-amber-400 font-bold ml-2">
                     {feedbackRating} / 5 Stars
                   </span>
                 </div>
               </div>
 
               <div>
-                <label className="text-slate-300 font-semibold">Feedback Remarks</label>
+                <label className="text-slate-700 dark:text-slate-300 font-semibold">Feedback Remarks</label>
                 <textarea
                   rows={3}
                   placeholder="Share your satisfaction with the repair turnaround and technician service..."
                   value={feedbackText}
                   onChange={(e) => setFeedbackText(e.target.value)}
-                  className="w-full mt-1.5 rounded-lg border border-slate-800 bg-slate-900/60 py-2 px-3 text-sm text-slate-200 focus:border-indigo-600 focus:outline-none"
+                  className="w-full mt-1.5 rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900/60 py-2 px-3 text-sm text-slate-900 dark:text-slate-200 focus:border-indigo-600 focus:outline-none"
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => setActiveFeedbackTicket(null)}
-                  className="px-4 py-2 rounded-lg border border-slate-800 text-slate-400 hover:bg-slate-900"
+                  className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900"
                 >
                   Cancel
                 </button>
@@ -1070,58 +1074,58 @@ export default function ComplaintManagementPage() {
       {/* ========================================== */}
       {isStaffManagerOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-150">
-          <div className="w-full max-w-2xl rounded-2xl border border-slate-800 bg-slate-950 p-6 shadow-2xl space-y-5 max-h-[90vh] flex flex-col">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div className="w-full max-w-2xl rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-6 shadow-2xl space-y-5 max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
               <div>
-                <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
-                  <Users className="h-5 w-5 text-sky-400" /> Society Staff & Facility Technicians Team
+                <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                  <Users className="h-5 w-5 text-sky-600 dark:text-sky-400" /> Society Staff & Facility Technicians Team
                 </h3>
-                <p className="text-xs text-slate-400 mt-0.5">Manage electricians, plumbers, security guards, and facility maintenance team</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Manage electricians, plumbers, security guards, and facility maintenance team</p>
               </div>
               <button
                 onClick={() => setIsStaffManagerOpen(false)}
-                className="text-slate-500 hover:text-slate-300 p-1"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
             {/* Add Staff Form */}
-            <form onSubmit={handleCreateStaffSubmit} className="bg-slate-900/60 border border-slate-800 p-4 rounded-xl space-y-3 text-xs">
-              <h4 className="font-bold text-slate-200 flex items-center gap-1.5 text-xs">
-                <Plus className="h-4 w-4 text-sky-400" /> Add New Staff Member / Technician
+            <form onSubmit={handleCreateStaffSubmit} className="bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 p-4 rounded-xl space-y-3 text-xs">
+              <h4 className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5 text-xs">
+                <Plus className="h-4 w-4 text-sky-600 dark:text-sky-400" /> Add New Staff Member / Technician
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="text-slate-400 font-medium">Full Name *</label>
+                  <label className="text-slate-600 dark:text-slate-400 font-medium">Full Name *</label>
                   <input
                     type="text"
                     required
                     placeholder="e.g. Ramesh Kumar"
                     value={staffForm.name}
                     onChange={(e) => setStaffForm({ ...staffForm, name: e.target.value })}
-                    className="w-full mt-1 rounded-lg border border-slate-800 bg-slate-950/80 py-2 px-3 text-xs text-slate-200 focus:border-sky-600 focus:outline-none"
+                    className="w-full mt-1 rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-950/80 py-2 px-3 text-xs text-slate-900 dark:text-slate-200 focus:border-sky-600 focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="text-slate-400 font-medium">Mobile Phone *</label>
+                  <label className="text-slate-600 dark:text-slate-400 font-medium">Mobile Phone *</label>
                   <input
                     type="text"
                     required
                     placeholder="9876543210"
                     value={staffForm.mobile}
                     onChange={(e) => setStaffForm({ ...staffForm, mobile: e.target.value })}
-                    className="w-full mt-1 rounded-lg border border-slate-800 bg-slate-950/80 py-2 px-3 text-xs text-slate-200 focus:border-sky-600 focus:outline-none"
+                    className="w-full mt-1 rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-950/80 py-2 px-3 text-xs text-slate-900 dark:text-slate-200 focus:border-sky-600 focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="text-slate-400 font-medium">Trade / Role</label>
+                  <label className="text-slate-600 dark:text-slate-400 font-medium">Trade / Role</label>
                   <select
                     value={staffForm.role}
                     onChange={(e) => setStaffForm({ ...staffForm, role: e.target.value })}
-                    className="w-full mt-1 rounded-lg border border-slate-800 bg-slate-950/80 py-2 px-3 text-xs text-slate-200 focus:border-sky-600 focus:outline-none"
+                    className="w-full mt-1 rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-950/80 py-2 px-3 text-xs text-slate-900 dark:text-slate-200 focus:border-sky-600 focus:outline-none"
                   >
                     <option value="ELECTRICIAN">Electrician</option>
                     <option value="PLUMBER">Plumber</option>
@@ -1150,23 +1154,23 @@ export default function ComplaintManagementPage() {
             {/* Staff List Roster */}
             <div className="overflow-y-auto space-y-2 max-h-64 pr-1">
               {staffList.length === 0 ? (
-                <div className="py-8 text-center text-slate-500 text-xs border border-dashed border-slate-800 rounded-xl">
+                <div className="py-8 text-center text-slate-500 text-xs border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
                   No staff members registered in the team roster yet.
                 </div>
               ) : (
                 staffList.map((s) => (
-                  <div key={s.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-900/40 border border-slate-800/80 text-xs">
+                  <div key={s.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 text-xs">
                     <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-lg bg-slate-800/80 flex items-center justify-center text-sky-400 font-bold">
+                      <div className="h-8 w-8 rounded-lg bg-sky-100 dark:bg-slate-800/80 border border-sky-200 dark:border-slate-700 flex items-center justify-center text-sky-700 dark:text-sky-400 font-bold">
                         {s.name[0]?.toUpperCase() || 'S'}
                       </div>
                       <div>
-                        <p className="font-bold text-slate-200">{s.name}</p>
-                        <p className="text-[11px] text-slate-400 flex items-center gap-2">
-                          <span className="text-sky-400 font-semibold">{s.role.replace('_', ' ')}</span>
+                        <p className="font-bold text-slate-900 dark:text-slate-200">{s.name}</p>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                          <span className="text-sky-600 dark:text-sky-400 font-semibold">{s.role.replace('_', ' ')}</span>
                           {s.phone && (
-                            <a href={`tel:${s.phone}`} className="text-slate-400 hover:text-slate-200 flex items-center gap-1 font-mono">
-                              <Phone className="h-3 w-3 text-slate-500" /> {s.phone}
+                            <a href={`tel:${s.phone}`} className="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 flex items-center gap-1 font-mono">
+                              <Phone className="h-3 w-3 text-slate-400" /> {s.phone}
                             </a>
                           )}
                         </p>
@@ -1174,12 +1178,12 @@ export default function ComplaintManagementPage() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold bg-emerald-950/40 border border-emerald-800/60 text-emerald-400 px-2 py-0.5 rounded-full">
+                      <span className="text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full">
                         Active
                       </span>
                       <button
                         onClick={() => handleDeleteStaff(s.id, s.name)}
-                        className="text-slate-500 hover:text-red-400 p-1.5 transition-colors"
+                        className="text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 p-1.5 transition-colors"
                         title="Remove staff"
                       >
                         <Trash2 className="h-4 w-4" />

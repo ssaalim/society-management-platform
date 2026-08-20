@@ -146,6 +146,17 @@ export default function MemberDetailPage() {
     }
   };
 
+  const handlePrintIdCard = () => {
+    document.body.classList.add('print-id-card-only');
+    const cleanup = () => {
+      document.body.classList.remove('print-id-card-only');
+      window.removeEventListener('afterprint', cleanup);
+    };
+    window.addEventListener('afterprint', cleanup);
+    window.print();
+    setTimeout(cleanup, 2500);
+  };
+
   const handleDeleteMember = async () => {
     if (!isManagementRole || !memberIdString) return;
     if (!confirm('Are you sure you want to delete this member? All associated family & nominee rosters will be deleted.')) return;
@@ -172,11 +183,11 @@ export default function MemberDetailPage() {
   }
 
   return (
-    <main className="relative flex min-h-screen flex-col items-center justify-start overflow-x-hidden w-full py-8 px-4 sm:px-6 md:px-8 lg:px-10">
+    <main className="relative flex min-h-screen flex-col items-center justify-start overflow-x-hidden w-full py-4 sm:py-5 px-3 sm:px-5 lg:px-6">
       {/* Background Grids */}
       <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
 
-      <div className="w-full max-w-[1450px] mx-auto space-y-8 z-10">
+      <div className="w-full max-w-[1600px] mx-auto space-y-6 z-10">
         
         {/* Back and Title */}
         <div className="space-y-4">
@@ -248,14 +259,18 @@ export default function MemberDetailPage() {
 
         {message && (
           <div
-            className={`rounded-lg border p-4 text-sm flex items-center gap-2 ${
+            className={`rounded-xl border p-3 text-xs font-semibold flex items-center gap-2.5 shadow-xs ${
               message.type === 'success'
-                ? 'bg-emerald-950/30 border-emerald-900/50 text-emerald-400'
-                : 'bg-red-950/30 border-red-900/50 text-red-400'
+                ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/60 text-emerald-800 dark:text-emerald-300'
+                : 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900/60 text-rose-800 dark:text-rose-300'
             }`}
           >
-            {message.type === 'success' ? <CheckCircle className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
-            {message.text}
+            {message.type === 'success' ? (
+              <CheckCircle className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+            ) : (
+              <AlertCircle className="h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400" />
+            )}
+            <span>{message.text}</span>
           </div>
         )}
 
@@ -610,61 +625,97 @@ export default function MemberDetailPage() {
           </fieldset>
 
           {activeTab === 'idcard' && (
-            <div className="flex flex-col items-center py-8 space-y-6">
+            <div className="flex flex-col items-center py-6 space-y-5">
               {/* Premium CSS Digital ID Card */}
-              <div className="w-80 h-96 rounded-2xl bg-gradient-to-br from-slate-950 to-slate-900 border border-indigo-500/50 p-6 flex flex-col justify-between shadow-2xl relative overflow-hidden text-center select-none">
-                
+              <div 
+                id="printable-id-card"
+                className="w-80 h-[420px] rounded-3xl bg-gradient-to-br from-white via-indigo-50/50 to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 border-2 border-indigo-200/90 dark:border-indigo-500/40 p-6 flex flex-col justify-between shadow-2xl relative overflow-hidden text-center select-none"
+              >
                 {/* Visual Glassmorphism highlight */}
-                <div className="absolute top-[-50px] right-[-50px] w-36 h-36 bg-indigo-500/10 rounded-full blur-3xl" />
+                <div className="absolute top-[-40px] right-[-40px] w-36 h-36 bg-indigo-500/15 dark:bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute bottom-[-30px] left-[-30px] w-32 h-32 bg-blue-500/10 dark:bg-indigo-600/10 rounded-full blur-2xl pointer-events-none" />
                 
                 {/* Header housing society name */}
-                <div className="border-b border-slate-800/80 pb-2 space-y-0.5">
-                  <h3 className="text-xs font-black uppercase tracking-widest text-indigo-400">{activeSociety?.societyName || 'Society Resident'}</h3>
-                  <span className="text-[8px] text-slate-500 tracking-wider">Housing Society Digital ID</span>
+                <div className="border-b border-indigo-100 dark:border-slate-800/80 pb-2.5 space-y-1">
+                  <div className="flex items-center justify-center gap-1.5">
+                    <Building className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                    <h3 className="text-xs font-black uppercase tracking-widest text-indigo-700 dark:text-indigo-400 truncate max-w-[220px]">
+                      {activeSociety?.societyName || 'Housing Society'}
+                    </h3>
+                  </div>
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                      Official Resident Smart ID
+                    </span>
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  </div>
                 </div>
 
                 {/* Photo frame */}
-                <div className="mx-auto w-24 h-24 rounded-full border-2 border-indigo-500/40 bg-slate-950 overflow-hidden flex items-center justify-center my-3 relative shadow-inner">
+                <div className="mx-auto w-24 h-24 rounded-2xl border-2 border-indigo-500/40 bg-white dark:bg-slate-950 overflow-hidden flex items-center justify-center my-2 relative shadow-md">
                   {watchedPhoto ? (
                     <img src={watchedPhoto} alt="Member Avatar" className="w-full h-full object-cover" />
                   ) : (
-                    <Users className="h-10 w-10 text-slate-700" />
+                    <Users className="h-10 w-10 text-indigo-300 dark:text-slate-600" />
                   )}
                 </div>
 
                 {/* Name & details */}
-                <div className="space-y-1">
-                  <h4 className="text-sm font-bold text-slate-100">{watchedName}</h4>
-                  <span className="inline-block text-[9px] font-black border border-indigo-900 bg-indigo-950/40 text-indigo-400 rounded-full px-2.5 py-0.5 uppercase tracking-widest">
-                    {watchedType}
-                  </span>
+                <div className="space-y-1.5">
+                  <h4 className="text-base font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
+                    {watchedName || 'Member Name'}
+                  </h4>
+                  <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                    <span className="inline-block text-[10px] font-bold border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 rounded-full px-3 py-0.5 uppercase tracking-wide shadow-xs">
+                      {watchedType || 'OWNER'}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Card footer details */}
-                <div className="border-t border-slate-800/80 pt-3 flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400">
-                  <div className="text-left font-mono">
-                    <span className="text-[7px] text-slate-600 block uppercase">Member No</span>
-                    <span className="font-semibold text-slate-300">{watchedNo || 'MEM-0000'}</span>
+                <div className="border-t border-indigo-100 dark:border-slate-800/80 pt-3 flex items-center justify-between text-slate-600 dark:text-slate-400">
+                  <div className="text-left font-mono space-y-0.5">
+                    <span className="text-[8px] font-bold text-slate-400 dark:text-slate-500 block uppercase tracking-wider">Member ID No</span>
+                    <span className="text-xs font-black text-slate-900 dark:text-slate-200">{watchedNo || 'MEM-0000'}</span>
                   </div>
 
-                  {/* Mock Verification barcode lines */}
-                  <div className="flex gap-[2px] opacity-40">
-                    <span className="w-[1px] h-6 bg-slate-200" />
-                    <span className="w-[2px] h-6 bg-slate-200" />
-                    <span className="w-[1px] h-6 bg-slate-200" />
-                    <span className="w-[3px] h-6 bg-slate-200" />
-                    <span className="w-[1px] h-6 bg-slate-200" />
-                    <span className="w-[2px] h-6 bg-slate-200" />
+                  {/* Crisp High-Contrast Vector Barcode */}
+                  <div className="flex flex-col items-end">
+                    <svg className="h-6 w-28 text-slate-950 dark:text-slate-100" viewBox="0 0 100 24" preserveAspectRatio="none">
+                      <rect x="0" y="0" width="2.5" height="24" fill="currentColor" />
+                      <rect x="5" y="0" width="1.5" height="24" fill="currentColor" />
+                      <rect x="8" y="0" width="3.5" height="24" fill="currentColor" />
+                      <rect x="14" y="0" width="1.5" height="24" fill="currentColor" />
+                      <rect x="17" y="0" width="2.5" height="24" fill="currentColor" />
+                      <rect x="22" y="0" width="4.5" height="24" fill="currentColor" />
+                      <rect x="28" y="0" width="1.5" height="24" fill="currentColor" />
+                      <rect x="31" y="0" width="3" height="24" fill="currentColor" />
+                      <rect x="36" y="0" width="1.5" height="24" fill="currentColor" />
+                      <rect x="39" y="0" width="3.5" height="24" fill="currentColor" />
+                      <rect x="45" y="0" width="1.5" height="24" fill="currentColor" />
+                      <rect x="48" y="0" width="4.5" height="24" fill="currentColor" />
+                      <rect x="55" y="0" width="2.5" height="24" fill="currentColor" />
+                      <rect x="59" y="0" width="1.5" height="24" fill="currentColor" />
+                      <rect x="62" y="0" width="3.5" height="24" fill="currentColor" />
+                      <rect x="68" y="0" width="1.5" height="24" fill="currentColor" />
+                      <rect x="71" y="0" width="3" height="24" fill="currentColor" />
+                      <rect x="76" y="0" width="4.5" height="24" fill="currentColor" />
+                      <rect x="83" y="0" width="1.5" height="24" fill="currentColor" />
+                      <rect x="86" y="0" width="2.5" height="24" fill="currentColor" />
+                      <rect x="90" y="0" width="4" height="24" fill="currentColor" />
+                      <rect x="96" y="0" width="1.5" height="24" fill="currentColor" />
+                      <rect x="98.5" y="0" width="1.5" height="24" fill="currentColor" />
+                    </svg>
                   </div>
                 </div>
               </div>
 
               <button
                 type="button"
-                onClick={() => window.print()}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-950/60 py-2 px-5 text-xs font-semibold text-slate-300 hover:bg-slate-900 hover:text-slate-100 transition-all"
+                onClick={handlePrintIdCard}
+                className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-5 text-xs font-bold shadow-md hover:shadow-lg transition-all active:scale-95 cursor-pointer"
               >
-                <CreditCard className="h-3.5 w-3.5" /> Print Digital ID
+                <CreditCard className="h-4 w-4" /> Print Digital ID Card
               </button>
             </div>
           )}

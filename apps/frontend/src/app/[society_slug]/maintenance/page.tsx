@@ -3,7 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../providers/auth-context';
 import { apiClient } from '../../../lib/api/client';
-import { Building, Search, Filter, ShieldAlert, Plus, Calculator, Settings, Receipt, Loader2, CheckCircle, AlertCircle, Calendar, History, CheckSquare, Square, Layers, X, ArrowRight, CreditCard, Clock } from 'lucide-react';
+import { 
+  Building, Search, Filter, ShieldAlert, Plus, Calculator, Settings, Receipt, 
+  Loader2, CheckCircle, AlertCircle, Calendar, History, CheckSquare, Square, 
+  Layers, X, ArrowRight, CreditCard, Clock, HelpCircle, Info, BookOpen, Sparkles,
+  ChevronDown, ChevronUp
+} from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
 
@@ -43,6 +48,140 @@ interface BankAccount {
   accountNumber: string;
   isDefault: boolean;
 }
+
+interface FormulaVariableDef {
+  tag: string;
+  name: string;
+  category: string;
+  categoryColor: string;
+  desc: string;
+  source: string;
+  example: string;
+  sampleVal: string;
+}
+
+const FORMULA_VARIABLES: FormulaVariableDef[] = [
+  {
+    tag: 'area',
+    name: 'Effective Selected Area',
+    category: 'Dimension',
+    categoryColor: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800',
+    desc: 'The dynamic area of the flat in Sq. Ft. based on your Step 1 mode selection (Super Built-up Area or RERA Carpet Area).',
+    source: 'flats.super_built_up_area OR flats.carpet_area',
+    example: 'area * rate',
+    sampleVal: '1,000 Sq. Ft.',
+  },
+  {
+    tag: 'sqft',
+    name: 'Flat Area (Sq. Ft.)',
+    category: 'Dimension',
+    categoryColor: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800',
+    desc: 'Convenient shorthand alias for the flat\'s area in square feet.',
+    source: 'flats.sqft_area / flats.super_built_up_area',
+    example: '(sqft * rate) + parking',
+    sampleVal: '1,000 Sq. Ft.',
+  },
+  {
+    tag: 'super_builtup_area',
+    name: 'Super Built-Up Area',
+    category: 'Dimension',
+    categoryColor: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800',
+    desc: 'Explicitly injects the flat\'s full architectural Super Built-Up area in square feet including common share.',
+    source: 'flats.super_built_up_area',
+    example: 'super_builtup_area * 3.5',
+    sampleVal: '1,000 Sq. Ft.',
+  },
+  {
+    tag: 'carpet_area',
+    name: 'RERA Net Carpet Area',
+    category: 'Dimension',
+    categoryColor: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800',
+    desc: 'Explicitly injects the flat\'s net internal usable carpet area as registered under RERA.',
+    source: 'flats.carpet_area',
+    example: 'carpet_area * 4.2',
+    sampleVal: '850 Sq. Ft.',
+  },
+  {
+    tag: 'rate',
+    name: 'Mode Base Rate',
+    category: 'Rate',
+    categoryColor: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
+    desc: 'The configured rate per Sq. Ft. (Mode 1) or the fixed rate configured for this flat\'s type (Mode 2).',
+    source: 'society_config.per_sq_ft_rate OR per_flat_type_rates',
+    example: 'area * rate',
+    sampleVal: '₹3.50',
+  },
+  {
+    tag: 'base',
+    name: 'Pre-Calculated Base Fee',
+    category: 'Rate',
+    categoryColor: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
+    desc: 'Pre-computed maintenance amount before auxiliary heads. Equals (area * rate) in Mode 1, or unit type rate in Mode 2, or flat uniform rate in Mode 3.',
+    source: 'Evaluated dynamically based on active Step 1 Mode',
+    example: 'base + parking + water',
+    sampleVal: '₹3,500',
+  },
+  {
+    tag: 'parking',
+    name: 'Total Combined Parking Fee',
+    category: 'Parking',
+    categoryColor: 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800',
+    desc: 'Total combined parking slot maintenance for all parking spaces (stilt + open + basement) assigned to this flat.',
+    source: 'parking_slots table -> sum of rates for linked flat',
+    example: 'base + parking',
+    sampleVal: '₹500',
+  },
+  {
+    tag: 'parking_stilt',
+    name: 'Covered / Stilt Parking',
+    category: 'Parking',
+    categoryColor: 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800',
+    desc: 'Total charges for Covered / Stilt / Podium garage slots assigned to the flat (slots count × stilt rate).',
+    source: 'parking_slots where type="STILT"',
+    example: 'base + parking_stilt',
+    sampleVal: '₹500',
+  },
+  {
+    tag: 'parking_open',
+    name: 'Open / Surface Parking',
+    category: 'Parking',
+    categoryColor: 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800',
+    desc: 'Total charges for Open / Surface vehicle bays assigned to the flat (slots count × open rate).',
+    source: 'parking_slots where type="OPEN"',
+    example: 'base + parking_open',
+    sampleVal: '₹250',
+  },
+  {
+    tag: 'parking_slots',
+    name: 'Allocated Slots Count',
+    category: 'Parking',
+    categoryColor: 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800',
+    desc: 'The integer count of vehicle slots allocated to the flat (0, 1, 2, etc.). Useful for custom per-slot multipliers.',
+    source: 'COUNT(parking_slots) WHERE flat_id = current',
+    example: 'base + (parking_slots * 300)',
+    sampleVal: '1 slot',
+  },
+  {
+    tag: 'water',
+    name: 'Water Utility Charge',
+    category: 'Utility',
+    categoryColor: 'bg-sky-100 text-sky-800 dark:bg-sky-950/60 dark:text-sky-300 border-sky-200 dark:border-sky-800',
+    desc: 'Fixed monthly water consumption or municipal tanker water maintenance cess per unit.',
+    source: 'society_config.water_charge_head',
+    example: 'base + water',
+    sampleVal: '₹250',
+  },
+  {
+    tag: 'sinking',
+    name: 'Statutory Sinking Fund',
+    category: 'Statutory Fund',
+    categoryColor: 'bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300 border-purple-200 dark:border-purple-800',
+    desc: 'Mandatory sinking fund reserve collection allocated per flat for major structural repairs & lift overhauls.',
+    source: 'society_config.sinking_fund_head',
+    example: 'base + water + sinking',
+    sampleVal: '₹150',
+  },
+];
 
 export default function MaintenanceDashboardPage() {
 
@@ -91,6 +230,8 @@ export default function MaintenanceDashboardPage() {
 
   // Settings formula state
   const [formulaString, setFormulaString] = useState<string>('(area * rate) + parking + water');
+  const [isVariableGuideOpen, setIsVariableGuideOpen] = useState<boolean>(true);
+  const [selectedVarHelp, setSelectedVarHelp] = useState<FormulaVariableDef | null>(null);
 
   // Filters state
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -445,11 +586,11 @@ export default function MaintenanceDashboardPage() {
   );
 
   return (
-    <main className="relative flex min-h-screen flex-col items-center justify-start overflow-x-hidden w-full py-8 px-4 sm:px-6 md:px-8 lg:px-10">
+    <main className="relative flex min-h-screen flex-col items-center justify-start overflow-x-hidden w-full py-4 sm:py-5 px-3 sm:px-5 lg:px-6">
       {/* Background Grids */}
       <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
 
-      <div className="w-full max-w-[1450px] mx-auto space-y-8 z-10">
+      <div className="w-full max-w-[1600px] mx-auto space-y-6 z-10">
 
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -517,12 +658,16 @@ export default function MaintenanceDashboardPage() {
         {/* Global Feedback Banner */}
         {message && (
           <div
-            className={`p-4 rounded-xl border flex items-center gap-3 text-xs font-medium ${message.type === 'success'
-                ? 'bg-emerald-950/40 border-emerald-900/60 text-emerald-300'
-                : 'bg-red-950/40 border-red-900/60 text-red-300'
+            className={`p-3 sm:p-3.5 rounded-xl border flex items-center gap-2.5 text-xs font-semibold shadow-xs ${message.type === 'success'
+                ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/60 text-emerald-800 dark:text-emerald-300'
+                : 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900/60 text-rose-800 dark:text-rose-300'
               }`}
           >
-            {message.type === 'success' ? <CheckCircle className="h-5 w-5 shrink-0" /> : <AlertCircle className="h-5 w-5 shrink-0" />}
+            {message.type === 'success' ? (
+              <CheckCircle className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+            ) : (
+              <AlertCircle className="h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400" />
+            )}
             <span>{message.text}</span>
           </div>
         )}
@@ -617,8 +762,8 @@ export default function MaintenanceDashboardPage() {
               <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/20">
                 <table className="w-full text-left text-xs border-collapse whitespace-nowrap">
                   <thead>
-                    <tr className="bg-black/60 text-slate-500 dark:text-slate-400 font-semibold border-b border-slate-800">
-                      <th className="p-4 w-10">
+                    <tr className="bg-slate-50 dark:bg-black/60 text-slate-700 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800 text-[10px] uppercase">
+                      <th className="px-3.5 py-2.5 w-10">
                         <button
                           onClick={handleSelectAllPending}
                           title={
@@ -628,20 +773,20 @@ export default function MaintenanceDashboardPage() {
                           }
                           className="text-slate-500 dark:text-slate-400 hover:text-indigo-400"
                         >
-                          <Layers className="h-4 w-4" />
+                          <Layers className="h-3.5 w-3.5" />
                         </button>
                       </th>
-                      <th className="p-4">Invoice No</th>
-                      <th className="p-4">Flat Number</th>
-                      <th className="p-4">Period</th>
-                      <th className="p-4">Due Date</th>
-                      <th className="p-4">Total Bill (₹)</th>
-                      <th className="p-4">Paid / Balance (₹)</th>
-                      <th className="p-4">Status</th>
-                      <th className="p-4 text-right">Actions</th>
+                      <th className="px-3.5 py-2.5">Invoice No</th>
+                      <th className="px-3.5 py-2.5">Flat Number</th>
+                      <th className="px-3.5 py-2.5">Period</th>
+                      <th className="px-3.5 py-2.5">Due Date</th>
+                      <th className="px-3.5 py-2.5">Total Bill (₹)</th>
+                      <th className="px-3.5 py-2.5">Paid / Balance (₹)</th>
+                      <th className="px-3.5 py-2.5">Status</th>
+                      <th className="px-3.5 py-2.5 text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800/40">
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40">
                     {billsList.map((bill) => {
                       const isChecked = selectedBillIds.includes(bill.id);
                       const isFlatDisabled = !!selectedFlatNumber && bill.flatNumber !== selectedFlatNumber;
@@ -651,14 +796,14 @@ export default function MaintenanceDashboardPage() {
                       return (
                         <tr
                           key={bill.id}
-                          className={`text-slate-300 transition-colors ${isChecked
-                              ? 'bg-indigo-950/30'
+                          className={`text-slate-700 dark:text-slate-300 transition-colors ${isChecked
+                              ? 'bg-indigo-50 dark:bg-indigo-950/30'
                               : isFlatDisabled
-                                ? 'opacity-40 bg-slate-950/40'
-                                : 'hover:bg-slate-900/10'
+                                ? 'opacity-40 bg-slate-50 dark:bg-slate-950/40'
+                                : 'hover:bg-slate-50 dark:hover:bg-slate-900/10'
                             }`}
                         >
-                          <td className="p-4">
+                          <td className="px-3.5 py-2.5">
                             {bill.status !== 'PAID' ? (
                               <input
                                 type="checkbox"
@@ -670,28 +815,28 @@ export default function MaintenanceDashboardPage() {
                                     ? `Multi-invoice payment restricted to Flat ${selectedFlatNumber}`
                                     : `Select invoice for Flat ${bill.flatNumber}`
                                 }
-                                className={`h-4 w-4 rounded border-slate-700 bg-slate-900 text-indigo-600 focus:ring-indigo-500 ${isFlatDisabled ? 'cursor-not-allowed opacity-30' : 'cursor-pointer'
+                                className={`h-3.5 w-3.5 rounded border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-indigo-600 focus:ring-indigo-500 ${isFlatDisabled ? 'cursor-not-allowed opacity-30' : 'cursor-pointer'
                                   }`}
                               />
                             ) : (
-                              <CheckCircle className="h-4 w-4 text-emerald-500 opacity-60" />
+                              <CheckCircle className="h-3.5 w-3.5 text-emerald-500 opacity-60" />
                             )}
                           </td>
-                          <td className="p-4 font-mono text-slate-500 dark:text-slate-400">{bill.billNumber}</td>
-                          <td className="p-4 font-bold text-slate-200">
+                          <td className="px-3.5 py-2.5 font-mono text-slate-500 dark:text-slate-400">{bill.billNumber}</td>
+                          <td className="px-3.5 py-2.5 font-bold text-slate-900 dark:text-slate-200">
                             Flat {bill.flatNumber} <span className="text-[10px] text-slate-500 font-normal">({bill.buildingName})</span>
                           </td>
-                          <td className="p-4 text-slate-500 dark:text-slate-400">
+                          <td className="px-3.5 py-2.5 text-slate-500 dark:text-slate-400">
                             {bill.periodStart.substring(0, 7)}
                           </td>
-                          <td className="p-4 text-red-400/80">{bill.dueDate.substring(0, 10)}</td>
-                          <td className="p-4 font-bold text-slate-200">
+                          <td className="px-3.5 py-2.5 text-rose-500 dark:text-red-400/80">{bill.dueDate.substring(0, 10)}</td>
+                          <td className="px-3.5 py-2.5 font-bold text-slate-900 dark:text-slate-200">
                             ₹ {Number(bill.amount).toLocaleString('en-IN')}
                           </td>
-                          <td className="p-4">
-                            <span className="font-semibold text-emerald-400">₹ {paidAmount.toLocaleString('en-IN')}</span>
+                          <td className="px-3.5 py-2.5">
+                            <span className="font-semibold text-emerald-600 dark:text-emerald-400">₹ {paidAmount.toLocaleString('en-IN')}</span>
                             {remBalance > 0 && bill.status !== 'PAID' && (
-                              <span className="block text-[10px] text-amber-400 font-semibold mt-0.5">
+                              <span className="block text-[10px] text-amber-500 dark:text-amber-400 font-semibold mt-0.5">
                                 Due: ₹ {remBalance.toLocaleString('en-IN')}
                               </span>
                             )}
@@ -738,12 +883,12 @@ export default function MaintenanceDashboardPage() {
 
         {/* Society Outstanding Dues (Statutory Transparency View for all members) */}
         {activeView === 'society_dues' && (
-          <div className="space-y-6 animate-in fade-in duration-150">
+          <div className="space-y-3.5 animate-in fade-in duration-150">
             {/* Legal Notice Banner */}
-            <div className="p-4 rounded-xl border border-indigo-900/60 bg-indigo-950/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-indigo-600/20 border border-indigo-500/30 text-indigo-400">
-                  <ShieldAlert className="h-5 w-5" />
+            <div className="p-3 rounded-xl border border-indigo-900/60 bg-indigo-950/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs shadow-xs">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-indigo-600/20 border border-indigo-500/30 text-indigo-400">
+                  <ShieldAlert className="h-4 w-4" />
                 </div>
                 <div>
                   <h4 className="font-bold text-slate-100 flex items-center gap-2">
@@ -757,26 +902,26 @@ export default function MaintenanceDashboardPage() {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 font-mono text-[11px] bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800 text-slate-300">
+              <div className="flex items-center gap-2 font-mono text-[11px] bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-800 text-slate-300 whitespace-nowrap">
                 <span>Total Flats with Dues:</span>
                 <strong className="text-amber-400">{societyDuesList.length}</strong>
               </div>
             </div>
 
             {/* Filter Search */}
-            <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-slate-950/40 p-3 border border-slate-800 rounded-xl">
+            <div className="flex flex-col sm:flex-row gap-2.5 items-center justify-between bg-white dark:bg-slate-950/40 p-3 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xs">
               <div className="relative w-full sm:w-80">
-                <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
+                <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
                 <input
                   type="text"
                   placeholder="Search flat number or tower..."
                   value={duesSearchTerm}
                   onChange={(e) => setDuesSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-800 bg-slate-900/60 text-xs text-slate-200 focus:outline-none focus:border-slate-700"
+                  className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 text-xs text-slate-900 dark:text-slate-200 focus:outline-none focus:border-indigo-600"
                 />
               </div>
 
-              <div className="text-xs text-slate-400">
+              <div className="text-xs text-slate-500">
                 Showing {
                   societyDuesList.filter((d) =>
                     !duesSearchTerm ||
@@ -790,29 +935,29 @@ export default function MaintenanceDashboardPage() {
             {/* Dues Transparency Table */}
             {isDuesLoading ? (
               <div className="flex justify-center items-center py-16 text-slate-500">
-                <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+                <Loader2 className="h-7 w-7 animate-spin text-indigo-500" />
               </div>
             ) : societyDuesList.length === 0 ? (
-              <div className="text-center py-16 border border-dashed border-slate-800 rounded-xl space-y-2">
-                <CheckCircle className="h-10 w-10 text-emerald-400 mx-auto" />
-                <h3 className="text-sm font-bold text-slate-200">Zero Outstanding Dues!</h3>
+              <div className="text-center py-16 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl space-y-2">
+                <CheckCircle className="h-8 w-8 text-emerald-400 mx-auto" />
+                <h3 className="text-sm font-bold text-slate-900 dark:text-slate-200">Zero Outstanding Dues!</h3>
                 <p className="text-xs text-slate-500">All flats in the society currently have their maintenance accounts cleared.</p>
               </div>
             ) : (
-              <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/20 shadow-sm">
+              <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/20 shadow-xs">
                 <table className="w-full text-left text-xs border-collapse whitespace-nowrap">
                   <thead>
-                    <tr className="bg-black/60 text-slate-400 font-semibold border-b border-slate-800">
-                      <th className="p-4">Flat & Location</th>
-                      <th className="p-4">Unit Type</th>
-                      <th className="p-4">Occupancy</th>
-                      <th className="p-4">Unpaid Invoices</th>
-                      <th className="p-4">Oldest Due Date</th>
-                      <th className="p-4">Total Pending Dues (₹)</th>
-                      <th className="p-4">Status</th>
+                    <tr className="bg-slate-50 dark:bg-black/60 text-slate-700 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800 text-[10px] uppercase">
+                      <th className="px-3.5 py-2.5">Flat & Location</th>
+                      <th className="px-3.5 py-2.5">Unit Type</th>
+                      <th className="px-3.5 py-2.5">Occupancy</th>
+                      <th className="px-3.5 py-2.5">Unpaid Invoices</th>
+                      <th className="px-3.5 py-2.5">Oldest Due Date</th>
+                      <th className="px-3.5 py-2.5">Total Pending Dues (₹)</th>
+                      <th className="px-3.5 py-2.5">Status</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800/40">
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40">
                     {societyDuesList
                       .filter((d) =>
                         !duesSearchTerm ||
@@ -820,41 +965,41 @@ export default function MaintenanceDashboardPage() {
                         d.buildingName.toLowerCase().includes(duesSearchTerm.toLowerCase())
                       )
                       .map((item) => (
-                        <tr key={item.flatId} className="text-slate-300 hover:bg-slate-900/20 transition-colors">
-                          <td className="p-4 font-bold text-slate-200">
-                            <span className="text-sm">Flat {item.flatNumber}</span>
+                        <tr key={item.flatId} className="text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900/20 transition-colors">
+                          <td className="px-3.5 py-2.5 font-bold text-slate-900 dark:text-slate-200">
+                            <span>Flat {item.flatNumber}</span>
                             <div className="text-[10px] font-normal text-slate-500 mt-0.5">
                               {item.buildingName} • {item.wingName} • Floor {item.floorNumber}
                             </div>
                           </td>
-                          <td className="p-4">
-                            <span className="px-2 py-0.5 rounded-md bg-slate-900 border border-slate-800 text-slate-300 font-semibold text-[10px]">
+                          <td className="px-3.5 py-2.5">
+                            <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-[10px]">
                               {item.flatType} ({item.sqftArea} sq ft)
                             </span>
                           </td>
-                          <td className="p-4">
+                          <td className="px-3.5 py-2.5">
                             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
                               item.occupancyStatus === 'OCCUPIED'
-                                ? 'bg-emerald-950/40 border-emerald-900/60 text-emerald-300'
-                                : 'bg-slate-900 border-slate-800 text-slate-400'
+                                ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/60 text-emerald-700 dark:text-emerald-300'
+                                : 'bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
                             }`}>
                               {item.occupancyStatus}
                             </span>
                           </td>
-                          <td className="p-4 font-mono font-semibold text-slate-300">
+                          <td className="px-3.5 py-2.5 font-mono font-semibold text-slate-700 dark:text-slate-300">
                             {item.unpaidInvoicesCount} invoice{item.unpaidInvoicesCount > 1 ? 's' : ''}
                           </td>
-                          <td className="p-4 font-mono text-slate-400 text-[11px]">
+                          <td className="px-3.5 py-2.5 font-mono text-slate-500 text-[11px]">
                             {item.oldestDueDate || '—'}
                           </td>
-                          <td className="p-4 font-bold font-mono text-amber-300 text-sm">
+                          <td className="px-3.5 py-2.5 font-bold font-mono text-amber-600 dark:text-amber-300">
                             ₹ {Number(item.totalPendingAmount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                           </td>
-                          <td className="p-4">
-                            <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border uppercase tracking-wider ${
+                          <td className="px-3.5 py-2.5">
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider ${
                               item.status === 'OVERDUE'
-                                ? 'bg-red-950/50 border-red-800 text-red-400'
-                                : 'bg-amber-950/50 border-amber-800 text-amber-400'
+                                ? 'bg-rose-50 dark:bg-red-950/50 border-rose-200 dark:border-red-800 text-rose-700 dark:text-red-400'
+                                : 'bg-amber-50 dark:bg-amber-950/50 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400'
                             }`}>
                               {item.status}
                             </span>
@@ -870,68 +1015,73 @@ export default function MaintenanceDashboardPage() {
 
         {/* Generate Sweep Form */}
         {activeView === 'generate' && (
-          <form onSubmit={handleGenerateInvoices} className="space-y-6 max-w-xl bg-slate-950/20 border border-slate-800 p-6 rounded-xl">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Generate Invoices Sweep</h3>
-            <p className="text-xs text-slate-500">Run a batch sweep operation. This automatically computes maintenance variables for all flats and logs double-entry receivables postings.</p>
+          <form onSubmit={handleGenerateInvoices} className="space-y-3.5 max-w-2xl bg-white dark:bg-slate-950/20 border border-slate-200 dark:border-slate-800 p-4 sm:p-5 rounded-xl shadow-xs">
+            <div className="bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 p-3 rounded-xl">
+              <h3 className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+                <Calculator className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                Generate Invoices Sweep
+              </h3>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Run a batch sweep operation. This automatically computes maintenance variables for all flats and logs double-entry receivables postings.</p>
+            </div>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
-                <label className="text-xs text-slate-500 dark:text-slate-400 font-medium">Billing Period Start</label>
+                <label className="text-xs text-slate-700 dark:text-slate-300 font-semibold">Billing Period Start</label>
                 <input
                   type="date"
                   value={periodStart}
                   onChange={(e) => setPeriodStart(e.target.value)}
-                  className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-slate-700 focus:outline-none mt-1"
+                  className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 py-2 px-3 text-xs text-slate-900 dark:text-slate-200 focus:border-indigo-600 focus:outline-none mt-1"
                   required
                 />
               </div>
 
               <div>
-                <label className="text-xs text-slate-500 dark:text-slate-400 font-medium">Billing Period End</label>
+                <label className="text-xs text-slate-700 dark:text-slate-300 font-semibold">Billing Period End</label>
                 <input
                   type="date"
                   value={periodEnd}
                   onChange={(e) => setPeriodEnd(e.target.value)}
-                  className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-slate-700 focus:outline-none mt-1"
+                  className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 py-2 px-3 text-xs text-slate-900 dark:text-slate-200 focus:border-indigo-600 focus:outline-none mt-1"
                   required
                 />
               </div>
             </div>
 
             <div>
-              <label className="text-xs text-slate-500 dark:text-slate-400 font-medium">Invoice Due Date</label>
+              <label className="text-xs text-slate-700 dark:text-slate-300 font-semibold">Invoice Due Date</label>
               <input
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-slate-700 focus:outline-none mt-1"
+                className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 py-2 px-3 text-xs text-slate-900 dark:text-slate-200 focus:border-indigo-600 focus:outline-none mt-1"
                 required
               />
             </div>
 
-            <div className="flex justify-end">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2 border-t border-slate-200 dark:border-slate-800">
               <div>
-                <label className="text-xs text-slate-600 dark:text-slate-400 font-medium">Generation Type</label>
-                <div className="flex gap-4 mt-2">
-                  <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+                <label className="text-xs text-slate-700 dark:text-slate-300 font-semibold">Generation Type</label>
+                <div className="flex gap-4 mt-1.5">
+                  <label className="flex items-center gap-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 cursor-pointer">
                     <input
                       type="radio"
                       name="generationType"
                       value="SINGLE"
                       checked={generationType === 'SINGLE'}
                       onChange={() => setGenerationType('SINGLE')}
-                      className="accent-indigo-500"
+                      className="accent-indigo-600"
                     />
                     <span>Single Combined Invoice</span>
                   </label>
-                  <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+                  <label className="flex items-center gap-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 cursor-pointer">
                     <input
                       type="radio"
                       name="generationType"
                       value="PER_MONTH"
                       checked={generationType === 'PER_MONTH'}
                       onChange={() => setGenerationType('PER_MONTH')}
-                      className="accent-indigo-500"
+                      className="accent-indigo-600"
                     />
                     <span>Separate Invoice per Month</span>
                   </label>
@@ -940,9 +1090,9 @@ export default function MaintenanceDashboardPage() {
               <button
                 type="submit"
                 disabled={isProcessing}
-                className="rounded-lg bg-indigo-600 hover:bg-indigo-700 text-slate-100 py-2 px-5 text-sm font-semibold transition-all disabled:opacity-55 flex items-center gap-2"
+                className="rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 text-xs font-bold transition-all disabled:opacity-55 flex items-center justify-center gap-1.5 shadow-xs"
               >
-                {isProcessing && <Loader2 className="h-4 w-4 animate-spin" />}
+                {isProcessing && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                 Generate Batch Sweeps
               </button>
             </div>
@@ -951,159 +1101,212 @@ export default function MaintenanceDashboardPage() {
 
         {/* Maintenance Calculation Mode Setup */}
         {activeView === 'settings' && (
-          <form onSubmit={handleSaveSettings} className="space-y-6 max-w-3xl bg-slate-950/40 border border-slate-800 p-6 rounded-2xl">
-            <div>
-              <h3 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-                <Settings className="h-5 w-5 text-indigo-400" /> Maintenance Calculation Mode Configuration
+          <form onSubmit={handleSaveSettings} className="w-full bg-white dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 p-4 sm:p-5 rounded-xl shadow-xs space-y-4">
+            <div className="border-b border-slate-200 dark:border-slate-800/80 pb-3">
+              <h3 className="text-lg font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <div className="p-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/60 text-indigo-600 dark:text-indigo-400">
+                  <Settings className="h-4 w-4" />
+                </div>
+                Maintenance Calculation Mode & Formula Engine
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                Configure how monthly maintenance is calculated across society housing units. Restricted strictly to President, Secretary, Treasurer & Accountant roles.
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed max-w-3xl">
+                Configure how monthly maintenance is calculated across society housing units, customize the algebraic variable formula, and establish late fee penalty rules.
               </p>
             </div>
 
-            {/* Mode Selectors */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              {/* Option 1: PER_SQ_FT */}
-              <div
-                onClick={() => setCalculationType('PER_SQ_FT')}
-                className={`p-4 rounded-xl border-2 cursor-pointer transition-all space-y-2 relative ${calculationType === 'PER_SQ_FT'
-                    ? 'bg-indigo-50 border-indigo-600 text-slate-900 shadow-lg ring-2 ring-indigo-600 dark:bg-indigo-950/50 dark:border-indigo-500 dark:text-slate-100 dark:ring-indigo-500'
-                    : 'bg-white dark:bg-slate-950/60 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700'
-                  }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Mode 1</span>
-                  <div className="flex items-center gap-1.5">
-                    {calculationType === 'PER_SQ_FT' && <CheckCircle className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />}
-                    <span className="text-sm">📏</span>
-                  </div>
-                </div>
-                <h4 className="text-sm font-bold text-slate-900 dark:text-slate-200">Per Sq. Ft. Rate</h4>
-                <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Calculated based on the area of each flat (Area × Rate per Sq. Ft.)
-                </p>
+            {/* Section 1: Mode Selectors */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Step 1: Choose Primary Billing Mode
+                </span>
+                <span className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold">
+                  Active Mode: {calculationType.replace(/_/g, ' ')}
+                </span>
               </div>
 
-              {/* Option 2: PER_FLAT_TYPE */}
-              <div
-                onClick={() => setCalculationType('PER_FLAT_TYPE')}
-                className={`p-4 rounded-xl border-2 cursor-pointer transition-all space-y-2 relative ${calculationType === 'PER_FLAT_TYPE'
-                    ? 'bg-indigo-50 border-indigo-600 text-slate-900 shadow-lg ring-2 ring-indigo-600 dark:bg-indigo-950/50 dark:border-indigo-500 dark:text-slate-100 dark:ring-indigo-500'
-                    : 'bg-white dark:bg-slate-950/60 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700'
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {/* Option 1: PER_SQ_FT */}
+                <div
+                  onClick={() => setCalculationType('PER_SQ_FT')}
+                  className={`p-3.5 rounded-xl border-2 cursor-pointer transition-all space-y-2 relative flex flex-col justify-between ${
+                    calculationType === 'PER_SQ_FT'
+                      ? 'bg-indigo-50/80 border-indigo-600 text-slate-900 shadow-xs ring-1 ring-indigo-600/20 dark:bg-indigo-950/50 dark:border-indigo-500 dark:text-slate-100'
+                      : 'bg-white dark:bg-slate-900/30 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50/60 dark:hover:bg-slate-900/60'
                   }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Mode 2</span>
-                  <div className="flex items-center gap-1.5">
-                    {calculationType === 'PER_FLAT_TYPE' && <CheckCircle className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />}
-                    <span className="text-sm">🏢</span>
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.2 rounded-full bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60">
+                        Mode 1
+                      </span>
+                      <div className="flex items-center gap-1">
+                        {calculationType === 'PER_SQ_FT' ? (
+                          <CheckCircle className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                        ) : (
+                          <span className="text-sm">📏</span>
+                        )}
+                      </div>
+                    </div>
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">Per Sq. Ft. Area Rate</h4>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mt-0.5">
+                      Calculated dynamically based on each unit's verified square footage (Area × Rate per Sq. Ft.).
+                    </p>
+                  </div>
+                  <div className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 pt-1.5 border-t border-slate-100 dark:border-slate-800/60">
+                    Standard for high-rise apartments
                   </div>
                 </div>
-                <h4 className="text-sm font-bold text-slate-900 dark:text-slate-200">Per Flat Type</h4>
-                <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Different fixed rates per flat type (1BHK, 2BHK, 3BHK, Shop, etc.)
-                </p>
-              </div>
 
-              {/* Option 3: FLAT_RATE_SAME_FOR_ALL */}
-              <div
-                onClick={() => setCalculationType('FLAT_RATE_SAME_FOR_ALL')}
-                className={`p-4 rounded-xl border-2 cursor-pointer transition-all space-y-2 relative ${calculationType === 'FLAT_RATE_SAME_FOR_ALL'
-                    ? 'bg-indigo-50 border-indigo-600 text-slate-900 shadow-lg ring-2 ring-indigo-600 dark:bg-indigo-950/50 dark:border-indigo-500 dark:text-slate-100 dark:ring-indigo-500'
-                    : 'bg-white dark:bg-slate-950/60 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700'
+                {/* Option 2: PER_FLAT_TYPE */}
+                <div
+                  onClick={() => setCalculationType('PER_FLAT_TYPE')}
+                  className={`p-3.5 rounded-xl border-2 cursor-pointer transition-all space-y-2 relative flex flex-col justify-between ${
+                    calculationType === 'PER_FLAT_TYPE'
+                      ? 'bg-indigo-50/80 border-indigo-600 text-slate-900 shadow-xs ring-1 ring-indigo-600/20 dark:bg-indigo-950/50 dark:border-indigo-500 dark:text-slate-100'
+                      : 'bg-white dark:bg-slate-900/30 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50/60 dark:hover:bg-slate-900/60'
                   }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Mode 3</span>
-                  <div className="flex items-center gap-1.5">
-                    {calculationType === 'FLAT_RATE_SAME_FOR_ALL' && <CheckCircle className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />}
-                    <span className="text-sm">⚖️</span>
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.2 rounded-full bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60">
+                        Mode 2
+                      </span>
+                      <div className="flex items-center gap-1">
+                        {calculationType === 'PER_FLAT_TYPE' ? (
+                          <CheckCircle className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                        ) : (
+                          <span className="text-sm">🏢</span>
+                        )}
+                      </div>
+                    </div>
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">Per Flat / Unit Type</h4>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mt-0.5">
+                      Tiered fixed rate structure assigned per configuration (1BHK, 2BHK, 3BHK, Penthouse, Commercial Shop).
+                    </p>
+                  </div>
+                  <div className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 pt-1.5 border-t border-slate-100 dark:border-slate-800/60">
+                    Ideal for mixed residential societies
                   </div>
                 </div>
-                <h4 className="text-sm font-bold text-slate-900 dark:text-slate-200">Same For All Flats</h4>
-                <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Uniform fixed maintenance fee charged equally to all flat units.
-                </p>
+
+                {/* Option 3: FLAT_RATE_SAME_FOR_ALL */}
+                <div
+                  onClick={() => setCalculationType('FLAT_RATE_SAME_FOR_ALL')}
+                  className={`p-3.5 rounded-xl border-2 cursor-pointer transition-all space-y-2 relative flex flex-col justify-between ${
+                    calculationType === 'FLAT_RATE_SAME_FOR_ALL'
+                      ? 'bg-indigo-50/80 border-indigo-600 text-slate-900 shadow-xs ring-1 ring-indigo-600/20 dark:bg-indigo-950/50 dark:border-indigo-500 dark:text-slate-100'
+                      : 'bg-white dark:bg-slate-900/30 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50/60 dark:hover:bg-slate-900/60'
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.2 rounded-full bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60">
+                        Mode 3
+                      </span>
+                      <div className="flex items-center gap-1">
+                        {calculationType === 'FLAT_RATE_SAME_FOR_ALL' ? (
+                          <CheckCircle className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                        ) : (
+                          <span className="text-sm">⚖️</span>
+                        )}
+                      </div>
+                    </div>
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">Uniform Flat Rate For All</h4>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mt-0.5">
+                      Equal, single uniform monthly charge billed across every unit regardless of size or occupant type.
+                    </p>
+                  </div>
+                  <div className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 pt-1.5 border-t border-slate-100 dark:border-slate-800/60">
+                    Simplest model for equal-sized units
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Dynamic Inputs Based on Selected Mode */}
-            <div className="bg-slate-950/60 border border-slate-800/80 p-5 rounded-xl space-y-4">
+            {/* Dynamic Rate Configuration Panel Based on Selected Mode */}
+            <div className="bg-slate-50/80 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 p-6 sm:p-7 rounded-2xl space-y-6 shadow-xs">
               {calculationType === 'PER_SQ_FT' && (
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-xs font-semibold text-slate-300">Rate Per Sq. Ft. (₹)</label>
-                    <div className="relative max-w-xs">
-                      <span className="absolute left-3.5 top-2.5 text-sm font-bold text-slate-500">₹</span>
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={perSqFtRate}
-                        onChange={(e) => setPerSqFtRate(e.target.value)}
-                        className="w-full rounded-lg border border-slate-800 bg-slate-950 py-2 pl-8 pr-4 text-sm text-slate-100 font-bold focus:border-slate-700 focus:outline-none"
-                      />
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-slate-800 dark:text-slate-200">Rate Per Sq. Ft. (₹)</label>
+                      <div className="relative max-w-sm">
+                        <span className="absolute left-3.5 top-3 text-sm font-bold text-slate-400 dark:text-slate-500">₹</span>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={perSqFtRate}
+                          onChange={(e) => setPerSqFtRate(e.target.value)}
+                          className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 py-2.5 pl-8 pr-4 text-base text-slate-900 dark:text-slate-100 font-bold focus:border-indigo-600 focus:outline-none shadow-xs"
+                          placeholder="3.50"
+                        />
+                      </div>
+                      <p className="text-[11px] text-slate-500">The base monthly rate charged per square foot of area.</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-slate-800 dark:text-slate-200">Area Basis For Calculation</label>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <button
+                          type="button"
+                          onClick={() => setSqftAreaType('SUPER_BUILTUP')}
+                          className={`p-3.5 rounded-xl border text-left transition-all ${
+                            sqftAreaType === 'SUPER_BUILTUP'
+                              ? 'bg-indigo-50 border-indigo-600 text-slate-900 ring-1 ring-indigo-600 dark:bg-indigo-950/60 dark:border-indigo-500 dark:text-slate-100'
+                              : 'bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700'
+                          }`}
+                        >
+                          <div className="text-xs font-bold flex items-center justify-between">
+                            Super Built-up Area
+                            {sqftAreaType === 'SUPER_BUILTUP' && <CheckCircle className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />}
+                          </div>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Calculates using flat's Super Built-up Sq. Ft.</p>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setSqftAreaType('CARPET_AREA')}
+                          className={`p-3.5 rounded-xl border text-left transition-all ${
+                            sqftAreaType === 'CARPET_AREA'
+                              ? 'bg-indigo-50 border-indigo-600 text-slate-900 ring-1 ring-indigo-600 dark:bg-indigo-950/60 dark:border-indigo-500 dark:text-slate-100'
+                              : 'bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700'
+                          }`}
+                        >
+                          <div className="text-xs font-bold flex items-center justify-between">
+                            RERA Carpet Area
+                            {sqftAreaType === 'CARPET_AREA' && <CheckCircle className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />}
+                          </div>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Calculates using flat's Net Carpet Area</p>
+                        </button>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Option to calculate by Super Built-up vs Carpet Area */}
-                  <div className="space-y-2 pt-2 border-t border-slate-800/60">
-                    <label className="text-xs font-semibold text-slate-300">Area Basis For Calculation</label>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-md">
-                      <button
-                        type="button"
-                        onClick={() => setSqftAreaType('SUPER_BUILTUP')}
-                        className={`p-3 rounded-lg border text-left transition-all ${
-                          sqftAreaType === 'SUPER_BUILTUP'
-                            ? 'bg-indigo-950/60 border-indigo-500 text-slate-100 ring-1 ring-indigo-500'
-                            : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700'
-                        }`}
-                      >
-                        <div className="text-xs font-bold flex items-center justify-between">
-                          Super Built-up Area
-                          {sqftAreaType === 'SUPER_BUILTUP' && <CheckCircle className="h-3.5 w-3.5 text-indigo-400" />}
-                        </div>
-                        <p className="text-[11px] text-slate-400 mt-0.5">Calculates using flat's Super Built-up Sq. Ft.</p>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setSqftAreaType('CARPET_AREA')}
-                        className={`p-3 rounded-lg border text-left transition-all ${
-                          sqftAreaType === 'CARPET_AREA'
-                            ? 'bg-indigo-950/60 border-indigo-500 text-slate-100 ring-1 ring-indigo-500'
-                            : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700'
-                        }`}
-                      >
-                        <div className="text-xs font-bold flex items-center justify-between">
-                          RERA Carpet Area
-                          {sqftAreaType === 'CARPET_AREA' && <CheckCircle className="h-3.5 w-3.5 text-indigo-400" />}
-                        </div>
-                        <p className="text-[11px] text-slate-400 mt-0.5">Calculates using flat's Net Carpet Area</p>
-                      </button>
-                    </div>
+                  <div className="p-3.5 rounded-xl bg-white dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-400">
+                    💡 <strong>Calculation Example:</strong> A 1,000 Sq. Ft. flat will be charged 1,000 × ₹{perSqFtRate || '3.50'} = <strong>₹{(1000 * Number(perSqFtRate || 3.5)).toLocaleString()}</strong> base maintenance on {sqftAreaType === 'CARPET_AREA' ? 'Carpet Area' : 'Super Built-up Area'}.
                   </div>
-
-                  <p className="text-[11px] text-slate-400">
-                    Example: A 1,000 Sq. Ft. flat will be charged 1,000 × ₹{perSqFtRate || '3.50'} = ₹{(1000 * Number(perSqFtRate || 3.5)).toLocaleString()} base maintenance on {sqftAreaType === 'CARPET_AREA' ? 'Carpet Area' : 'Super Built-up Area'}.
-                  </p>
                 </div>
               )}
 
               {calculationType === 'PER_FLAT_TYPE' && (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
+                <div className="space-y-5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
                     <div>
-                      <label className="text-xs font-semibold text-slate-300">Configured Society Flat Unit Types & Fixed Rates (₹)</label>
-                      <p className="text-[11px] text-slate-400">Add or manage unit types used across flat creation and maintenance billing.</p>
+                      <label className="text-xs font-bold text-slate-800 dark:text-slate-200">Configured Society Flat Unit Types & Fixed Rates (₹)</label>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Define fixed base maintenance charges for each distinct flat type in your society.</p>
                     </div>
+                    <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-2.5 py-1 rounded-full border border-indigo-200 dark:border-indigo-800/60 shrink-0">
+                      {flatTypes.length} Types Active
+                    </span>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5">
                     {flatTypes.map((fType) => (
-                      <div key={fType} className="flex items-center gap-2 bg-slate-900 border border-slate-800 p-2.5 rounded-lg group">
-                        <span className="text-xs font-bold text-indigo-400 w-24 truncate" title={fType}>{fType}</span>
+                      <div key={fType} className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 rounded-xl shadow-xs group hover:border-indigo-300 dark:hover:border-slate-700 transition">
+                        <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 w-24 truncate" title={fType}>{fType}</span>
                         <div className="relative flex-1">
-                          <span className="absolute left-2.5 top-2 text-xs font-bold text-slate-500">₹</span>
+                          <span className="absolute left-2.5 top-2 text-xs font-bold text-slate-400 dark:text-slate-500">₹</span>
                           <input
                             type="number"
                             value={perFlatTypeRates[fType] ?? 0}
@@ -1111,14 +1314,14 @@ export default function MaintenanceDashboardPage() {
                               ...perFlatTypeRates,
                               [fType]: Number(e.target.value),
                             })}
-                            className="w-full rounded-md border border-slate-800 bg-slate-950 py-1.5 pl-6 pr-2 text-xs text-slate-100 font-bold focus:border-indigo-500 focus:outline-none"
+                            className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 py-1.5 pl-6 pr-2 text-xs text-slate-900 dark:text-slate-100 font-bold focus:border-indigo-600 focus:outline-none"
                           />
                         </div>
                         <button
                           type="button"
                           onClick={() => handleRemoveFlatType(fType)}
                           title="Remove unit type"
-                          className="text-slate-500 hover:text-rose-400 p-1.5 rounded transition-colors"
+                          className="text-slate-400 hover:text-rose-500 p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
                         >
                           <X className="h-3.5 w-3.5" />
                         </button>
@@ -1127,32 +1330,32 @@ export default function MaintenanceDashboardPage() {
                   </div>
 
                   {/* Add New Unit Type Row */}
-                  <div className="bg-slate-900/60 border border-dashed border-slate-700/80 p-3 rounded-lg flex flex-wrap items-center gap-3">
-                    <span className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                      <Plus className="h-3.5 w-3.5 text-indigo-400" /> Add New Unit Type:
+                  <div className="bg-white dark:bg-slate-950/80 border border-dashed border-indigo-300 dark:border-indigo-800/80 p-4 rounded-xl flex flex-wrap items-center gap-3">
+                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                      <Plus className="h-4 w-4 text-indigo-600 dark:text-indigo-400" /> Add New Unit Type:
                     </span>
                     <input
                       type="text"
-                      placeholder="e.g. Studio, 1.5BHK, Duplex, Villa"
+                      placeholder="e.g. Studio, 1.5BHK, Duplex, Penthouse, Villa"
                       value={newTypeName}
                       onChange={(e) => setNewTypeName(e.target.value)}
-                      className="rounded-md border border-slate-700 bg-slate-950 py-1.5 px-3 text-xs text-slate-100 placeholder-slate-500 focus:border-indigo-500 focus:outline-none min-w-[160px]"
+                      className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 py-2 px-3.5 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-indigo-600 focus:outline-none min-w-[220px]"
                     />
-                    <div className="relative w-32">
-                      <span className="absolute left-2.5 top-1.5 text-xs font-bold text-slate-500">₹</span>
+                    <div className="relative w-36">
+                      <span className="absolute left-3 top-2 text-xs font-bold text-slate-400 dark:text-slate-500">₹</span>
                       <input
                         type="number"
-                        placeholder="Rate"
+                        placeholder="Fixed Rate"
                         value={newTypeRate}
                         onChange={(e) => setNewTypeRate(e.target.value)}
-                        className="w-full rounded-md border border-slate-700 bg-slate-950 py-1.5 pl-6 pr-2 text-xs text-slate-100 font-bold focus:border-indigo-500 focus:outline-none"
+                        className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 py-2 pl-7 pr-3 text-xs text-slate-900 dark:text-slate-100 font-bold focus:border-indigo-600 focus:outline-none"
                       />
                     </div>
                     <button
                       type="button"
                       onClick={handleAddFlatType}
                       disabled={!newTypeName.trim()}
-                      className="px-3 py-1.5 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold disabled:opacity-40 transition-all flex items-center gap-1"
+                      className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold disabled:opacity-40 transition-all flex items-center gap-1.5 shadow-sm active:scale-95"
                     >
                       <Plus className="h-3.5 w-3.5" /> Add Type
                     </button>
@@ -1161,76 +1364,322 @@ export default function MaintenanceDashboardPage() {
               )}
 
               {calculationType === 'FLAT_RATE_SAME_FOR_ALL' && (
-                <div className="space-y-2">
-                  <label className="text-xs font-semibold text-slate-300">Uniform Flat Rate For All Units (₹)</label>
-                  <div className="relative max-w-xs">
-                    <span className="absolute left-3.5 top-2.5 text-sm font-bold text-slate-500">₹</span>
+                <div className="space-y-3">
+                  <label className="text-xs font-bold text-slate-800 dark:text-slate-200">Uniform Flat Rate For All Units (₹)</label>
+                  <div className="relative max-w-sm">
+                    <span className="absolute left-3.5 top-3 text-sm font-bold text-slate-400 dark:text-slate-500">₹</span>
                     <input
                       type="number"
                       step="1"
                       value={flatRateSameForAll}
                       onChange={(e) => setFlatRateSameForAll(e.target.value)}
-                      className="w-full rounded-lg border border-slate-800 bg-slate-950 py-2 pl-8 pr-4 text-sm text-slate-100 font-bold focus:border-slate-700 focus:outline-none"
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 py-2.5 pl-8 pr-4 text-base text-slate-900 dark:text-slate-100 font-bold focus:border-indigo-600 focus:outline-none shadow-xs"
+                      placeholder="2500"
                     />
                   </div>
-                  <p className="text-[11px] text-slate-500">
-                    Every flat in the society will be charged flat ₹{Number(flatRateSameForAll || 2500).toLocaleString()} per month regardless of flat size or type.
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Every flat in the society will be charged flat <strong>₹{Number(flatRateSameForAll || 2500).toLocaleString()}</strong> per month regardless of flat size or type.
                   </p>
                 </div>
               )}
             </div>
 
             {/* Section 2: Mathematical Formula Expression Builder */}
-            <div className="border-t border-slate-800/80 pt-6 space-y-4">
-              <div>
-                <h4 className="text-sm font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-                  <Calculator className="h-4 w-4 text-indigo-400" /> Mathematical Algebraic Formula Builder
-                </h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  Define the exact algebraic formula used to compute maintenance invoices. The formula evaluates the mode's calculated <code className="text-indigo-400">rate</code> or <code className="text-indigo-400">base</code> along with extra head charges.
-                </p>
+            <div className="border-t border-slate-200 dark:border-slate-800/80 pt-8 space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h4 className="text-base font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2.5">
+                    <div className="p-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/60 text-indigo-600 dark:text-indigo-400">
+                      <Calculator className="h-4 w-4" />
+                    </div>
+                    Mathematical Algebraic Formula Builder
+                  </h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-3xl leading-relaxed">
+                    Define the exact algebraic formula used to compute maintenance invoices. The formula evaluates the mode's calculated <code className="text-indigo-600 dark:text-indigo-400 font-mono font-bold bg-indigo-50 dark:bg-indigo-950/60 px-1.5 py-0.5 rounded">rate</code> or <code className="text-indigo-600 dark:text-indigo-400 font-mono font-bold bg-indigo-50 dark:bg-indigo-950/60 px-1.5 py-0.5 rounded">base</code> along with dynamic auxiliary charges (parking, water, sinking fund).
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setIsVariableGuideOpen(!isVariableGuideOpen)}
+                  className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-indigo-200 dark:border-indigo-800/80 bg-indigo-50/80 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 font-bold text-xs transition-all shadow-xs shrink-0 self-start sm:self-center active:scale-95"
+                >
+                  <HelpCircle className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                  <span>{isVariableGuideOpen ? 'Hide Variable Reference' : 'Variable Reference & Usage Guide'}</span>
+                  {isVariableGuideOpen ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                </button>
               </div>
 
-              <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Formula Expression Syntax</label>
+              {/* Standard Formula Preset Templates */}
+              <div className="space-y-2">
+                <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <Sparkles className="h-3.5 w-3.5 text-amber-500" /> Standard Preset Templates (Click to Load):
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                  {[
+                    {
+                      title: 'Standard Maharashtra Model',
+                      formula: '(area * rate) + parking + water + sinking',
+                      desc: 'Area-based rate + slots + water + sinking fund',
+                    },
+                    {
+                      title: 'Pure Area-Based Billing',
+                      formula: 'area * rate',
+                      desc: 'Simple flat area × rate with no extra heads',
+                    },
+                    {
+                      title: 'Unit Type + Stilt/Open Parking',
+                      formula: 'base + parking_stilt + parking_open',
+                      desc: 'Tiered flat type base + individual parking types',
+                    },
+                    {
+                      title: 'Fixed Rate + Water & Sinking',
+                      formula: 'base + water + sinking',
+                      desc: 'Fixed flat rate + municipal water & sinking cess',
+                    },
+                  ].map((preset) => (
+                    <button
+                      key={preset.title}
+                      type="button"
+                      onClick={() => setFormulaString(preset.formula)}
+                      className={`p-3 rounded-xl border text-left transition-all flex flex-col justify-between ${
+                        formulaString === preset.formula
+                          ? 'bg-indigo-50/80 border-indigo-500 ring-1 ring-indigo-500/30 text-slate-900 dark:bg-indigo-950/40 dark:border-indigo-500 dark:text-slate-100'
+                          : 'bg-white dark:bg-slate-900/40 border-slate-200 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-slate-700 text-slate-700 dark:text-slate-300'
+                      }`}
+                    >
+                      <div>
+                        <div className="font-bold text-xs text-indigo-600 dark:text-indigo-400">{preset.title}</div>
+                        <code className="text-[11px] font-mono font-bold text-slate-800 dark:text-slate-200 block mt-1">{preset.formula}</code>
+                      </div>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1.5">{preset.desc}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-800 dark:text-slate-200">Formula Expression Syntax Editor</label>
                 <input
                   type="text"
                   value={formulaString}
                   onChange={(e) => setFormulaString(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-2.5 px-3.5 text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-500 focus:outline-none mt-1 font-mono font-bold shadow-sm"
+                  className="w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-3.5 px-4 text-base text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:outline-none font-mono font-bold shadow-xs transition"
                   placeholder="(area * rate) + parking + water"
                   required
                 />
               </div>
 
-              {/* Variable Pills / Insert Shortcuts */}
-              <div className="space-y-1.5">
-                <span className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider">Click variables to insert into formula:</span>
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    { tag: 'area', label: 'area (Selected Basis)' },
-                    { tag: 'super_builtup_area', label: 'super_builtup_area (SqFt)' },
-                    { tag: 'carpet_area', label: 'carpet_area (SqFt)' },
-                    { tag: 'rate', label: 'rate (Mode Rate)' },
-                    { tag: 'base', label: 'base (Base Amount)' },
-                    { tag: 'parking', label: 'parking (Total Slot Fees)' },
-                    { tag: 'parking_stilt', label: 'parking_stilt (₹500)' },
-                    { tag: 'parking_open', label: 'parking_open (₹250)' },
-                    { tag: 'parking_slots', label: 'parking_slots (Count)' },
-                    { tag: 'water', label: 'water (₹250)' },
-                    { tag: 'sinking', label: 'sinking (₹150)' },
-                  ].map((v) => (
-                    <button
-                      key={v.tag}
-                      type="button"
-                      onClick={() => setFormulaString((prev) => `${prev} + ${v.tag}`.trim())}
-                      className="px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-indigo-500 text-indigo-700 dark:text-indigo-300 font-mono text-xs font-semibold transition-all"
-                    >
-                      +{v.tag}
-                    </button>
+              {/* Variable Pills / Insert Shortcuts with Inline Help Icons */}
+              <div className="space-y-3 bg-slate-50/80 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 p-5 rounded-2xl">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] text-slate-600 dark:text-slate-400 font-bold uppercase tracking-wider">
+                    Click any variable to append to formula (or click ? for full definition):
+                  </span>
+                  <span className="text-[10px] text-slate-500">{FORMULA_VARIABLES.length} variables supported</span>
+                </div>
+                <div className="flex flex-wrap gap-2.5">
+                  {FORMULA_VARIABLES.map((v) => (
+                    <div key={v.tag} className="flex items-center group shadow-xs">
+                      <button
+                        type="button"
+                        onClick={() => setFormulaString((prev) => `${prev} + ${v.tag}`.trim())}
+                        className="px-3 py-1.5 rounded-l-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-indigo-500 dark:hover:border-indigo-500 text-indigo-700 dark:text-indigo-300 font-mono text-xs font-bold transition-all hover:bg-indigo-50/60 dark:hover:bg-indigo-950/40"
+                        title={`Click to insert +${v.tag} into formula`}
+                      >
+                        +{v.tag}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedVarHelp(v)}
+                        className="px-2.5 py-1.5 rounded-r-xl bg-slate-100 dark:bg-slate-800/80 border border-l-0 border-slate-200 dark:border-slate-800 text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 transition-all cursor-pointer"
+                        title={`Click to view full definition and calculation details for ${v.tag}`}
+                      >
+                        <HelpCircle className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   ))}
                 </div>
               </div>
+
+              {/* Collapsible Full Variable Reference & Usage Guide */}
+              {isVariableGuideOpen && (
+                <div className="bg-white dark:bg-slate-950/60 border border-indigo-200 dark:border-indigo-900/60 rounded-2xl p-6 space-y-5 shadow-sm animate-in fade-in duration-200">
+                  <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                    <div className="flex items-center gap-2">
+                      <BookOpen className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                      <h5 className="text-sm font-extrabold text-slate-900 dark:text-slate-100">
+                        Formula Variables Reference & Database Mapping
+                      </h5>
+                    </div>
+                    <span className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold bg-indigo-50 dark:bg-indigo-950/60 px-2.5 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-800/60">
+                      Auto-Evaluated at Billing Sweep
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {FORMULA_VARIABLES.map((item) => (
+                      <div
+                        key={item.tag}
+                        className="p-4 rounded-xl border border-slate-200 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/30 hover:border-indigo-300 dark:hover:border-slate-700 transition flex flex-col justify-between gap-3 shadow-xs"
+                      >
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <code className="text-xs font-mono font-extrabold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-800/60">
+                                {item.tag}
+                              </code>
+                              <span className="text-xs font-bold text-slate-900 dark:text-slate-100">{item.name}</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedVarHelp(item)}
+                              className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full border uppercase cursor-pointer hover:opacity-80 transition ${item.categoryColor}`}
+                              title="Click for full breakdown"
+                            >
+                              {item.category} ℹ️
+                            </button>
+                          </div>
+                          <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                            {item.desc}
+                          </p>
+                        </div>
+
+                        <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-500">
+                          <div>
+                            <span className="font-medium text-slate-400 dark:text-slate-500">Sample Value: </span>
+                            <span className="font-bold text-slate-800 dark:text-slate-200">{item.sampleVal}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedVarHelp(item)}
+                              className="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-indigo-600 font-bold text-[10px] transition active:scale-95 flex items-center gap-1"
+                            >
+                              <HelpCircle className="h-3 w-3" /> Details
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setFormulaString((prev) => `${prev} + ${item.tag}`.trim())}
+                              className="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[10px] transition active:scale-95 shadow-xs flex items-center gap-1"
+                            >
+                              <Plus className="h-3 w-3" /> Insert
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Dedicated Variable Detail Help Modal */}
+              {selectedVarHelp && (
+                <div 
+                  className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-150"
+                  onClick={() => setSelectedVarHelp(null)}
+                >
+                  <div 
+                    className="w-full max-w-lg rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-6 sm:p-7 space-y-5 animate-in zoom-in-95 duration-150"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {/* Header */}
+                    <div className="flex items-start justify-between gap-3 border-b border-slate-100 dark:border-slate-800/80 pb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/60 text-indigo-600 dark:text-indigo-400">
+                          <Calculator className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <code className="text-sm font-mono font-extrabold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-800/60">
+                              {selectedVarHelp.tag}
+                            </code>
+                            <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border uppercase ${selectedVarHelp.categoryColor}`}>
+                              {selectedVarHelp.category}
+                            </span>
+                          </div>
+                          <h4 className="text-base font-bold text-slate-900 dark:text-slate-100 mt-1">
+                            {selectedVarHelp.name}
+                          </h4>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedVarHelp(null)}
+                        className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+
+                    {/* Description */}
+                    <div className="space-y-4 text-xs">
+                      <div>
+                        <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Description & Purpose</label>
+                        <p className="text-slate-800 dark:text-slate-200 mt-1 leading-relaxed bg-slate-50 dark:bg-slate-950/50 p-3 rounded-xl border border-slate-200 dark:border-slate-800/80">
+                          {selectedVarHelp.desc}
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="bg-slate-50 dark:bg-slate-950/50 p-3 rounded-xl border border-slate-200 dark:border-slate-800/80 space-y-1">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Database Source</span>
+                          <p className="font-mono text-[11px] text-slate-900 dark:text-slate-100 font-semibold truncate" title={selectedVarHelp.source}>
+                            {selectedVarHelp.source}
+                          </p>
+                        </div>
+
+                        <div className="bg-slate-50 dark:bg-slate-950/50 p-3 rounded-xl border border-slate-200 dark:border-slate-800/80 space-y-1">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Preview Value (Sample)</span>
+                          <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold">
+                            {selectedVarHelp.sampleVal}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Example Algebraic Expression</label>
+                        <div className="flex items-center justify-between gap-2 mt-1 bg-slate-100 dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+                          <code className="text-xs font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                            {selectedVarHelp.example}
+                          </code>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFormulaString(selectedVarHelp.example);
+                              setSelectedVarHelp(null);
+                            }}
+                            className="text-[10px] font-bold px-2 py-1 rounded bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 border border-indigo-200 dark:border-indigo-800 transition"
+                          >
+                            Use Example
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedVarHelp(null)}
+                        className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                      >
+                        Close
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormulaString((prev) => `${prev} + ${selectedVarHelp.tag}`.trim());
+                          setSelectedVarHelp(null);
+                        }}
+                        className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md active:scale-95 transition flex items-center gap-1.5"
+                      >
+                        <Plus className="h-3.5 w-3.5" /> Append +{selectedVarHelp.tag} to Formula
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Live Formula Preview Box */}
               {(() => {
@@ -1245,21 +1694,62 @@ export default function MaintenanceDashboardPage() {
                 let hasEvalError = false;
 
                 try {
-                  const expr = formulaString.toLowerCase()
-                    .replace(/\bsuper_builtup_area\b/g, '1000')
-                    .replace(/\bcarpet_area\b/g, '850')
-                    .replace(/\barea\b/g, sampleArea.toString())
-                    .replace(/\brate\b/g, sampleRate.toString())
-                    .replace(/\bbase\b/g, sampleBase.toString())
-                    .replace(/\bparking_stilt\b/g, '500')
-                    .replace(/\bparking_open\b/g, '250')
-                    .replace(/\bparking_slots\b/g, '1')
-                    .replace(/\bparking\b/g, '500')
-                    .replace(/\bwater\b/g, '250')
-                    .replace(/\bsinking\b/g, '150');
+                  const sampleVars: Record<string, number> = {
+                    super_builtup_area: 1000,
+                    super_built_up_area: 1000,
+                    builtup_area: 1000,
+                    built_up_area: 1000,
+                    carpet_area: 850,
+                    carpet: 850,
+                    rera_carpet_area: 850,
+                    area: sampleArea,
+                    sqft: sampleArea,
+                    sq_ft: sampleArea,
+                    sqfeet: sampleArea,
+                    sq_feet: sampleArea,
+                    sqft_area: sampleArea,
+                    rate: sampleRate,
+                    per_sqft_rate: sampleRate,
+                    base_rate: sampleRate,
+                    base: sampleBase,
+                    base_amount: sampleBase,
+                    parking_stilt: 500,
+                    stilt_parking: 500,
+                    stilt: 500,
+                    parking_open: 250,
+                    open_parking: 250,
+                    open: 250,
+                    parking_slots: 1,
+                    parking: 500,
+                    water: 250,
+                    water_charge: 250,
+                    sinking: 150,
+                    sinking_fund: 150,
+                    repair: 200,
+                    repairs: 200,
+                    repair_fund: 200,
+                    elevator: 150,
+                    lift: 150,
+                    security: 300,
+                    gym: 100,
+                    clubhouse: 100,
+                  };
+
+                  let expr = formulaString.toLowerCase();
+                  const sortedKeys = Object.keys(sampleVars).sort((a, b) => b.length - a.length);
+
+                  for (const key of sortedKeys) {
+                    const regex = new RegExp(`\\b${key}\\b`, 'gi');
+                    expr = expr.replace(regex, sampleVars[key].toString());
+                  }
 
                   if (/^[0-9+\-*/().\s]+$/.test(expr)) {
-                    sampleCalculated = Number(new Function(`return (${expr})`)());
+                    const res = new Function(`return (${expr})`)();
+                    if (typeof res === 'number' && !isNaN(res) && isFinite(res)) {
+                      sampleCalculated = Number(Number(res).toFixed(2));
+                    } else {
+                      hasEvalError = true;
+                    }
                   } else {
                     hasEvalError = true;
                   }
@@ -1268,17 +1758,17 @@ export default function MaintenanceDashboardPage() {
                 }
 
                 return (
-                  <div className="rounded-xl border border-indigo-900/50 bg-indigo-950/20 p-4 space-y-2">
-                    <div className="flex items-center justify-between text-xs font-bold text-slate-300">
-                      <span className="flex items-center gap-1.5 text-indigo-400">
-                        <Calculator className="h-4 w-4" /> Live Calculation Formula Preview (Sample 1000 Sq. Ft. 2BHK Flat)
+                  <div className="rounded-2xl border border-indigo-200 dark:border-indigo-900/60 bg-gradient-to-r from-indigo-50/80 via-white to-indigo-50/40 dark:from-indigo-950/30 dark:via-slate-900/40 dark:to-indigo-950/20 p-4 sm:p-5 space-y-2.5 shadow-xs">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <span className="flex items-center gap-2 text-xs font-bold text-indigo-700 dark:text-indigo-400">
+                        <Calculator className="h-4 w-4" /> Live Calculation Formula Preview (Sample 1,000 Sq. Ft. 2BHK Unit)
                       </span>
-                      <span className="font-mono text-sm text-emerald-400">
-                        {hasEvalError ? 'Syntax Error' : `Total: ₹${Number(sampleCalculated || 0).toLocaleString('en-IN')}`}
+                      <span className={`font-mono text-base font-extrabold ${hasEvalError ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                        {hasEvalError ? 'Syntax Error in Formula' : `Evaluated Total: ₹${Number(sampleCalculated || 0).toLocaleString('en-IN')}`}
                       </span>
                     </div>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
-                      Selected Mode Rate: <span className="text-slate-200">₹{sampleRate}</span> | Base: <span className="text-slate-200">₹{sampleBase}</span> | Evaluated: <span className="text-indigo-300 font-bold">{formulaString}</span>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 font-mono">
+                      Selected Mode Rate: <span className="text-slate-900 dark:text-slate-100 font-bold">₹{sampleRate}</span> | Base: <span className="text-slate-900 dark:text-slate-100 font-bold">₹{sampleBase}</span> | Evaluated: <span className="text-indigo-600 dark:text-indigo-300 font-bold">{formulaString}</span>
                     </p>
                   </div>
                 );
@@ -1286,17 +1776,20 @@ export default function MaintenanceDashboardPage() {
             </div>
 
             {/* Section 3: Society Late Fees & Overdue Penalty Policy */}
-            <div className="border-t border-slate-800/80 pt-6 space-y-4">
+            <div className="border-t border-slate-200 dark:border-slate-800/80 pt-8 space-y-6">
               <div>
-                <h4 className="text-sm font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-amber-400" /> Late Fees & Overdue Penalty Policy
+                <h4 className="text-base font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2.5">
+                  <div className="p-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800/60 text-amber-600 dark:text-amber-400">
+                    <Clock className="h-4 w-4" />
+                  </div>
+                  Late Fees & Overdue Penalty Policy
                 </h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  Configure the society's late fee rules applied to invoices that remain unpaid after the due date.
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-3xl leading-relaxed">
+                  Configure the society's late fee rules applied automatically to invoices that remain unpaid after the due date and grace period.
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
                   {
                     type: 'PERCENTAGE',
@@ -1305,17 +1798,17 @@ export default function MaintenanceDashboardPage() {
                   },
                   {
                     type: 'FIXED_PER_MONTH',
-                    title: 'Fixed Fee Per Overdue Month',
+                    title: 'Fixed Fee Per Month',
                     desc: 'Flat late charge added for every month the invoice is overdue.',
                   },
                   {
                     type: 'FIXED_ONE_TIME',
-                    title: 'Fixed One-Time Late Fee',
+                    title: 'One-Time Late Fee',
                     desc: 'Single flat penalty once the invoice crosses due date.',
                   },
                   {
                     type: 'NONE',
-                    title: 'No Late Fees / Disabled',
+                    title: 'No Late Fees',
                     desc: 'Overdue invoices will not accrue any penalty charges.',
                   },
                 ].map((item) => (
@@ -1323,18 +1816,18 @@ export default function MaintenanceDashboardPage() {
                     key={item.type}
                     type="button"
                     onClick={() => setPenaltyType(item.type)}
-                    className={`p-3.5 rounded-xl border text-left transition-all relative flex flex-col justify-between ${
+                    className={`p-5 rounded-2xl border-2 text-left transition-all relative flex flex-col justify-between ${
                       penaltyType === item.type
-                        ? 'bg-amber-950/40 border-amber-500/80 ring-1 ring-amber-500/50 text-slate-100 shadow-md'
-                        : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700'
+                        ? 'bg-amber-50/80 border-amber-500 text-slate-900 shadow-md ring-2 ring-amber-500/20 dark:bg-amber-950/40 dark:border-amber-500/80 dark:ring-amber-500/30 dark:text-slate-100'
+                        : 'bg-white dark:bg-slate-900/30 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50/60 dark:hover:bg-slate-900/60'
                     }`}
                   >
                     <div>
-                      <div className="text-xs font-bold flex items-center justify-between mb-1">
-                        <span className={penaltyType === item.type ? 'text-amber-300' : 'text-slate-300'}>{item.title}</span>
-                        {penaltyType === item.type && <CheckCircle className="h-4 w-4 text-amber-400" />}
+                      <div className="text-xs font-bold flex items-center justify-between mb-2">
+                        <span className={penaltyType === item.type ? 'text-amber-800 dark:text-amber-300 font-extrabold' : 'text-slate-800 dark:text-slate-300'}>{item.title}</span>
+                        {penaltyType === item.type && <CheckCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />}
                       </div>
-                      <p className="text-[11px] text-slate-500 leading-relaxed">{item.desc}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{item.desc}</p>
                     </div>
                   </button>
                 ))}
@@ -1342,44 +1835,44 @@ export default function MaintenanceDashboardPage() {
 
               {/* Dynamic Inputs Based on Penalty Type */}
               {penaltyType !== 'NONE' && (
-                <div className="bg-slate-950/60 border border-slate-800/80 p-5 rounded-xl space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="bg-slate-50/80 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 p-6 sm:p-7 rounded-2xl space-y-5 shadow-xs">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {penaltyType === 'PERCENTAGE' && (
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-300">Annual Interest Rate (% p.a.)</label>
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-800 dark:text-slate-200">Annual Interest Rate (% p.a.)</label>
                         <div className="relative">
                           <input
                             type="number"
                             step="0.1"
                             value={penaltyInterestRate}
                             onChange={(e) => setPenaltyInterestRate(e.target.value)}
-                            className="w-full rounded-lg border border-slate-800 bg-slate-950 py-2 pl-3 pr-8 text-sm text-slate-100 font-bold focus:border-amber-500 focus:outline-none"
+                            className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 py-2.5 pl-3.5 pr-8 text-sm text-slate-900 dark:text-slate-100 font-bold focus:border-amber-500 focus:outline-none shadow-xs"
                           />
-                          <span className="absolute right-3.5 top-2.5 text-xs font-bold text-slate-500">%</span>
+                          <span className="absolute right-3.5 top-2.5 text-xs font-bold text-slate-400 dark:text-slate-500">%</span>
                         </div>
-                        <p className="text-[11px] text-slate-500">e.g. 12% or 18% or 21% per annum (Model Bye-Laws default 21% p.a. max).</p>
+                        <p className="text-[11px] text-slate-500">Model Bye-Laws default up to 21% p.a. max.</p>
                       </div>
                     )}
 
                     {(penaltyType === 'FIXED_PER_MONTH' || penaltyType === 'FIXED_ONE_TIME') && (
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-300">Fixed Late Fee Amount (₹)</label>
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-800 dark:text-slate-200">Fixed Late Fee Amount (₹)</label>
                         <div className="relative">
-                          <span className="absolute left-3.5 top-2.5 text-sm font-bold text-slate-500">₹</span>
+                          <span className="absolute left-3.5 top-2.5 text-sm font-bold text-slate-400 dark:text-slate-500">₹</span>
                           <input
                             type="number"
                             step="1"
                             value={penaltyFlatAmount}
                             onChange={(e) => setPenaltyFlatAmount(e.target.value)}
-                            className="w-full rounded-lg border border-slate-800 bg-slate-950 py-2 pl-8 pr-4 text-sm text-slate-100 font-bold focus:border-amber-500 focus:outline-none"
+                            className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 py-2.5 pl-8 pr-4 text-sm text-slate-900 dark:text-slate-100 font-bold focus:border-amber-500 focus:outline-none shadow-xs"
                           />
                         </div>
-                        <p className="text-[11px] text-slate-500">e.g. ₹200 or ₹500 flat fee.</p>
+                        <p className="text-[11px] text-slate-500">e.g. ₹200 or ₹500 flat fee per period.</p>
                       </div>
                     )}
 
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-slate-300">Grace Period (Days After Due Date)</label>
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-slate-800 dark:text-slate-200">Grace Period (Days After Due Date)</label>
                       <div className="relative">
                         <input
                           type="number"
@@ -1388,7 +1881,7 @@ export default function MaintenanceDashboardPage() {
                           max="60"
                           value={penaltyGracePeriodDays}
                           onChange={(e) => setPenaltyGracePeriodDays(Number(e.target.value) || 0)}
-                          className="w-full rounded-lg border border-slate-800 bg-slate-950 py-2 px-3 text-sm text-slate-100 font-bold focus:border-amber-500 focus:outline-none"
+                          className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 py-2.5 px-3.5 text-sm text-slate-900 dark:text-slate-100 font-bold focus:border-amber-500 focus:outline-none shadow-xs"
                         />
                       </div>
                       <p className="text-[11px] text-slate-500">Days allowed past the invoice due date before late fees start calculating.</p>
@@ -1398,11 +1891,16 @@ export default function MaintenanceDashboardPage() {
               )}
             </div>
 
-            <div className="flex justify-end pt-2 border-t border-slate-800">
+            {/* Footer Actions */}
+            <div className="flex items-center justify-between pt-6 border-t border-slate-200 dark:border-slate-800">
+              <span className="text-xs text-slate-500 dark:text-slate-400 hidden sm:inline">
+                All changes apply immediately to upcoming batch sweeps and overdue invoices.
+              </span>
+
               <button
                 type="submit"
                 disabled={isProcessing}
-                className="rounded-lg bg-indigo-600 hover:bg-indigo-700 text-slate-100 py-2.5 px-6 text-sm font-semibold transition-all disabled:opacity-55 flex items-center gap-2 shadow-md"
+                className="rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white py-3 px-8 text-sm font-bold transition-all disabled:opacity-55 flex items-center gap-2 shadow-lg shadow-indigo-600/25 active:scale-95 ml-auto"
               >
                 {isProcessing && <Loader2 className="h-4 w-4 animate-spin" />}
                 Save Mode, Formula & Late Fee Settings

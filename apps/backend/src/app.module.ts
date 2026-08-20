@@ -25,6 +25,8 @@ import { QueueModule } from './modules/queue/queue.module';
 import { WorkerModule } from './modules/worker/worker.module';
 import { AuditModule } from './core/audit/audit.module';
 import { StaffModule } from './modules/staff/staff.module';
+import { CustomReportModule } from './modules/custom-report/custom-report.module';
+import { SearchModule } from './modules/search/search.module';
 
 @Module({
   imports: [
@@ -79,6 +81,8 @@ import { StaffModule } from './modules/staff/staff.module';
     QueueModule,
     WorkerModule,
     AuditModule,
+    CustomReportModule,
+    SearchModule,
   ],
   controllers: [],
   providers: [],

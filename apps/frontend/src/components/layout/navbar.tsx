@@ -7,6 +7,7 @@ import { usePathname, useParams } from 'next/navigation';
 import { useAuth } from '../../app/providers/auth-context';
 import { SocietySwitcher } from './society-switcher';
 import { DefaultSocietyModal } from './default-society-modal';
+import { SpotlightSearch } from './spotlight-search';
 import { apiClient } from '../../lib/api/client';
 import { 
   Building, 
@@ -20,6 +21,7 @@ import {
   BarChart2, 
   Bot,
   Menu, 
+  Search,
   Settings, 
   ShieldCheck, 
   LogOut,
@@ -48,6 +50,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { useTheme } from '../../app/providers/theme-context';
+import { useSidebar } from '../../app/providers/sidebar-context';
 
 interface NavItem {
   label: string;
@@ -82,15 +85,13 @@ export const Navbar: React.FC<AppLayoutProps> = ({ children }) => {
   const isSuperAdmin = userRole === 'SUPER_ADMIN';
   const isManagementRole = ['SUPER_ADMIN', 'PRESIDENT', 'SECRETARY', 'TREASURER', 'ACCOUNTANT'].includes(userRole);
 
+  const { isCollapsed, toggleSidebar } = useSidebar();
   const [mounted, setMounted] = useState<boolean>(false);
-
-  // Left Sidebar Collapsed state (persisted in localStorage)
-  const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
 
   // Tooltip hover states for collapsed sidebar
-  const [hoveredNavItem, setHoveredNavItem] = useState<{ label: string; top: number } | null>(null);
-  const [hoveredSociety, setHoveredSociety] = useState<{ name: string; role: string; top: number } | null>(null);
+  const [hoveredNavItem, setHoveredNavItem] = useState<{ label: string; top: number; left: number } | null>(null);
+  const [hoveredSociety, setHoveredSociety] = useState<{ name: string; role: string; top: number; left: number } | null>(null);
 
   // Notification state
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -102,6 +103,7 @@ export const Navbar: React.FC<AppLayoutProps> = ({ children }) => {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState<boolean>(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState<boolean>(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState<boolean>(false);
+  const [isSpotlightOpen, setIsSpotlightOpen] = useState<boolean>(false);
   
   const userMenuRef = useRef<HTMLDivElement>(null);
   const notifMenuRef = useRef<HTMLDivElement>(null);
@@ -121,26 +123,7 @@ export const Navbar: React.FC<AppLayoutProps> = ({ children }) => {
 
   useEffect(() => {
     setMounted(true);
-    // Load persisted collapse state
-    try {
-      const savedState = localStorage.getItem('housive_sidebar_collapsed');
-      if (savedState !== null) {
-        setIsCollapsed(savedState === 'true');
-      }
-    } catch (e) {
-      // localStorage may not be available
-    }
   }, []);
-
-  const toggleSidebar = () => {
-    setIsCollapsed(prev => {
-      const next = !prev;
-      try {
-        localStorage.setItem('housive_sidebar_collapsed', String(next));
-      } catch (e) {}
-      return next;
-    });
-  };
 
   // Update profile form state on user change
   useEffect(() => {
@@ -480,7 +463,8 @@ export const Navbar: React.FC<AppLayoutProps> = ({ children }) => {
               setHoveredSociety({ 
                 name: activeSociety.societyName, 
                 role: userRole.replace('_', ' ') || 'Resident', 
-                top: rect.top + rect.height / 2 
+                top: rect.top + rect.height / 2,
+                left: rect.right + 8
               });
             }}
             onMouseLeave={() => setHoveredSociety(null)}
@@ -508,7 +492,11 @@ export const Navbar: React.FC<AppLayoutProps> = ({ children }) => {
                 onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => {
                   if (isCollapsed) {
                     const rect = e.currentTarget.getBoundingClientRect();
-                    setHoveredNavItem({ label: item.label, top: rect.top + rect.height / 2 });
+                    setHoveredNavItem({ 
+                      label: item.label, 
+                      top: rect.top + rect.height / 2,
+                      left: rect.right + 8
+                    });
                   }
                 }}
                 onMouseLeave={() => setHoveredNavItem(null)}
@@ -562,12 +550,14 @@ export const Navbar: React.FC<AppLayoutProps> = ({ children }) => {
   );
 
   return (
-    <div className="min-h-screen bg-[#030712] text-slate-100 flex flex-row">
+    <div className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-neutral-100 flex flex-row">
       {/* ========================================================================= */}
       {/* 1. DESKTOP LEFT SIDEBAR (STICKY, COLLAPSIBLE TO ICONS ONLY)              */}
       {/* ========================================================================= */}
       <aside 
-        className={`hidden lg:flex flex-col sticky top-0 h-screen z-30 shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-[#030712] backdrop-blur-xl transition-all duration-300 ease-in-out ${
+        className={`hidden lg:flex flex-col sticky top-0 h-screen z-30 shrink-0 border-r border-slate-200 dark:border-neutral-800 bg-white dark:bg-black backdrop-blur-xl ${
+          mounted ? 'transition-all duration-300 ease-in-out' : ''
+        } ${
           isCollapsed ? 'w-[72px]' : 'w-64'
         }`}
       >
@@ -666,8 +656,8 @@ export const Navbar: React.FC<AppLayoutProps> = ({ children }) => {
       {/* ========================================================================= */}
       <div className="flex-1 flex flex-col min-w-0 min-h-screen">
         {/* Top Header Bar */}
-        <header className="sticky top-0 z-20 w-full border-b border-slate-200 dark:border-slate-800/80 bg-white/90 dark:bg-[#030712]/90 backdrop-blur-xl transition-colors">
-          <div className="w-full px-4 sm:px-6 lg:px-8 flex h-16 items-center justify-between gap-4">
+        <header className="sticky top-0 z-20 w-full border-b border-slate-200 dark:border-neutral-800 bg-white/90 dark:bg-black/90 backdrop-blur-xl transition-colors">
+          <div className="w-full px-3 sm:px-5 lg:px-6 flex h-16 items-center justify-between gap-4">
             
             {/* Left: Mobile Toggle & Society Switcher & Active Section */}
             <div className="flex items-center gap-3">
@@ -692,8 +682,37 @@ export const Navbar: React.FC<AppLayoutProps> = ({ children }) => {
               )}
             </div>
 
+            {/* Center: macOS Spotlight Global Search Button */}
+            <div className="flex-1 max-w-md mx-2 hidden md:block">
+              <button
+                type="button"
+                onClick={() => setIsSpotlightOpen(true)}
+                className="w-full flex items-center justify-between px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-800/80 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-all text-xs focus:outline-none shadow-sm group"
+                title="Global Search across all modules (⌘K / Ctrl+K)"
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <Search className="h-3.5 w-3.5 text-slate-400 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors shrink-0" />
+                  <span className="truncate text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300">
+                    Search members, flats, invoices, complaints...
+                  </span>
+                </div>
+                <kbd className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-mono text-[10px] font-bold text-slate-500 dark:text-slate-400 group-hover:border-indigo-500/40 transition-colors shrink-0 shadow-xs">
+                  <span className="text-[11px]">⌘</span>K
+                </kbd>
+              </button>
+            </div>
+
             {/* Right: Theme Toggle, Notifications, User Profile Menu */}
-            <div className="flex items-center gap-2.5 sm:gap-3">
+            <div className="flex items-center gap-2 sm:gap-2.5">
+              {/* Mobile Search Icon button (visible < md) */}
+              <button
+                type="button"
+                onClick={() => setIsSpotlightOpen(true)}
+                className="md:hidden flex items-center justify-center p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-all focus:outline-none"
+                title="Search (⌘K)"
+              >
+                <Search className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+              </button>
               {/* Day / Night Theme Toggle Button */}
               <button
                 onClick={toggleTheme}
@@ -930,14 +949,18 @@ export const Navbar: React.FC<AppLayoutProps> = ({ children }) => {
 
             {profileMessage && (
               <div
-                className={`rounded-lg border p-3 text-xs flex items-center gap-2 ${
+                className={`rounded-xl border p-3 text-xs font-semibold flex items-center gap-2.5 shadow-xs ${
                   profileMessage.type === 'success'
-                    ? 'bg-emerald-950/30 border-emerald-900/50 text-emerald-400'
-                    : 'bg-red-950/30 border-red-900/50 text-red-400'
+                    ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/60 text-emerald-800 dark:text-emerald-300'
+                    : 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900/60 text-rose-800 dark:text-rose-300'
                 }`}
               >
-                {profileMessage.type === 'success' ? <CheckCircle className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
-                {profileMessage.text}
+                {profileMessage.type === 'success' ? (
+                  <CheckCircle className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                ) : (
+                  <AlertCircle className="h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400" />
+                )}
+                <span>{profileMessage.text}</span>
               </div>
             )}
 
@@ -1049,14 +1072,18 @@ export const Navbar: React.FC<AppLayoutProps> = ({ children }) => {
 
             {passwordMessage && (
               <div
-                className={`rounded-lg border p-3 text-xs flex items-center gap-2 ${
+                className={`rounded-xl border p-3 text-xs font-semibold flex items-center gap-2.5 shadow-xs ${
                   passwordMessage.type === 'success'
-                    ? 'bg-emerald-950/30 border-emerald-900/50 text-emerald-400'
-                    : 'bg-red-950/30 border-red-900/50 text-red-400'
+                    ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/60 text-emerald-800 dark:text-emerald-300'
+                    : 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900/60 text-rose-800 dark:text-rose-300'
                 }`}
               >
-                {passwordMessage.type === 'success' ? <CheckCircle className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
-                {passwordMessage.text}
+                {passwordMessage.type === 'success' ? (
+                  <CheckCircle className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                ) : (
+                  <AlertCircle className="h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400" />
+                )}
+                <span>{passwordMessage.text}</span>
               </div>
             )}
 
@@ -1131,14 +1158,14 @@ export const Navbar: React.FC<AppLayoutProps> = ({ children }) => {
       {/* ========================================================================= */}
       {mounted && isCollapsed && hoveredNavItem && createPortal(
         <div 
-          className="fixed z-[99999] pointer-events-none px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-bold shadow-2xl border border-slate-700/80 whitespace-nowrap flex items-center gap-1.5 animate-in fade-in zoom-in-95 duration-75"
+          className="fixed z-[99999] pointer-events-none px-2.5 py-1.5 rounded-lg bg-slate-900 dark:bg-slate-800 text-slate-50 dark:text-slate-100 text-xs font-semibold shadow-2xl border border-slate-700/80 dark:border-slate-600/80 whitespace-nowrap flex items-center gap-1.5 animate-in fade-in zoom-in-95 duration-75"
           style={{
-            left: '84px',
+            left: `${hoveredNavItem.left}px`,
             top: `${hoveredNavItem.top}px`,
             transform: 'translateY(-50%)'
           }}
         >
-          <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-slate-900 border-l border-b border-slate-700/80 rotate-45" />
+          <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-slate-900 dark:bg-slate-800 border-l border-b border-slate-700/80 dark:border-slate-600/80 rotate-45" />
           <span>{hoveredNavItem.label}</span>
         </div>,
         document.body
@@ -1146,19 +1173,24 @@ export const Navbar: React.FC<AppLayoutProps> = ({ children }) => {
 
       {mounted && isCollapsed && hoveredSociety && createPortal(
         <div 
-          className="fixed z-[99999] pointer-events-none px-3.5 py-2 rounded-xl bg-slate-900 text-white text-xs shadow-2xl border border-slate-700/80 whitespace-nowrap space-y-0.5 animate-in fade-in zoom-in-95 duration-75"
+          className="fixed z-[99999] pointer-events-none px-3 py-1.5 rounded-xl bg-slate-900 dark:bg-slate-800 text-slate-50 dark:text-slate-100 text-xs shadow-2xl border border-slate-700/80 dark:border-slate-600/80 whitespace-nowrap space-y-0.5 animate-in fade-in zoom-in-95 duration-75"
           style={{
-            left: '84px',
+            left: `${hoveredSociety.left}px`,
             top: `${hoveredSociety.top}px`,
             transform: 'translateY(-50%)'
           }}
         >
-          <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-slate-900 border-l border-b border-slate-700/80 rotate-45" />
+          <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-slate-900 dark:bg-slate-800 border-l border-b border-slate-700/80 dark:border-slate-600/80 rotate-45" />
           <p className="font-bold text-slate-100">{hoveredSociety.name}</p>
           <p className="text-[10px] text-indigo-400 font-semibold uppercase">{hoveredSociety.role}</p>
         </div>,
         document.body
       )}
+      {/* Global Spotlight Search Dialog (macOS Style) */}
+      <SpotlightSearch
+        isOpen={isSpotlightOpen}
+        onClose={() => setIsSpotlightOpen(false)}
+      />
     </div>
   );
 };

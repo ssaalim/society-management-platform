@@ -151,18 +151,43 @@ export class MaintenanceService {
       const waterCharge = 250;
       const sinkingCharge = 150;
 
-      const variables = {
+      const variables: Record<string, number> = {
         area,
+        sqft: area,
+        sq_ft: area,
+        sqfeet: area,
+        sq_feet: area,
+        sqft_area: area,
         super_builtup_area: superBuiltupArea,
+        super_built_up_area: superBuiltupArea,
+        builtup_area: superBuiltupArea,
+        built_up_area: superBuiltupArea,
         carpet_area: carpetArea,
+        carpet: carpetArea,
+        rera_carpet_area: carpetArea,
         rate,
+        per_sqft_rate: rate,
+        base_rate: rate,
         base: baseAmount,
+        base_amount: baseAmount,
         parking: parkingCharge,
         parking_open: openParkingTotal,
+        open_parking: openParkingTotal,
         parking_stilt: stiltParkingTotal,
+        stilt_parking: stiltParkingTotal,
         parking_slots: parkingSlotsCount,
         water: waterCharge,
+        water_charge: waterCharge,
         sinking: sinkingCharge,
+        sinking_fund: sinkingCharge,
+        repair: 200,
+        repairs: 200,
+        repair_fund: 200,
+        elevator: 150,
+        lift: 150,
+        security: 300,
+        gym: 100,
+        clubhouse: 100,
       };
 
       // 4. Calculate total maintenance using algebraic formula evaluator
