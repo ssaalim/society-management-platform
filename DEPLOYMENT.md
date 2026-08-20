@@ -1,70 +1,115 @@
-# Society Management Platform Deployment Guide
+# 🚀 Free Deployment Guide: Neon & Vercel (+ Render / Koyeb for Backend)
 
-This document details how to deploy the Monorepo to production across Vercel (Frontend), Railway (Backend), and Neon (Database).
-
-## Architecture
-- **Frontend**: Next.js App Router -> Vercel
-- **Backend**: NestJS -> Railway
-- **Database**: PostgreSQL -> Neon
-- **Auth/Storage**: Supabase
+This guide provides the step-by-step configuration to deploy the complete Society Management Platform **100% free** using:
+- **Database**: [Neon](https://neon.tech) (Free Serverless PostgreSQL with PgBouncer Pooling)
+- **Frontend**: [Vercel](https://vercel.com) (Free Hobby Tier with Edge CDN & Custom Domain)
+- **Backend API**: [Render](https://render.com) or [Koyeb](https://koyeb.com) (Free Web Service Tier)
+- **Auth & Storage**: [Supabase](https://supabase.com) (Free Tier)
 
 ---
 
-## 1. Neon Database Setup
-1. Create a project in [Neon](https://neon.tech).
-2. Copy the **Connection String** (Pooled connection recommended).
-3. Set this connection string as the `DATABASE_URL` environment variable for your Backend in Railway.
+## 1. 🗄️ Neon PostgreSQL Setup (Free Tier)
 
-## 2. Supabase Setup
-1. Create a [Supabase](https://supabase.com) project.
-2. Under **Project Settings > API**, copy the `Project URL`, `anon public` key, and `service_role` key.
-3. In **Storage**, create a bucket (e.g., `society_assets`) and make it public if serving images.
+1. Sign up at [neon.tech](https://neon.tech) (free, no credit card required).
+2. Click **Create Project**, name it (e.g., `society-db`), and select a region closest to your users (e.g., `AWS ap-south-1 Mumbai` or `us-east-2`).
+3. In your Neon Dashboard, go to **Connection Details**:
+   - Check the **Pooled connection** checkbox (this enables PgBouncer pooling on port 6543/5432).
+   - Copy the connection string. It looks like:
+     ```env
+     postgres://user:password@ep-cold-shadow-123456-pooler.ap-south-1.aws.neon.tech/neondb?sslmode=require
+     ```
 
-## 3. GitHub Integration
-The deployment pipeline uses the `.github/workflows/ci.yml` pipeline for Continuous Integration.
-1. Commit all files and push to a new GitHub repository.
+### Run Migrations & Seed to Neon Database (from your local machine):
+```bash
+# 1. Export Neon connection string
+export DATABASE_URL="postgres://user:password@ep-cold-shadow-123456-pooler.ap-south-1.aws.neon.tech/neondb?sslmode=require"
 
-## 4. Backend Deployment (Railway)
-1. Go to [Railway Dashboard](https://railway.app).
-2. Click **New Project** -> **Deploy from GitHub repo**.
-3. Select this repository.
-4. Railway will automatically detect `railway.json` and build using `docker/backend.Dockerfile`.
-5. **Environment Variables Required in Railway**:
-   - `DATABASE_URL` (From Neon)
-   - `PORT=4000`
-   - `NODE_ENV=production`
-   - `SUPABASE_URL`
-   - `SUPABASE_SERVICE_ROLE_KEY`
-   - `FRONTEND_URL` (Set this after Vercel deployment)
-   - *If using queues:* Add a Redis plugin in Railway and it will automatically set `REDIS_URL`.
+# 2. Run Drizzle schema migrations
+npm run db:migrate --workspace=backend
 
-## 5. Frontend Deployment (Vercel)
-1. Go to [Vercel Dashboard](https://vercel.com).
-2. Click **Add New Project** -> Import your GitHub repository.
-3. Vercel will auto-detect the monorepo configuration from `vercel.json` and set the root directory to `apps/frontend`.
-4. **Environment Variables Required in Vercel**:
-   - `NEXT_PUBLIC_API_URL` (Set to the Railway public domain, e.g., `https://backend-xyz.up.railway.app/api/v1`)
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+# 3. (Optional) Populate initial test societies & roles
+npm run db:seed --workspace=backend
+```
 
 ---
 
-## Deployment Checklist
-- [ ] Neon DB created.
-- [ ] Supabase project created.
-- [ ] Code pushed to GitHub.
-- [ ] Railway project connected. Environment variables set. Domain generated.
-- [ ] Database migrated (Run `npm run migration` locally pointing to Neon DB).
-- [ ] Vercel project connected. Environment variables set (using Railway domain for API).
-- [ ] Update Railway `FRONTEND_URL` environment variable with the generated Vercel domain.
+## 2. ⚡ Backend Deployment on Render / Koyeb (100% Free)
 
-## Rollback Steps
-### Vercel (Frontend)
-1. In Vercel, go to the **Deployments** tab.
-2. Find the previous stable deployment.
-3. Click **Promote to Production** or **Rollback**.
+Since NestJS is a persistent Node.js HTTP server, deploy it on **Render** or **Koyeb** free tier:
 
-### Railway (Backend)
-1. In Railway, click on the service.
-2. Go to the **Deployments** tab.
-3. Find the previous stable build, click the three dots, and select **Rollback**.
+### Deploying on Render:
+1. Sign up at [render.com](https://render.com).
+2. Click **New +** -> **Web Service** -> Connect your GitHub repository.
+3. Configure the Web Service settings:
+   - **Name**: `society-backend`
+   - **Root Directory**: *(Leave empty / root)*
+   - **Environment**: `Node`
+   - **Build Command**: `npm install && npm run build --workspace=backend`
+   - **Start Command**: `npm run start:prod --workspace=backend`
+   - **Instance Type**: `Free`
+4. Add **Environment Variables** in Render:
+   | Key | Value / Example | Notes |
+   | :--- | :--- | :--- |
+   | `NODE_ENV` | `production` | Enables production security mode |
+   | `PORT` | `4000` | Render automatically maps this |
+   | `DATABASE_URL` | `postgres://user:pass@ep-...-pooler.neon.tech/neondb?sslmode=require` | From Neon (Pooled) |
+   | `SUPABASE_URL` | `https://your-project.supabase.co` | From Supabase API settings |
+   | `SUPABASE_SERVICE_ROLE_KEY` | `eyJhbGciOi...` | Supabase Service Key |
+   | `SUPABASE_ANON_KEY` | `eyJhbGciOi...` | Supabase Anon Key |
+   | `JWT_SECRET` | `generate-a-strong-random-32-char-string` | Backend signing secret |
+   | `FRONTEND_URL` | `https://your-frontend.vercel.app` | (Update after Vercel deploy) |
+   | `DEV_AUTH` | `false` | Strictly locked in production |
+   | `WEBHOOK_SECRET` | `your-supabase-webhook-secret` | For auth webhook validation |
+   | `RAZORPAY_KEY_ID` | `rzp_test_...` or `rzp_live_...` | Optional / for payments |
+   | `RAZORPAY_KEY_SECRET`| `your-razorpay-secret` | Optional / for payments |
+
+5. Click **Create Web Service**. Render will deploy your backend and provide a public URL like:
+   `https://society-backend.onrender.com`
+
+---
+
+## 3. ▲ Frontend Deployment on Vercel (100% Free)
+
+1. Sign up at [vercel.com](https://vercel.com) and click **Add New...** -> **Project**.
+2. Import your GitHub repository.
+3. Configure Project Settings:
+   - **Framework Preset**: `Next.js`
+   - **Root Directory**: `apps/frontend`
+   - **Build Command**: `npm run build`
+   - **Output Directory**: `.next`
+   - **Install Command**: `npm install`
+4. Add **Environment Variables** in Vercel:
+   | Key | Value | Notes |
+   | :--- | :--- | :--- |
+   | `NEXT_PUBLIC_API_URL` | `https://society-backend.onrender.com/api/v1` | Your Render Backend URL + `/api/v1` |
+   | `NEXT_PUBLIC_DEV_AUTH` | `false` | Disables dev switcher in prod |
+   | `NEXT_PUBLIC_SUPABASE_URL` | `https://your-project.supabase.co` | Supabase Project URL |
+   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `eyJhbGciOi...` | Supabase Anon Public Key |
+
+5. Click **Deploy**. Vercel will build and launch your Next.js application (e.g., `https://society-frontend.vercel.app`).
+
+---
+
+## 4. 🔄 Final Wiring (CORS & Webhooks)
+
+1. **Update Backend CORS**:
+   - Go back to Render -> `society-backend` -> **Environment**.
+   - Set `FRONTEND_URL` to your actual Vercel domain (e.g. `https://society-frontend.vercel.app`).
+   - Click **Save Changes** (Render will redeploy).
+
+2. **Supabase Auth Webhook (Optional)**:
+   - In Supabase Dashboard -> **Authentication > Webhooks**:
+   - Point the Webhook URL to: `https://society-backend.onrender.com/api/v1/auth/webhook`
+   - Add header: `x-webhook-signature: your-supabase-webhook-secret`
+
+---
+
+## 5. 💰 Cost Breakdown (Zero Cost)
+
+| Service | Component | Tier | Free Quota | Monthly Cost |
+| :--- | :--- | :--- | :--- | :--- |
+| **Neon** | PostgreSQL Database | Free Tier | 0.5 GB storage, serverless compute | **$0.00 / mo** |
+| **Vercel** | Next.js Frontend | Hobby | Unlimited builds, Edge CDN, HTTPS | **$0.00 / mo** |
+| **Render / Koyeb** | NestJS Backend API | Free Tier | 512 MB RAM, free web service | **$0.00 / mo** |
+| **Supabase** | Auth & Object Storage | Free Tier | 50,000 MAU, 1 GB file storage | **$0.00 / mo** |
+| **Total** | | | | **$0.00 / month** |
