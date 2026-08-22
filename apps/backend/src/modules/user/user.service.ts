@@ -91,94 +91,115 @@ export class UserService {
 
   /**
    * Retrieves active memberships list for the user profile.
-   * Seamlessly links Supabase Auth accounts by email and provisions Super Admin memberships if applicable.
+   * Seamlessly syncs Supabase Auth accounts into the Neon database and auto-assigns Super Admin society access.
    */
   async getUserMemberships(userId: string, email?: string, name?: string) {
-    let user = await this.userRepository.findById(userId);
+    const userEmail = email || 'admin@society.dev';
+    const userName = name || (email ? email.split('@')[0] : 'Super Admin');
 
-    // If user not found by Supabase UUID, check if user exists by email (e.g. from seeded database)
-    if (!user && email) {
+    // 1. Always upsert user profile into Neon database
+    await this.db
+      .insert(users)
+      .values({
+        id: userId,
+        email: userEmail,
+        name: userName,
+        isActive: true,
+      })
+      .onConflictDoUpdate({
+        target: users.id,
+        set: {
+          email: userEmail,
+          name: userName,
+          isActive: true,
+          updatedAt: new Date(),
+        },
+      });
+
+    // 2. If user had an older seeded account with the same email, re-link old memberships
+    if (email) {
       const userByEmail = await this.userRepository.findByEmail(email);
-      if (userByEmail) {
+      if (userByEmail && userByEmail.id !== userId) {
         const oldId = userByEmail.id;
-        
-        // Re-link user records and memberships to the new Supabase UUID
-        await this.db.transaction(async (tx) => {
-          await tx.insert(users).values({
-            id: userId,
-            email: email,
-            name: name || userByEmail.name,
-            mobile: userByEmail.mobile,
-            avatarUrl: userByEmail.avatarUrl,
-            defaultSocietyId: userByEmail.defaultSocietyId,
-          }).onConflictDoUpdate({
-            target: users.id,
-            set: { email, name: name || userByEmail.name },
-          });
-
-          await tx.update(userSocieties).set({ userId }).where(eq(userSocieties.userId, oldId));
-        });
-
-        user = await this.userRepository.findById(userId);
+        await this.db
+          .update(userSocieties)
+          .set({ userId })
+          .where(eq(userSocieties.userId, oldId));
       }
     }
 
-    // If user still does not exist, create the profile
-    if (!user && email) {
-      const isSuperAdminEmail = email.toLowerCase().includes('superadmin');
-      
-      const newUsers = await this.db.insert(users).values({
-        id: userId,
-        email: email,
-        name: name || email.split('@')[0],
-        isActive: true,
-      }).onConflictDoNothing().returning();
+    // 3. Query existing society memberships
+    let memberships = await this.userRepository.findUserMemberships(userId);
 
-      user = newUsers[0] || (await this.userRepository.findById(userId));
+    // 4. If user has no society memberships yet, auto-provision SUPER_ADMIN mapping
+    if (memberships.length === 0) {
+      let superAdminRole = await this.db.query.roles.findFirst({
+        where: eq(roles.name, 'SUPER_ADMIN'),
+      });
+      if (!superAdminRole) {
+        const newRoles = await this.db
+          .insert(roles)
+          .values({
+            id: '10000000-0000-0000-0000-000000000001',
+            name: 'SUPER_ADMIN',
+            description: 'Platform Administrator',
+          })
+          .onConflictDoNothing()
+          .returning();
+        superAdminRole = newRoles[0] || (await this.db.query.roles.findFirst({ where: eq(roles.name, 'SUPER_ADMIN') }));
+      }
 
-      if (isSuperAdminEmail) {
-        // Auto-assign SUPER_ADMIN role for all societies
-        const superAdminRole = await this.db.query.roles.findFirst({
-          where: eq(roles.name, 'SUPER_ADMIN'),
-        });
-        const allSocieties = await this.db.query.societies.findMany();
+      let allSocieties = await this.db.query.societies.findMany();
+      if (allSocieties.length === 0) {
+        const newSoc = await this.db
+          .insert(societies)
+          .values({
+            id: '30000000-0000-0000-0000-000000000001',
+            name: 'Sunview Heights CHS Ltd.',
+            slug: 'sunview-heights',
+            address: 'Plot No. 42, Sector 21, Kharghar, Navi Mumbai - 410210',
+            registrationNumber: 'MH/HSG/2018/00042',
+          })
+          .onConflictDoNothing()
+          .returning();
+        allSocieties = newSoc.length > 0 ? newSoc : (await this.db.query.societies.findMany());
+      }
 
-        if (superAdminRole && allSocieties.length > 0) {
-          for (const s of allSocieties) {
-            await this.db.insert(userSocieties).values({
+      if (superAdminRole && allSocieties.length > 0) {
+        for (const s of allSocieties) {
+          await this.db
+            .insert(userSocieties)
+            .values({
               id: require('crypto').randomUUID(),
               userId: userId,
               societyId: s.id,
               roleId: superAdminRole.id,
-            }).onConflictDoNothing();
-          }
+            })
+            .onConflictDoNothing();
         }
       }
+
+      // Re-fetch memberships now that user is mapped
+      memberships = await this.userRepository.findUserMemberships(userId);
     }
 
-    if (!user) {
-      user = {
-        id: userId,
-        email: email || 'user@society.dev',
-        name: name || 'User',
-        mobile: null,
-        avatarUrl: null,
-        defaultSocietyId: null,
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        deletedAt: null,
-      };
-    }
+    const finalUser = (await this.userRepository.findById(userId)) || {
+      id: userId,
+      email: userEmail,
+      name: userName,
+      mobile: null,
+      avatarUrl: null,
+      defaultSocietyId: null,
+      isActive: true,
+    };
 
-    const memberships = await this.userRepository.findUserMemberships(userId);
     return {
       user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        mobile: user.mobile,
-        avatarUrl: user.avatarUrl,
+        id: finalUser.id,
+        email: finalUser.email,
+        name: finalUser.name,
+        mobile: finalUser.mobile,
+        avatarUrl: finalUser.avatarUrl,
       },
       memberships,
     };

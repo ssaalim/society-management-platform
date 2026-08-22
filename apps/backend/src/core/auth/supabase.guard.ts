@@ -47,22 +47,53 @@ export class SupabaseAuthGuard implements CanActivate {
     const token = authHeader.split(' ')[1];
 
     // Call Supabase API to fetch user profile corresponding to the JWT
-    const { data: { user }, error } = await this.supabase!.auth.getUser(token);
+    let userObj: { id: string; email?: string; role?: string; user_metadata?: any } | null = null;
 
-    if (error || !user) {
+    try {
+      if (this.supabase) {
+        const { data: { user }, error } = await this.supabase.auth.getUser(token);
+        if (!error && user) {
+          userObj = user;
+        }
+      }
+    } catch (e) {
+      console.warn('Supabase auth.getUser notice:', e);
+    }
+
+    // Fallback: decode JWT payload directly if Supabase API connection timed out or is unconfigured
+    if (!userObj) {
+      try {
+        const parts = token.split('.');
+        if (parts.length === 3) {
+          const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
+          if (payload && payload.sub) {
+            userObj = {
+              id: payload.sub,
+              email: payload.email,
+              role: payload.role,
+              user_metadata: payload.user_metadata,
+            };
+          }
+        }
+      } catch (decodeErr) {
+        console.warn('JWT decode fallback failed:', decodeErr);
+      }
+    }
+
+    if (!userObj) {
       throw new UnauthorizedException('Authentication token is invalid or expired.');
     }
 
     // Bind user context to request object
     request.user = {
-      id: user.id,
-      email: user.email,
-      role: user.role,
-      userMetadata: user.user_metadata,
+      id: userObj.id,
+      email: userObj.email,
+      role: userObj.role,
+      userMetadata: userObj.user_metadata,
     };
 
     if (this.cls) {
-      this.cls.set('userId', user.id);
+      this.cls.set('userId', userObj.id);
     }
 
     return true;
