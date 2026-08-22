@@ -9,11 +9,11 @@
   ],
   "scripts": {
     "dev": "concurrently \"npm run dev --workspace=backend\" \"npm run dev --workspace=frontend\"",
-    "build": "npm run build --workspaces --if-present",
+    "build": "npm run build --workspace=backend",
     "build:backend": "npm run build --workspace=backend",
     "build:frontend": "npm run build --workspace=frontend",
     "start:backend": "npm run start:prod --workspace=backend",
-    "start": "npm run start --workspaces --if-present",
+    "start": "npm run start:prod --workspace=backend",
     "lint": "npm run lint --workspaces --if-present",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "test": "npm run test --workspaces --if-present",
