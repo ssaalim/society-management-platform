@@ -6,6 +6,7 @@ import { DRIZZLE_PROVIDER, DrizzleDB } from '@core/database/database.module';
 import { auditLogs, userSocieties, roles, societies, subscriptions, plans, users } from '../../../database/schema';
 import { ConfigService } from '@nestjs/config';
 import { eq, and, desc, inArray, sql } from 'drizzle-orm';
+import { R2StorageService } from '@core/storage/r2-storage.service';
 
 @Injectable()
 export class SocietyService {
@@ -13,6 +14,7 @@ export class SocietyService {
     private readonly societyRepository: SocietyRepository,
     @Inject(DRIZZLE_PROVIDER) private readonly db: DrizzleDB,
     private readonly configService: ConfigService,
+    private readonly r2StorageService: R2StorageService,
   ) {}
 
   async create(dto: CreateSocietyDto, userId?: string) {
@@ -175,20 +177,15 @@ export class SocietyService {
   }
 
   /**
-   * Generates a pre-signed upload URL for society profile document uploads.
+   * Generates a pre-signed Cloudflare R2 upload URL for society profile document uploads.
    */
-  async generateUploadUrl(id: string, fileType: string, fileName: string) {
-    const validTypes = ['logo', 'registration_certificate', 'pan', 'gst', 'bye_laws', 'bank_passbook'];
-    if (!validTypes.includes(fileType)) {
-      throw new BadRequestException(`Invalid file type upload scope: ${fileType}`);
-    }
-
-    const path = `societies/${id}/${fileType}_${Date.now()}_${fileName}`;
-    return {
-      uploadUrl: `/api/v1/societies/${id}/documents/direct-upload?fileKey=${encodeURIComponent(path)}`,
-      fileKey: path,
-      publicUrl: `/uploads/${path}`,
-    };
+  async generateUploadUrl(id: string, fileType: string, fileName: string, contentType?: string, fileSize?: number) {
+    return this.r2StorageService.generatePresignedUploadUrl(id, {
+      fileType: fileType as any,
+      fileName,
+      contentType: contentType || 'application/octet-stream',
+      fileSize,
+    });
   }
 
   /**

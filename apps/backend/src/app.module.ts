@@ -28,6 +28,7 @@ import { AuditModule } from './core/audit/audit.module';
 import { StaffModule } from './modules/staff/staff.module';
 import { CustomReportModule } from './modules/custom-report/custom-report.module';
 import { SearchModule } from './modules/search/search.module';
+import { StorageModule } from './core/storage/storage.module';
 
 @Module({
   imports: [
@@ -84,6 +85,7 @@ import { SearchModule } from './modules/search/search.module';
     AuditModule,
     CustomReportModule,
     SearchModule,
+    StorageModule,
   ],
   controllers: [],
   providers: [

@@ -122,7 +122,7 @@ export class SocietyController {
     };
   }
 
-  @ApiOperation({ summary: 'Request pre-signed upload URL for document upload' })
+  @ApiOperation({ summary: 'Request pre-signed Cloudflare R2 upload URL for document upload' })
   @UseGuards(TenantGuard, RolesGuard)
   @RequirePermissions('society:write')
   @Post(':id/documents/upload-url')
@@ -130,8 +130,11 @@ export class SocietyController {
     @Param('id') id: string,
     @Query('fileType') fileType: string,
     @Query('fileName') fileName: string,
+    @Query('contentType') contentType?: string,
+    @Query('fileSize') fileSize?: string,
   ) {
-    const result = await this.societyService.generateUploadUrl(id, fileType, fileName);
+    const sizeNumber = fileSize ? parseInt(fileSize, 10) : undefined;
+    const result = await this.societyService.generateUploadUrl(id, fileType, fileName, contentType, sizeNumber);
     return {
       success: true,
       data: result,

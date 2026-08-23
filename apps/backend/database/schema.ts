@@ -1058,3 +1058,11 @@ export const customReportFavorites = pgTable('custom_report_favorites', {
 }, (table) => ({
   idxCustomReportFavoritesUser: index('idx_custom_report_fav_user').on(table.userId, table.societyId),
 }));
+
+// Monthly Storage Operation Usage (Free Tier Safety Guardrail)
+export const storageUsage = pgTable('storage_usage', {
+  monthKey: varchar('month_key', { length: 7 }).primaryKey().notNull(), // 'YYYY-MM' e.g. '2026-08'
+  uploadCount: integer('upload_count').default(0).notNull(),
+  totalBytes: numeric('total_bytes', { precision: 20, scale: 0 }).default('0').notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});

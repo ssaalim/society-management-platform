@@ -1,10 +1,11 @@
-# 🚀 Free Deployment Guide: Neon & Vercel (+ Render / Koyeb for Backend)
+# 🚀 Free Deployment Guide: Neon & Vercel (+ Render / Koyeb for Backend + Cloudflare R2 Storage)
 
 This guide provides the step-by-step configuration to deploy the complete Society Management Platform **100% free** using:
 - **Database**: [Neon](https://neon.tech) (Free Serverless PostgreSQL with PgBouncer Pooling)
 - **Frontend**: [Vercel](https://vercel.com) (Free Hobby Tier with Edge CDN & Custom Domain)
 - **Backend API**: [Render](https://render.com) or [Koyeb](https://koyeb.com) (Free Web Service Tier)
 - **Authentication**: Native NestJS JWT + bcrypt directly on Neon PostgreSQL
+- **Object Storage**: [Cloudflare R2](https://www.cloudflare.com/products/r2/) (Free 10 GB/month S3-compatible storage with $0 egress fees)
 
 ---
 
@@ -33,7 +34,29 @@ npm run db:seed --workspace=backend
 
 ---
 
-## 2. ⚡ Backend Deployment on Render / Koyeb (100% Free)
+## 2. ☁️ Cloudflare R2 Setup (Free 10 GB Document Storage)
+
+1. Sign up / Log in to [Cloudflare Dashboard](https://dash.cloudflare.com).
+2. Click **R2 Object Storage** in the sidebar.
+3. Click **Create Bucket**:
+   - Bucket Name: `society-documents`
+   - Region: `Automatic`
+   - Click **Create Bucket**.
+4. In the R2 Overview page, click **Manage R2 API Tokens** (on the right):
+   - Click **Create API Token**.
+   - Permissions: **Object Read & Write**.
+   - Apply to: **Specific bucket** → Select `society-documents`.
+   - TTL: Forever / As desired.
+   - Click **Create API Token**.
+5. Copy down the 3 keys:
+   - **Account ID** (Found on R2 dashboard URL / Overview)
+   - **Access Key ID**
+   - **Secret Access Key**
+6. *(Optional)* In bucket **Settings**, enable **R2.dev subdomain** or connect a Custom Domain if you want public asset URLs.
+
+---
+
+## 3. ⚡ Backend Deployment on Render / Koyeb (100% Free)
 
 Deploy NestJS on **Render** free tier:
 
@@ -56,6 +79,12 @@ Deploy NestJS on **Render** free tier:
    | `JWT_SECRET` | `generate-a-strong-random-32-char-string` | Backend JWT signing secret |
    | `FRONTEND_URL` | `https://your-frontend.vercel.app` | (Update after Vercel deploy) |
    | `DEV_AUTH` | `false` | Strictly locked in production |
+   | `R2_ACCOUNT_ID` | `your-cloudflare-account-id` | From Cloudflare R2 |
+   | `R2_ACCESS_KEY_ID` | `your-r2-access-key-id` | From Cloudflare R2 API Tokens |
+   | `R2_SECRET_ACCESS_KEY`| `your-r2-secret-access-key` | From Cloudflare R2 API Tokens |
+   | `R2_BUCKET_NAME` | `society-documents` | Name of your R2 bucket |
+   | `R2_MONTHLY_UPLOAD_CAP` | `50000` | Optional safety cap (Default: 50,000/mo) |
+   | `R2_PUBLIC_URL` | `https://pub-xxx.r2.dev` | Optional / R2 public subdomain |
    | `RAZORPAY_KEY_ID` | `rzp_test_...` or `rzp_live_...` | Optional / for payments |
    | `RAZORPAY_KEY_SECRET`| `your-razorpay-secret` | Optional / for payments |
 
@@ -64,7 +93,7 @@ Deploy NestJS on **Render** free tier:
 
 ---
 
-## 3. ▲ Frontend Deployment on Vercel (100% Free)
+## 4. ▲ Frontend Deployment on Vercel (100% Free)
 
 1. Sign up at [vercel.com](https://vercel.com) and click **Add New...** -> **Project**.
 2. Import your GitHub repository.
@@ -83,7 +112,7 @@ Deploy NestJS on **Render** free tier:
 
 ---
 
-## 4. 🔄 Final Wiring (CORS)
+## 5. 🔄 Final Wiring (CORS)
 
 1. **Update Backend CORS**:
    - Go to Render -> `society-backend` -> **Environment**.
@@ -92,11 +121,12 @@ Deploy NestJS on **Render** free tier:
 
 ---
 
-## 5. 💰 Cost Breakdown (Zero Cost)
+## 6. 💰 Cost Breakdown (Zero Cost)
 
 | Service | Component | Tier | Free Quota | Monthly Cost |
 | :--- | :--- | :--- | :--- | :--- |
 | **Neon** | PostgreSQL Database | Free Tier | 0.5 GB storage, serverless compute | **$0.00 / mo** |
+| **Cloudflare R2** | Document & Object Storage | Free Tier | 10 GB storage, 10M writes, $0 egress | **$0.00 / mo** |
 | **Vercel** | Next.js Frontend | Hobby | Unlimited builds, Edge CDN, HTTPS | **$0.00 / mo** |
 | **Render / Koyeb** | NestJS Backend API | Free Tier | 512 MB RAM, free web service | **$0.00 / mo** |
 | **Total** | | | | **$0.00 / month** |

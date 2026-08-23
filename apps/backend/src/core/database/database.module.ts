@@ -161,6 +161,16 @@ export const DRIZZLE_PROVIDER = 'DRIZZLE_PROVIDER';
         await runSafe(() => client`CREATE UNIQUE INDEX IF NOT EXISTS idx_custom_report_fav_unique ON custom_report_favorites (report_id, user_id);`, 'custom_report_favorites unique index');
         await runSafe(() => client`CREATE INDEX IF NOT EXISTS idx_custom_report_fav_user ON custom_report_favorites (user_id, society_id);`, 'custom_report_favorites user index');
 
+        // Storage Usage tracking for free tier quota enforcement
+        await runSafe(() => client`
+          CREATE TABLE IF NOT EXISTS storage_usage (
+            month_key varchar(7) PRIMARY KEY NOT NULL,
+            upload_count integer DEFAULT 0 NOT NULL,
+            total_bytes numeric(20, 0) DEFAULT '0' NOT NULL,
+            updated_at timestamptz DEFAULT now() NOT NULL
+          );
+        `, 'storage_usage table');
+
         return drizzle(client, { schema });
       },
     },

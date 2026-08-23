@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { updateFlatSchema, UpdateFlatDto } from '../../../../../../backend/src/modules/flat/dto/update-flat.dto';
 import { useAuth } from '../../../providers/auth-context';
 import { apiClient } from '../../../../lib/api/client';
+import { uploadFileToR2 } from '../../../../lib/utils/upload';
 import { Building, UploadCloud, CheckCircle, FileText, Loader2, AlertCircle, ArrowLeft, Users, ShieldAlert, History , X } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -135,26 +136,16 @@ export default function FlatDetailPage() {
     setMessage(null);
 
     try {
-      const resUrl = await apiClient.post(
-        `/societies/${activeSociety?.societyId}/documents/upload-url?fileType=bye_laws&fileName=${encodeURIComponent(file.name)}`
-      );
+      const { publicUrl } = await uploadFileToR2({
+        file,
+        fileType: 'document',
+        societyId: activeSociety?.societyId,
+      });
 
-      if (resUrl.data?.success) {
-        const { uploadUrl, publicUrl } = resUrl.data.data;
-
-        await fetch(uploadUrl, {
-          method: 'PUT',
-          body: file,
-          headers: {
-            'Content-Type': file.type,
-          },
-        });
-
-        setValue(fileType as any, publicUrl, { shouldDirty: true });
-        setMessage({ type: 'success', text: `Lease document '${fileType}' uploaded. Save changes to update.` });
-      }
-    } catch (err) {
-      setMessage({ type: 'error', text: 'Document upload failed.' });
+      setValue(fileType as any, publicUrl, { shouldDirty: true });
+      setMessage({ type: 'success', text: `Document '${file.name}' uploaded successfully to Cloudflare R2. Save changes to update.` });
+    } catch (err: any) {
+      setMessage({ type: 'error', text: err.message || 'Document upload failed.' });
     } finally {
       setUploadsInProgress((prev) => ({ ...prev, [fileType]: false }));
     }
