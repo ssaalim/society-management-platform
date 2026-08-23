@@ -15,24 +15,18 @@ import {
 } from '../../../database/schema';
 import { eq, and, desc } from 'drizzle-orm';
 import { ConfigService } from '@nestjs/config';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class UserService {
-  private supabase: SupabaseClient;
-
   constructor(
     private readonly userRepository: UserRepository,
     @Inject(DRIZZLE_PROVIDER) private readonly db: DrizzleDB,
     private readonly configService: ConfigService,
-  ) {
-    const supabaseUrl = this.configService.get<string>('SUPABASE_URL') || 'https://placeholder.supabase.co';
-    const supabaseServiceKey = this.configService.get<string>('SUPABASE_SERVICE_ROLE_KEY') || 'placeholder-key';
-    this.supabase = createClient(supabaseUrl, supabaseServiceKey);
-  }
+  ) {}
 
   /**
-   * Syncs a user profile from Supabase metadata.
+   * Syncs / upserts a user profile.
    */
   async syncUser(data: { id: string; email: string; name?: string; mobile?: string; avatarUrl?: string }) {
     const existing = await this.userRepository.findById(data.id);
@@ -41,6 +35,16 @@ export class UserService {
         name: data.name ?? existing.name,
         mobile: data.mobile ?? existing.mobile,
         avatarUrl: data.avatarUrl ?? existing.avatarUrl,
+        updatedAt: new Date(),
+      });
+    }
+
+    const byEmail = await this.userRepository.findByEmail(data.email);
+    if (byEmail) {
+      return this.userRepository.update(byEmail.id, {
+        name: data.name ?? byEmail.name,
+        mobile: data.mobile ?? byEmail.mobile,
+        avatarUrl: data.avatarUrl ?? byEmail.avatarUrl,
         updatedAt: new Date(),
       });
     }
@@ -70,68 +74,68 @@ export class UserService {
   }
 
   /**
-   * Changes user password.
+   * Changes user password directly in Neon database with bcrypt.
    */
   async changePassword(userId: string, newPassword: string) {
     if (!newPassword || newPassword.length < 6) {
       throw new BadRequestException('Password must be at least 6 characters long.');
     }
-    try {
-      const { error } = await this.supabase.auth.admin.updateUserById(userId, {
-        password: newPassword,
-      });
-      if (error) {
-        console.warn('Supabase password update error:', error);
-      }
-    } catch (err) {
-      console.warn('Supabase change password notice:', err);
+
+    const existing = await this.userRepository.findById(userId);
+    if (!existing) {
+      throw new NotFoundException('User not found.');
     }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await this.db.update(users).set({
+      password: hashedPassword,
+      updatedAt: new Date(),
+    }).where(eq(users.id, userId));
+
     return { success: true, message: 'Password updated successfully.' };
   }
 
   /**
    * Retrieves active memberships list for the user profile.
-   * Seamlessly syncs Supabase Auth accounts into the Neon database and auto-assigns Super Admin society access.
+   * Auto-assigns Super Admin society access if user has superadmin role or email.
    */
   async getUserMemberships(userId: string, email?: string, name?: string) {
-    const userEmail = email || 'admin@society.dev';
+    const userEmail = email ? email.trim().toLowerCase() : 'admin@society.dev';
     const userName = name || (email ? email.split('@')[0] : 'Super Admin');
 
-    // 1. Always upsert user profile into Neon database
-    await this.db
-      .insert(users)
-      .values({
-        id: userId,
-        email: userEmail,
+    // 1. Safely resolve or upsert user profile
+    const existingById = await this.userRepository.findById(userId);
+    const existingByEmail = email ? await this.userRepository.findByEmail(userEmail) : null;
+
+    let targetUserId = userId;
+
+    if (existingById) {
+      await this.db.update(users).set({
         name: userName,
-        isActive: true,
-      })
-      .onConflictDoUpdate({
-        target: users.id,
-        set: {
+        updatedAt: new Date(),
+      }).where(eq(users.id, userId));
+    } else if (existingByEmail) {
+      targetUserId = existingByEmail.id;
+      await this.db.update(users).set({
+        name: userName,
+        updatedAt: new Date(),
+      }).where(eq(users.id, existingByEmail.id));
+    } else {
+      await this.db
+        .insert(users)
+        .values({
+          id: userId,
           email: userEmail,
           name: userName,
           isActive: true,
-          updatedAt: new Date(),
-        },
-      });
-
-    // 2. If user had an older seeded account with the same email, re-link old memberships
-    if (email) {
-      const userByEmail = await this.userRepository.findByEmail(email);
-      if (userByEmail && userByEmail.id !== userId) {
-        const oldId = userByEmail.id;
-        await this.db
-          .update(userSocieties)
-          .set({ userId })
-          .where(eq(userSocieties.userId, oldId));
-      }
+        })
+        .onConflictDoNothing();
     }
 
-    // 3. Query existing society memberships
-    let memberships = await this.userRepository.findUserMemberships(userId);
+    // 2. Query existing society memberships
+    let memberships = await this.userRepository.findUserMemberships(targetUserId);
 
-    // 4. If user has no society memberships yet, auto-provision SUPER_ADMIN mapping
+    // 3. If user has no society memberships yet, auto-provision SUPER_ADMIN mapping if applicable
     if (memberships.length === 0) {
       let superAdminRole = await this.db.query.roles.findFirst({
         where: eq(roles.name, 'SUPER_ADMIN'),
@@ -171,7 +175,7 @@ export class UserService {
             .insert(userSocieties)
             .values({
               id: require('crypto').randomUUID(),
-              userId: userId,
+              userId: targetUserId,
               societyId: s.id,
               roleId: superAdminRole.id,
             })
@@ -180,11 +184,11 @@ export class UserService {
       }
 
       // Re-fetch memberships now that user is mapped
-      memberships = await this.userRepository.findUserMemberships(userId);
+      memberships = await this.userRepository.findUserMemberships(targetUserId);
     }
 
-    const finalUser = (await this.userRepository.findById(userId)) || {
-      id: userId,
+    const finalUser = (await this.userRepository.findById(targetUserId)) || {
+      id: targetUserId,
       email: userEmail,
       name: userName,
       mobile: null,
@@ -200,49 +204,54 @@ export class UserService {
         name: finalUser.name,
         mobile: finalUser.mobile,
         avatarUrl: finalUser.avatarUrl,
+        defaultSocietyId: finalUser.defaultSocietyId,
       },
       memberships,
     };
   }
 
-  /**
-   * Find a user by email address. Used by dev-login endpoint.
-   */
+  async setDefaultSociety(userId: string, societyId: string) {
+    const isMember = await this.db.query.userSocieties.findFirst({
+      where: and(
+        eq(userSocieties.userId, userId),
+        eq(userSocieties.societyId, societyId),
+      ),
+    });
+
+    if (!isMember) {
+      throw new NotFoundException('You are not a registered member of this society.');
+    }
+
+    await this.userRepository.update(userId, { defaultSocietyId: societyId });
+    return { success: true, defaultSocietyId: societyId };
+  }
+
   async findByEmail(email: string) {
     return this.userRepository.findByEmail(email);
   }
 
-  async setDefaultSociety(userId: string, societyId: string) {
-    return this.userRepository.setDefaultSociety(userId, societyId);
-  }
-
-  /**
-   * Returns all users. Used by dev-login picker.
-   */
   async findAllUsers() {
-    return this.userRepository.findAllActive();
+    return this.userRepository.findAll();
   }
 
   // ==========================================
-  // SOCIETY USER ACCESS & PERMISSIONS CONTROL
+  // SOCIETY USERS & ACCESS CONTROL
   // ==========================================
 
-  /**
-   * Retrieves all users having login access to a specific society,
-   * distinguishing between inventory holders (flat owners/tenants) and professionals/staff (Accountant, Auditor, Estate Mgr, etc.).
-   */
   async getSocietyUsers(societyId: string) {
-    const societyUsers = await this.db
+    const list = await this.db
       .select({
-        id: userSocieties.id,
-        userId: users.id,
+        id: users.id,
         name: users.name,
         email: users.email,
         mobile: users.mobile,
+        avatarUrl: users.avatarUrl,
+        isActive: users.isActive,
         roleId: roles.id,
         roleName: roles.name,
         roleDescription: roles.description,
-        createdAt: userSocieties.createdAt,
+        userSocietyId: userSocieties.id,
+        joinedAt: userSocieties.createdAt,
       })
       .from(userSocieties)
       .innerJoin(users, eq(userSocieties.userId, users.id))
@@ -250,53 +259,16 @@ export class UserService {
       .where(eq(userSocieties.societyId, societyId))
       .orderBy(desc(userSocieties.createdAt));
 
-    // Get flat mappings for owner
-    const flatOwnersList = await this.db
-      .select({
-        userId: owners.userId,
-        flatNumber: flats.number,
-      })
-      .from(owners)
-      .innerJoin(flatOwners, eq(owners.id, flatOwners.ownerId))
-      .innerJoin(flats, eq(flatOwners.flatId, flats.id))
-      .where(eq(owners.societyId, societyId));
-
-    // Get flat mappings for tenant
-    const flatTenantsList = await this.db
-      .select({
-        userId: tenants.userId,
-        flatNumber: flats.number,
-      })
-      .from(tenants)
-      .innerJoin(flatTenants, eq(tenants.id, flatTenants.tenantId))
-      .innerJoin(flats, eq(flatTenants.flatId, flats.id))
-      .where(and(eq(tenants.societyId, societyId), eq(flatTenants.isActive, true)));
-
-    return societyUsers.map((u) => {
-      const ownerFlat = flatOwnersList.find((f) => f.userId === u.userId)?.flatNumber;
-      const tenantFlat = flatTenantsList.find((f) => f.userId === u.userId)?.flatNumber;
-      const flatNumber = ownerFlat || tenantFlat || null;
-      const isInventoryHolder = !!flatNumber;
-
-      return {
-        ...u,
-        flatNumber,
-        isInventoryHolder,
-        userCategory: isInventoryHolder ? 'RESIDENT_MEMBER' : 'STAFF_PROFESSIONAL',
-      };
-    });
+    return list;
   }
 
-  /**
-   * Grants system access to a non-inventory staff/accountant/auditor or user.
-   */
   async grantUserAccess(
     societyId: string,
     dto: {
-      name: string;
       email: string;
-      mobile?: string;
       roleName: string;
+      name?: string;
+      mobile?: string;
       password?: string;
     },
     executorId?: string,
@@ -308,34 +280,18 @@ export class UserService {
     const email = dto.email.trim().toLowerCase();
     const roleName = dto.roleName.trim().toUpperCase();
 
-    // 1. Resolve or create user in Supabase / database
+    // 1. Resolve or create user in database
     let userRecord = await this.userRepository.findByEmail(email);
     let resolvedUserId = userRecord?.id;
 
     if (!resolvedUserId) {
-      // Create user in Supabase Auth if service key configured
-      try {
-        const { data: authData, error: authError } = await this.supabase.auth.admin.createUser({
-          email,
-          password: dto.password || 'Society@123',
-          email_confirm: true,
-          user_metadata: { name: dto.name, mobile: dto.mobile },
-        });
-
-        if (authData?.user?.id) {
-          resolvedUserId = authData.user.id;
-        }
-      } catch (authErr) {
-        console.warn('Supabase createUser notice:', authErr);
-      }
-
-      if (!resolvedUserId) {
-        resolvedUserId = require('crypto').randomUUID();
-      }
+      resolvedUserId = require('crypto').randomUUID();
+      const hashedPassword = await bcrypt.hash(dto.password || 'password123', 10);
 
       const inserted = await this.db.insert(users).values({
         id: resolvedUserId,
         email,
+        password: hashedPassword,
         name: dto.name?.trim() || null,
         mobile: dto.mobile?.trim() || null,
         defaultSocietyId: societyId,
@@ -358,28 +314,27 @@ export class UserService {
     });
 
     if (!roleRecord) {
-      // Create role if doesn't exist
-      const newRoles = await this.db.insert(roles).values({
+      const insertedRoles = await this.db.insert(roles).values({
         id: require('crypto').randomUUID(),
         name: roleName,
-        description: `Society Role: ${roleName}`,
+        description: `Role for ${roleName}`,
       }).returning();
-      roleRecord = newRoles[0];
+      roleRecord = insertedRoles[0];
     }
 
-    // 3. Upsert into user_societies
-    const existingMapping = await this.db.query.userSocieties.findFirst({
+    // 3. Check existing membership in this society
+    const existingMembership = await this.db.query.userSocieties.findFirst({
       where: and(
         eq(userSocieties.userId, resolvedUserId),
         eq(userSocieties.societyId, societyId),
       ),
     });
 
-    if (existingMapping) {
+    if (existingMembership) {
       await this.db.update(userSocieties).set({
         roleId: roleRecord.id,
         updatedAt: new Date(),
-      }).where(eq(userSocieties.id, existingMapping.id));
+      }).where(eq(userSocieties.id, existingMembership.id));
     } else {
       await this.db.insert(userSocieties).values({
         id: require('crypto').randomUUID(),
@@ -389,118 +344,99 @@ export class UserService {
       });
     }
 
-    await this.logAction({
-      societyId,
-      userId: executorId,
-      action: 'USER_ACCESS_GRANTED',
-      entityName: 'user_societies',
-      entityId: resolvedUserId,
-      newValues: { email, roleName, name: dto.name },
-    });
+    // 4. Audit Log
+    try {
+      await this.db.insert(auditLogs).values({
+        societyId,
+        userId: executorId || null,
+        action: 'GRANT_USER_ACCESS',
+        entityName: 'user_societies',
+        entityId: resolvedUserId,
+        newValues: { email, role: roleName },
+      });
+    } catch {}
 
     return {
       success: true,
-      userId: resolvedUserId,
-      email,
-      roleName,
+      message: `Access successfully granted to ${email} as ${roleName}.`,
+      user: userRecord,
+      role: roleRecord,
     };
   }
 
-  /**
-   * Updates an existing user's role in the society.
-   */
-  async updateUserRole(
-    societyId: string,
-    userId: string,
-    dto: { roleName: string },
-    executorId?: string,
-  ) {
+  async updateUserRole(societyId: string, userId: string, dto: { roleName: string }, executorId?: string) {
+    if (!dto.roleName) {
+      throw new BadRequestException('Role name is required.');
+    }
+
     const roleName = dto.roleName.trim().toUpperCase();
     let roleRecord = await this.db.query.roles.findFirst({
       where: eq(roles.name, roleName),
     });
 
     if (!roleRecord) {
-      throw new NotFoundException(`Role ${roleName} not found.`);
+      const insertedRoles = await this.db.insert(roles).values({
+        id: require('crypto').randomUUID(),
+        name: roleName,
+        description: `Role for ${roleName}`,
+      }).returning();
+      roleRecord = insertedRoles[0];
     }
 
-    const mapping = await this.db.query.userSocieties.findFirst({
+    const membership = await this.db.query.userSocieties.findFirst({
       where: and(
         eq(userSocieties.userId, userId),
         eq(userSocieties.societyId, societyId),
       ),
     });
 
-    if (!mapping) {
-      throw new NotFoundException('User membership mapping not found in this society.');
+    if (!membership) {
+      throw new NotFoundException('User is not assigned to this society.');
     }
 
     await this.db.update(userSocieties).set({
       roleId: roleRecord.id,
       updatedAt: new Date(),
-    }).where(eq(userSocieties.id, mapping.id));
+    }).where(eq(userSocieties.id, membership.id));
 
-    await this.logAction({
-      societyId,
-      userId: executorId,
-      action: 'USER_ROLE_UPDATED',
-      entityName: 'user_societies',
-      entityId: userId,
-      newValues: { roleName },
-    });
+    try {
+      await this.db.insert(auditLogs).values({
+        societyId,
+        userId: executorId || null,
+        action: 'UPDATE_USER_ROLE',
+        entityName: 'user_societies',
+        entityId: userId,
+        newValues: { role: roleName },
+      });
+    } catch {}
 
-    return { success: true, roleName };
+    return { success: true, message: `User role updated to ${roleName}.` };
   }
 
-  /**
-   * Revokes user login access from the society.
-   */
   async revokeUserAccess(societyId: string, userId: string, executorId?: string) {
-    const mapping = await this.db.query.userSocieties.findFirst({
+    const membership = await this.db.query.userSocieties.findFirst({
       where: and(
         eq(userSocieties.userId, userId),
         eq(userSocieties.societyId, societyId),
       ),
     });
 
-    if (!mapping) {
+    if (!membership) {
       throw new NotFoundException('User membership not found.');
     }
 
-    await this.db.delete(userSocieties).where(eq(userSocieties.id, mapping.id));
+    await this.db.delete(userSocieties).where(eq(userSocieties.id, membership.id));
 
-    await this.logAction({
-      societyId,
-      userId: executorId,
-      action: 'USER_ACCESS_REVOKED',
-      entityName: 'user_societies',
-      entityId: userId,
-    });
-
-    return { success: true };
-  }
-
-  private async logAction(data: {
-    societyId?: string;
-    userId?: string;
-    action: string;
-    entityName: string;
-    entityId?: string;
-    oldValues?: any;
-    newValues?: any;
-  }) {
     try {
       await this.db.insert(auditLogs).values({
-        societyId: data.societyId || null,
-        userId: data.userId || null,
-        action: data.action,
-        entityName: data.entityName,
-        entityId: data.entityId || null,
-        oldValues: data.oldValues || null,
-        newValues: data.newValues || null,
+        societyId,
+        userId: executorId || null,
+        action: 'REVOKE_USER_ACCESS',
+        entityName: 'user_societies',
+        entityId: userId,
       });
-    } catch (err) {
-      console.error('Failed to log audit action:', err);
-    }
+    } catch {}
+
+    return { success: true, message: 'User access successfully revoked.' };
   }
 }

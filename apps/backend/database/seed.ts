@@ -3,6 +3,7 @@ import * as postgresModule from 'postgres';
 import * as dotenv from 'dotenv';
 import * as fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
+import * as bcrypt from 'bcryptjs';
 
 // Support multiple environments
 if (fs.existsSync('.env.local')) {
@@ -185,8 +186,9 @@ async function seed() {
       { id: USER_RESIDENT_ID, email: 'resident@society.dev', name: 'Vikram Singh (Owner)', mobile: '+919000000005' },
       { id: USER_TENANT_1_ID, email: 'tenant1@society.dev', name: 'Rahul Mehta (Tenant)', mobile: '+919000000006' },
     ];
+    const defaultHashedPassword = bcrypt.hashSync('password123', 10);
     for (const u of usersData) {
-      await client`INSERT INTO users (id, email, name, mobile) VALUES (${u.id}, ${u.email}, ${u.name}, ${u.mobile});`;
+      await client`INSERT INTO users (id, email, password, name, mobile) VALUES (${u.id}, ${u.email}, ${defaultHashedPassword}, ${u.name}, ${u.mobile});`;
     }
 
     const societiesData = [

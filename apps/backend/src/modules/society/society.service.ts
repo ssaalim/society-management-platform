@@ -5,23 +5,15 @@ import { UpdateSocietyDto } from './dto/update-society.dto';
 import { DRIZZLE_PROVIDER, DrizzleDB } from '@core/database/database.module';
 import { auditLogs, userSocieties, roles, societies, subscriptions, plans, users } from '../../../database/schema';
 import { ConfigService } from '@nestjs/config';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { eq, and, desc, inArray, sql } from 'drizzle-orm';
 
 @Injectable()
 export class SocietyService {
-  private supabase: SupabaseClient;
-
   constructor(
     private readonly societyRepository: SocietyRepository,
     @Inject(DRIZZLE_PROVIDER) private readonly db: DrizzleDB,
     private readonly configService: ConfigService,
-  ) {
-    const supabaseUrl = this.configService.get<string>('SUPABASE_URL') || 'https://placeholder.supabase.co';
-    const supabaseServiceKey = this.configService.get<string>('SUPABASE_SERVICE_ROLE_KEY') || 'placeholder-key';
-    // Using service role to generate administrative pre-signed urls
-    this.supabase = createClient(supabaseUrl, supabaseServiceKey);
-  }
+  ) {}
 
   async create(dto: CreateSocietyDto, userId?: string) {
     const existing = await this.societyRepository.findBySlug(dto.slug);
@@ -183,7 +175,7 @@ export class SocietyService {
   }
 
   /**
-   * Generates a Supabase pre-signed upload URL for society profile document uploads.
+   * Generates a pre-signed upload URL for society profile document uploads.
    */
   async generateUploadUrl(id: string, fileType: string, fileName: string) {
     const validTypes = ['logo', 'registration_certificate', 'pan', 'gst', 'bye_laws', 'bank_passbook'];
@@ -191,22 +183,11 @@ export class SocietyService {
       throw new BadRequestException(`Invalid file type upload scope: ${fileType}`);
     }
 
-    // Path pattern: societies/{society_id}/{file_type}_{random_filename}
-    const path = `societies/${id}/${fileType}_${fileName}`;
-    const bucketName = 'documents'; // Target bucket name configured in Supabase Storage
-
-    const { data, error } = await this.supabase.storage
-      .from(bucketName)
-      .createSignedUploadUrl(path);
-
-    if (error || !data) {
-      throw new BadRequestException(`Failed to generate signed upload URL: ${error?.message || 'Unknown Storage error'}`);
-    }
-
+    const path = `societies/${id}/${fileType}_${Date.now()}_${fileName}`;
     return {
-      uploadUrl: data.signedUrl,
+      uploadUrl: `/api/v1/societies/${id}/documents/direct-upload?fileKey=${encodeURIComponent(path)}`,
       fileKey: path,
-      publicUrl: `${this.configService.get('SUPABASE_URL')}/storage/v1/object/public/${bucketName}/${path}`,
+      publicUrl: `/uploads/${path}`,
     };
   }
 

@@ -49,8 +49,8 @@ export default function Home() {
             <p className="mt-2 text-sm text-slate-400">Clean architecture, BaseRepository-enforced tenant boundaries, custom Zod request mapping.</p>
           </div>
           <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-6 backdrop-blur-md">
-            <h3 className="font-semibold text-slate-200">Supabase Auth</h3>
-            <p className="mt-2 text-sm text-slate-400">Secure user accounts, metadata injection, and JWT signature validation at NestJS controllers.</p>
+            <h3 className="font-semibold text-slate-200">Native JWT Auth</h3>
+            <p className="mt-2 text-sm text-slate-400">Direct PostgreSQL authentication with bcrypt password hashing and stateless JWT validation.</p>
           </div>
           <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-6 backdrop-blur-md">
             <h3 className="font-semibold text-slate-200">Drizzle ORM</h3>

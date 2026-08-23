@@ -12,6 +12,7 @@ import {
 } from '../../../database/schema';
 import { DRIZZLE_PROVIDER, DrizzleDB } from '@core/database/database.module';
 import { eq, and, sql } from 'drizzle-orm';
+import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class SuperAdminRepository {
@@ -77,36 +78,48 @@ export class SuperAdminRepository {
       let finalUserId = existingUser[0]?.id;
       
       if (!finalUserId) {
+        const hashedPassword = await bcrypt.hash('password123', 10);
         await tx.insert(users).values({
           id: userId,
           email: presidentData.email,
+          password: hashedPassword,
           name: presidentData.name,
           mobile: presidentData.mobile,
+          defaultSocietyId: societyId,
         });
         finalUserId = userId;
       }
 
       // 3. Map user as PRESIDENT
-      const role = await tx.select().from(roles).where(eq(roles.name, 'PRESIDENT')).limit(1);
+      let role = await tx.select().from(roles).where(eq(roles.name, 'PRESIDENT')).limit(1);
+      let presidentRoleId = role[0]?.id;
+
+      if (!presidentRoleId) {
+        const [newRole] = await tx.insert(roles).values({
+          id: require('crypto').randomUUID(),
+          name: 'PRESIDENT',
+          description: 'Society President / Chairman',
+        }).returning();
+        presidentRoleId = newRole.id;
+      }
       
-      if (role[0]) {
+      if (presidentRoleId) {
         await tx.insert(userSocieties).values({
           id: require('crypto').randomUUID(),
           userId: finalUserId,
           societyId: societyId,
-          roleId: role[0].id,
+          roleId: presidentRoleId,
         });
         
         // If an executorId is provided and is different from the president's ID, also map them so they can view the society
         if (executorId && executorId !== finalUserId) {
-          // Verify executor exists in the DB to avoid foreign key constraint errors
           const executorUser = await tx.select().from(users).where(eq(users.id, executorId)).limit(1);
           if (executorUser[0]) {
             await tx.insert(userSocieties).values({
               id: require('crypto').randomUUID(),
               userId: executorId,
               societyId: societyId,
-              roleId: role[0].id, // Giving them PRESIDENT equivalent access for now so they can manage it
+              roleId: presidentRoleId,
             });
           }
         }
@@ -183,7 +196,6 @@ export class SuperAdminRepository {
     endDate: string;
     status?: string;
   }) {
-    // Check if an existing subscription exists for this society
     const existing = await this.db
       .select()
       .from(subscriptions)
@@ -272,4 +284,3 @@ export class SuperAdminRepository {
     return rows[0] || null;
   }
 }
-

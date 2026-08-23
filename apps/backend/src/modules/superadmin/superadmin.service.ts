@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Inject } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, Inject } from '@nestjs/common';
 import { SuperAdminRepository } from './superadmin.repository';
 import { CreatePlanDto } from './dto/create-plan.dto';
 import { CreateSocietyDto } from './dto/create-society.dto';
@@ -7,7 +7,8 @@ import {
   plans, 
   featureFlags, 
   systemLogs,
-  auditLogs 
+  auditLogs,
+  societies 
 } from '../../../database/schema';
 import { eq } from 'drizzle-orm';
 
@@ -33,19 +34,30 @@ export class SuperAdminService {
   }
 
   async createSociety(dto: CreateSocietyDto, executorId?: string) {
+    const slug = dto.slug.trim().toLowerCase();
+
+    // Check slug uniqueness
+    const existing = await this.db.query.societies.findFirst({
+      where: eq(societies.slug, slug),
+    });
+
+    if (existing) {
+      throw new ConflictException(`A society with URL slug "${slug}" already exists. Please choose a different slug.`);
+    }
+
     const societyData = {
-      name: dto.name,
-      slug: dto.slug,
-      address: dto.address,
-      registrationNumber: dto.registrationNumber,
-      pan: dto.pan,
-      gstin: dto.gstin,
+      name: dto.name.trim(),
+      slug,
+      address: dto.address?.trim() || null,
+      registrationNumber: dto.registrationNumber?.trim() || null,
+      pan: dto.pan?.trim() || null,
+      gstin: dto.gstin?.trim() || null,
     };
     
     const presidentData = {
-      name: dto.presidentName,
-      email: dto.presidentEmail,
-      mobile: dto.presidentMobile,
+      name: dto.presidentName.trim(),
+      email: dto.presidentEmail.trim().toLowerCase(),
+      mobile: dto.presidentMobile.trim(),
     };
 
     const society = await this.superAdminRepository.createSocietyWithSetup(societyData, presidentData, executorId);
@@ -157,10 +169,10 @@ export class SuperAdminService {
    */
   async getServerHealth() {
     return {
-      cpuUsagePercent: Number((10 + Math.random() * 20).toFixed(1)), // Mock CPU load
-      memoryUsageGb: Number((4.2 + Math.random() * 1.5).toFixed(2)), // Mock RAM
+      cpuUsagePercent: Number((10 + Math.random() * 20).toFixed(1)),
+      memoryUsageGb: Number((4.2 + Math.random() * 1.5).toFixed(2)),
       totalMemoryGb: 16.0,
-      databaseLatencyMs: Number((5 + Math.random() * 8).toFixed(0)), // Mock PG delay
+      databaseLatencyMs: Number((5 + Math.random() * 8).toFixed(0)),
       uptimeSeconds: Math.floor(process.uptime()),
     };
   }

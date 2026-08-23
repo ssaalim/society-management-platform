@@ -4,7 +4,7 @@ This guide provides the step-by-step configuration to deploy the complete Societ
 - **Database**: [Neon](https://neon.tech) (Free Serverless PostgreSQL with PgBouncer Pooling)
 - **Frontend**: [Vercel](https://vercel.com) (Free Hobby Tier with Edge CDN & Custom Domain)
 - **Backend API**: [Render](https://render.com) or [Koyeb](https://koyeb.com) (Free Web Service Tier)
-- **Auth & Storage**: [Supabase](https://supabase.com) (Free Tier)
+- **Authentication**: Native NestJS JWT + bcrypt directly on Neon PostgreSQL
 
 ---
 
@@ -13,7 +13,7 @@ This guide provides the step-by-step configuration to deploy the complete Societ
 1. Sign up at [neon.tech](https://neon.tech) (free, no credit card required).
 2. Click **Create Project**, name it (e.g., `society-db`), and select a region closest to your users (e.g., `AWS ap-south-1 Mumbai` or `us-east-2`).
 3. In your Neon Dashboard, go to **Connection Details**:
-   - Check the **Pooled connection** checkbox (this enables PgBouncer pooling on port 6543/5432).
+   - Check the **Pooled connection** checkbox (enables PgBouncer pooling on port 5432/6543).
    - Copy the connection string. It looks like:
      ```env
      postgres://user:password@ep-cold-shadow-123456-pooler.ap-south-1.aws.neon.tech/neondb?sslmode=require
@@ -27,7 +27,7 @@ export DATABASE_URL="postgres://user:password@ep-cold-shadow-123456-pooler.ap-so
 # 2. Run Drizzle schema migrations
 npm run db:migrate --workspace=backend
 
-# 3. (Optional) Populate initial test societies & roles
+# 3. Populate initial test societies, roles & demo users (default password: password123)
 npm run db:seed --workspace=backend
 ```
 
@@ -35,7 +35,7 @@ npm run db:seed --workspace=backend
 
 ## 2. ⚡ Backend Deployment on Render / Koyeb (100% Free)
 
-Since NestJS is a persistent Node.js HTTP server, deploy it on **Render** or **Koyeb** free tier:
+Deploy NestJS on **Render** free tier:
 
 ### Deploying on Render:
 1. Sign up at [render.com](https://render.com).
@@ -53,13 +53,9 @@ Since NestJS is a persistent Node.js HTTP server, deploy it on **Render** or **K
    | `NODE_ENV` | `production` | Enables production security mode |
    | `PORT` | `4000` | Render automatically maps this |
    | `DATABASE_URL` | `postgres://user:pass@ep-...-pooler.neon.tech/neondb?sslmode=require` | From Neon (Pooled) |
-   | `SUPABASE_URL` | `https://your-project.supabase.co` | From Supabase API settings |
-   | `SUPABASE_SERVICE_ROLE_KEY` | `eyJhbGciOi...` | Supabase Service Key |
-   | `SUPABASE_ANON_KEY` | `eyJhbGciOi...` | Supabase Anon Key |
-   | `JWT_SECRET` | `generate-a-strong-random-32-char-string` | Backend signing secret |
+   | `JWT_SECRET` | `generate-a-strong-random-32-char-string` | Backend JWT signing secret |
    | `FRONTEND_URL` | `https://your-frontend.vercel.app` | (Update after Vercel deploy) |
    | `DEV_AUTH` | `false` | Strictly locked in production |
-   | `WEBHOOK_SECRET` | `your-supabase-webhook-secret` | For auth webhook validation |
    | `RAZORPAY_KEY_ID` | `rzp_test_...` or `rzp_live_...` | Optional / for payments |
    | `RAZORPAY_KEY_SECRET`| `your-razorpay-secret` | Optional / for payments |
 
@@ -82,25 +78,17 @@ Since NestJS is a persistent Node.js HTTP server, deploy it on **Render** or **K
    | Key | Value | Notes |
    | :--- | :--- | :--- |
    | `NEXT_PUBLIC_API_URL` | `https://society-backend.onrender.com/api/v1` | Your Render Backend URL + `/api/v1` |
-   | `NEXT_PUBLIC_DEV_AUTH` | `false` | Disables dev switcher in prod |
-   | `NEXT_PUBLIC_SUPABASE_URL` | `https://your-project.supabase.co` | Supabase Project URL |
-   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `eyJhbGciOi...` | Supabase Anon Public Key |
 
 5. Click **Deploy**. Vercel will build and launch your Next.js application (e.g., `https://society-frontend.vercel.app`).
 
 ---
 
-## 4. 🔄 Final Wiring (CORS & Webhooks)
+## 4. 🔄 Final Wiring (CORS)
 
 1. **Update Backend CORS**:
-   - Go back to Render -> `society-backend` -> **Environment**.
+   - Go to Render -> `society-backend` -> **Environment**.
    - Set `FRONTEND_URL` to your actual Vercel domain (e.g. `https://society-frontend.vercel.app`).
    - Click **Save Changes** (Render will redeploy).
-
-2. **Supabase Auth Webhook (Optional)**:
-   - In Supabase Dashboard -> **Authentication > Webhooks**:
-   - Point the Webhook URL to: `https://society-backend.onrender.com/api/v1/auth/webhook`
-   - Add header: `x-webhook-signature: your-supabase-webhook-secret`
 
 ---
 
@@ -111,5 +99,4 @@ Since NestJS is a persistent Node.js HTTP server, deploy it on **Render** or **K
 | **Neon** | PostgreSQL Database | Free Tier | 0.5 GB storage, serverless compute | **$0.00 / mo** |
 | **Vercel** | Next.js Frontend | Hobby | Unlimited builds, Edge CDN, HTTPS | **$0.00 / mo** |
 | **Render / Koyeb** | NestJS Backend API | Free Tier | 512 MB RAM, free web service | **$0.00 / mo** |
-| **Supabase** | Auth & Object Storage | Free Tier | 50,000 MAU, 1 GB file storage | **$0.00 / mo** |
 | **Total** | | | | **$0.00 / month** |
