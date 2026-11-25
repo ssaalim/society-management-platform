@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException, Inject, BadRequestException } from '@nestjs/common';
+import { LedgerResolver } from '@core/accounting/ledger-resolver.service';
+import { Injectable, NotFoundException, Inject, BadRequestException, ConflictException } from '@nestjs/common';
 import { MaintenanceRepository } from './maintenance.repository';
 import { GenerateBillsDto } from './dto/generate-bills.dto';
 import { CreateReceiptDto } from './dto/create-receipt.dto';
@@ -17,11 +18,16 @@ import {
   owners,
   userSocieties,
   roles,
-  parkingSlots
+  parkingSlots,
+  floors,
+  wings,
+  buildings,
+  users,
 } from '../../../database/schema';
-import { eq, and, isNull } from 'drizzle-orm';
+import { eq, and, isNull, inArray, lte, gte } from 'drizzle-orm';
 
 import { NotificationService } from '../notification/notification.service';
+import { BillingCategoryService } from './billing-category.service';
 
 @Injectable()
 export class MaintenanceService {
@@ -29,274 +35,456 @@ export class MaintenanceService {
     private readonly maintenanceRepository: MaintenanceRepository,
     @Inject(DRIZZLE_PROVIDER) private readonly db: DrizzleDB,
     private readonly notificationService: NotificationService,
+    private readonly billingCategoryService: BillingCategoryService,
+    private readonly ledgerResolver: LedgerResolver,
   ) {}
 
   /**
    * Generates maintenance invoices for flats in the active society sweep.
    */
-  async generateBills(dto: GenerateBillsDto, executorId?: string) {
-    const activeTenantId = this.maintenanceRepository['activeTenantId'];
+  /** Number of calendar months a billing period spans (a bill for Apr–Jun covers 3 months). */
+  private monthsCovered(start: string, end: string): number {
+    const [sy, sm] = start.split('-').map(Number);
+    const [ey, em] = end.split('-').map(Number);
+    return Math.max(1, (ey * 12 + em) - (sy * 12 + sm) + 1);
+  }
 
+  /** The bills a generation run would create: one plan for both the preview and the real run. */
+  private async planBills(dto: GenerateBillsDto) {
+    const activeTenantId = this.maintenanceRepository['activeTenantId'];
 
     // 1. Resolve active society maintenance formula settings
     const currentConfig = await this.getConfig();
     const calcType = currentConfig.calculationType;
-
-    // 2. Fetch all active flats inside society scope
-    let targetFlats = await this.db
-      .select()
-      .from(flats)
-      .where(
-        and(
-          eq(flats.societyId, activeTenantId),
-          isNull(flats.deletedAt)
-        )
-      );
-
-    if (dto.flatIds && dto.flatIds.length > 0) {
-      targetFlats = targetFlats.filter((f) => dto.flatIds!.includes(f.id));
-    }
-
-    const generatedCount = targetFlats.length;
-    const generatedBillsList = [];
-
-    // Ledgers resolution for double-entry postings
-    const receivablesLedger = await this.maintenanceRepository.findLedgerByName('Maintenance Receivables');
-    const incomeLedger = await this.maintenanceRepository.findLedgerByName('Maintenance Income');
-
-    // Resolve head categories for itemized billing details
-    const baseHead = await this.maintenanceRepository.findOrCreateHead('Base Maintenance');
-    const parkingHead = await this.maintenanceRepository.findOrCreateHead('Parking Charges');
-    const waterHead = await this.maintenanceRepository.findOrCreateHead('Water Charges');
-
     const formula = currentConfig.maintenanceFormula || '(area * rate) + parking + water';
 
+    // 2. Active flats in this society, with their place and current owner for the preview and export
+    let targetFlats = await this.db
+      .select({
+        flat: flats,
+        floorNumber: floors.number,
+        wingName: wings.name,
+        buildingName: buildings.name,
+      })
+      .from(flats)
+      .innerJoin(floors, eq(flats.floorId, floors.id))
+      .innerJoin(wings, eq(floors.wingId, wings.id))
+      .innerJoin(buildings, eq(wings.buildingId, buildings.id))
+      .where(and(eq(flats.societyId, activeTenantId), isNull(flats.deletedAt)));
+
+    if (dto.flatIds && dto.flatIds.length > 0) {
+      targetFlats = targetFlats.filter((f) => dto.flatIds!.includes(f.flat.id));
+    }
+    targetFlats.sort((a, b) =>
+      `${a.buildingName}|${a.wingName}|${a.flat.number}`.localeCompare(`${b.buildingName}|${b.wingName}|${b.flat.number}`, undefined, { numeric: true }),
+    );
+    // Billing category per unit, and the "commercial only" / "residential only" filter
+    const categories = await this.billingCategoryService.list();
+    const categoryByFlat = new Map(targetFlats.map((f) => [f.flat.id, this.billingCategoryService.resolve(categories, f.flat)]));
+    if (dto.usage && dto.usage !== 'ALL') {
+      targetFlats = targetFlats.filter((f) => categoryByFlat.get(f.flat.id)!.usage === dto.usage);
+    }
+    const flatIds = targetFlats.map((f) => f.flat.id);
+
+    const ownerRows = flatIds.length
+      ? await this.db
+          .select({ flatId: flatOwners.flatId, name: users.name })
+          .from(flatOwners)
+          .innerJoin(owners, eq(flatOwners.ownerId, owners.id))
+          .innerJoin(users, eq(owners.userId, users.id))
+          .where(and(inArray(flatOwners.flatId, flatIds), eq(flatOwners.isCurrent, true), eq(owners.societyId, activeTenantId)))
+      : [];
+    const ownerByFlat = new Map<string, string>();
+    for (const o of ownerRows) if (!ownerByFlat.has(o.flatId)) ownerByFlat.set(o.flatId, o.name || '');
+
+    // 3. Billing periods
     const generationType = dto.generationType || 'SINGLE';
-    
-    // Compute billing periods based on generation type
-    let billingPeriods: { start: string, end: string }[] = [];
-    
+    const billingPeriods: { start: string; end: string; months: number }[] = [];
     if (generationType === 'PER_MONTH') {
       const start = new Date(dto.periodStart);
       const end = new Date(dto.periodEnd);
       let current = new Date(start.getFullYear(), start.getMonth(), 1);
-      
       while (current <= end) {
         const periodStart = new Date(Math.max(current.getTime(), start.getTime()));
         const nextMonth = new Date(current.getFullYear(), current.getMonth() + 1, 1);
         const periodEnd = new Date(Math.min(nextMonth.getTime() - 1, end.getTime()));
-        
         billingPeriods.push({
           start: periodStart.toISOString().substring(0, 10),
           end: periodEnd.toISOString().substring(0, 10),
+          months: 1,
         });
         current = nextMonth;
       }
     } else {
-      billingPeriods.push({
-        start: dto.periodStart,
-        end: dto.periodEnd,
-      });
+      billingPeriods.push({ start: dto.periodStart, end: dto.periodEnd, months: this.monthsCovered(dto.periodStart, dto.periodEnd) });
     }
 
-    for (const flat of targetFlats) {
-      // 3. Resolve rate and base amount according to active calculation mode
-      let rate = 3.5;
-      let baseAmount = 0;
-      const sqftAreaType = currentConfig.sqftAreaType || 'SUPER_BUILTUP';
-      const superBuiltupArea = Number(flat.sqftArea) || 1000;
-      const carpetArea = Number(flat.carpetArea) > 0 ? Number(flat.carpetArea) : superBuiltupArea;
-      const area = sqftAreaType === 'CARPET_AREA' ? carpetArea : superBuiltupArea;
-
-      if (calcType === 'PER_SQ_FT') {
-        rate = Number(currentConfig.perSqFtRate) || 3.5;
-        baseAmount = area * rate;
-      } else if (calcType === 'PER_FLAT_TYPE') {
-        const flatTypeRates: any = currentConfig.perFlatTypeRates || {};
-        rate = Number(flatTypeRates[flat.flatType]) || Number(currentConfig.flatRateSameForAll) || 2500;
-        baseAmount = rate;
-      } else if (calcType === 'FLAT_RATE_SAME_FOR_ALL') {
-        rate = Number(currentConfig.flatRateSameForAll) || 2500;
-        baseAmount = rate;
-      } else {
-        rate = 3.5;
-        baseAmount = area * rate;
-      }
-
-      // Fetch parking slots allocated to this flat
-      const flatParkingSlots = await this.db
-        .select()
-        .from(parkingSlots)
-        .where(
-          and(
-            eq(parkingSlots.societyId, activeTenantId),
-            eq(parkingSlots.flatId, flat.id)
+    // 4. Overlap check: any existing bill for these flats that touches any month in the selected range
+    const existing = flatIds.length
+      ? await this.db
+          .select({
+            flatId: maintenanceBills.flatId,
+            billNumber: maintenanceBills.billNumber,
+            start: maintenanceBills.billingPeriodStart,
+            end: maintenanceBills.billingPeriodEnd,
+            status: maintenanceBills.status,
+          })
+          .from(maintenanceBills)
+          .where(
+            and(
+              eq(maintenanceBills.societyId, activeTenantId),
+              inArray(maintenanceBills.flatId, flatIds),
+              lte(maintenanceBills.billingPeriodStart, dto.periodEnd),
+              gte(maintenanceBills.billingPeriodEnd, dto.periodStart),
+            ),
           )
-        );
-
-      let openParkingTotal = 0;
-      let stiltParkingTotal = 0;
-      for (const slot of flatParkingSlots) {
-        const explicitCharge = Number(slot.charges);
-        const slotType = (slot.type || 'OPEN').toUpperCase();
-        if (slotType === 'COVERED' || slotType === 'STILT') {
-          stiltParkingTotal += explicitCharge > 0 ? explicitCharge : 500;
-        } else {
-          openParkingTotal += explicitCharge > 0 ? explicitCharge : 250;
-        }
-      }
-
-      const parkingCharge = openParkingTotal + stiltParkingTotal;
-      const parkingSlotsCount = flatParkingSlots.length;
-      const waterCharge = 250;
-      const sinkingCharge = 150;
-
-      const variables: Record<string, number> = {
-        area,
-        sqft: area,
-        sq_ft: area,
-        sqfeet: area,
-        sq_feet: area,
-        sqft_area: area,
-        super_builtup_area: superBuiltupArea,
-        super_built_up_area: superBuiltupArea,
-        builtup_area: superBuiltupArea,
-        built_up_area: superBuiltupArea,
-        carpet_area: carpetArea,
-        carpet: carpetArea,
-        rera_carpet_area: carpetArea,
-        rate,
-        per_sqft_rate: rate,
-        base_rate: rate,
-        base: baseAmount,
-        base_amount: baseAmount,
-        parking: parkingCharge,
-        parking_open: openParkingTotal,
-        open_parking: openParkingTotal,
-        parking_stilt: stiltParkingTotal,
-        stilt_parking: stiltParkingTotal,
-        parking_slots: parkingSlotsCount,
-        water: waterCharge,
-        water_charge: waterCharge,
-        sinking: sinkingCharge,
-        sinking_fund: sinkingCharge,
-        repair: 200,
-        repairs: 200,
-        repair_fund: 200,
-        elevator: 150,
-        lift: 150,
-        security: 300,
-        gym: 100,
-        clubhouse: 100,
-      };
-
-      // 4. Calculate total maintenance using algebraic formula evaluator
-      let calculatedTotal = baseAmount + parkingCharge + waterCharge;
-      try {
-        calculatedTotal = evaluateFormula(formula, variables);
-      } catch (e) {
-        console.warn(`Formula evaluation fallback for Flat ${flat.number}:`, e);
-      }
-
-      for (const period of billingPeriods) {
-        // Generate invoice coordinates
-        const billNumber = `INV-${new Date().getFullYear()}-${flat.number}-${Math.floor(1000 + Math.random() * 9000)}`;
-
-        // 5. Write invoice transaction block
-        await this.db.transaction(async (tx) => {
-          const newBills = await tx.insert(maintenanceBills).values({
-            societyId: activeTenantId,
-            flatId: flat.id,
-            billNumber,
-            billingPeriodStart: period.start,
-            billingPeriodEnd: period.end,
-            dueDate: dto.dueDate,
-            totalAmount: calculatedTotal.toString(),
-            status: 'UNPAID',
-          }).returning();
-
-        const bill = newBills[0];
-
-        // 6. Write detailed line items (bill_items breakdown)
-        await tx.insert(billItems).values({
-          id: require('crypto').randomUUID(),
-          societyId: activeTenantId,
-          billId: bill.id,
-          headId: baseHead.id,
-          amount: baseAmount.toFixed(2),
-        });
-
-        if (parkingCharge > 0) {
-          await tx.insert(billItems).values({
-            id: require('crypto').randomUUID(),
-            societyId: activeTenantId,
-            billId: bill.id,
-            headId: parkingHead.id,
-            amount: parkingCharge.toFixed(2),
-          });
-        }
-
-        await tx.insert(billItems).values({
-          id: require('crypto').randomUUID(),
-          societyId: activeTenantId,
-          billId: bill.id,
-          headId: waterHead.id,
-          amount: waterCharge.toFixed(2),
-        });
-
-        // 7. Post double-entry bookkeeping journal voucher
-        const voucherId = require('crypto').randomUUID();
-        await tx.insert(vouchers).values({
-          id: voucherId,
-          societyId: activeTenantId,
-          voucherNumber: `VOU-${billNumber}`,
-          type: 'JOURNAL',
-          date: new Date().toISOString().substring(0, 10),
-          narration: `Maintenance Invoice generation for Flat ${flat.number}`,
-        });
-
-        // Debit Receivables Account
-        await tx.insert(transactions).values({
-          id: require('crypto').randomUUID(),
-          societyId: activeTenantId,
-          voucherId,
-          ledgerId: receivablesLedger.id,
-          type: 'DEBIT',
-          amount: calculatedTotal.toString(),
-        });
-        // Credit Income Account
-        await tx.insert(transactions).values({
-          id: require('crypto').randomUUID(),
-          societyId: activeTenantId,
-          voucherId,
-          ledgerId: incomeLedger.id,
-          type: 'CREDIT',
-          amount: calculatedTotal.toString(),
-        });
-
-        generatedBillsList.push(bill);
-      });
-      } // End of billingPeriods loop
-
+      : [];
+    const conflictsByFlat = new Map<string, { billNumber: string; start: string; end: string; status: string }[]>();
+    for (const e of existing) {
+      const list = conflictsByFlat.get(e.flatId) || [];
+      list.push({ billNumber: e.billNumber, start: String(e.start), end: String(e.end), status: e.status });
+      conflictsByFlat.set(e.flatId, list);
     }
+
+    // 5. Monthly charge lines per unit (by its billing category), then per bill: lines x months, plus GST
+    const round = (n: number) => Math.round(n * 100) / 100;
+    const rows = [];
+    for (const { flat, floorNumber, wingName, buildingName } of targetFlats) {
+      const category = categoryByFlat.get(flat.id)!;
+      const monthlyLines: { head: string; amount: number }[] = [];
+      let rateApplied: number | null = null;
+
+      if (category.calculationType === 'SOCIETY_FORMULA') {
+        // 3. Resolve rate and base amount according to active calculation mode
+        let rate = 3.5;
+        let baseAmount = 0;
+        const sqftAreaType = currentConfig.sqftAreaType || 'SUPER_BUILTUP';
+        const superBuiltupArea = Number(flat.sqftArea) || 1000;
+        const carpetArea = Number(flat.carpetArea) > 0 ? Number(flat.carpetArea) : superBuiltupArea;
+        const area = sqftAreaType === 'CARPET_AREA' ? carpetArea : superBuiltupArea;
+
+        if (calcType === 'PER_SQ_FT') {
+          rate = Number(currentConfig.perSqFtRate) || 3.5;
+          baseAmount = area * rate;
+        } else if (calcType === 'PER_FLAT_TYPE') {
+          const flatTypeRates: any = currentConfig.perFlatTypeRates || {};
+          rate = Number(flatTypeRates[flat.flatType]) || Number(currentConfig.flatRateSameForAll) || 2500;
+          baseAmount = rate;
+        } else if (calcType === 'FLAT_RATE_SAME_FOR_ALL') {
+          rate = Number(currentConfig.flatRateSameForAll) || 2500;
+          baseAmount = rate;
+        } else {
+          rate = 3.5;
+          baseAmount = area * rate;
+        }
+
+        // Fetch parking slots allocated to this flat
+        const flatParkingSlots = await this.db
+          .select()
+          .from(parkingSlots)
+          .where(
+            and(
+              eq(parkingSlots.societyId, activeTenantId),
+              eq(parkingSlots.flatId, flat.id)
+            )
+          );
+
+        let openParkingTotal = 0;
+        let stiltParkingTotal = 0;
+        for (const slot of flatParkingSlots) {
+          const explicitCharge = Number(slot.charges);
+          const slotType = (slot.type || 'OPEN').toUpperCase();
+          if (slotType === 'COVERED' || slotType === 'STILT') {
+            stiltParkingTotal += explicitCharge > 0 ? explicitCharge : 500;
+          } else {
+            openParkingTotal += explicitCharge > 0 ? explicitCharge : 250;
+          }
+        }
+
+        const parkingCharge = openParkingTotal + stiltParkingTotal;
+        const parkingSlotsCount = flatParkingSlots.length;
+        const waterCharge = 250;
+        const sinkingCharge = 150;
+
+        const variables: Record<string, number> = {
+          area,
+          sqft: area,
+          sq_ft: area,
+          sqfeet: area,
+          sq_feet: area,
+          sqft_area: area,
+          super_builtup_area: superBuiltupArea,
+          super_built_up_area: superBuiltupArea,
+          builtup_area: superBuiltupArea,
+          built_up_area: superBuiltupArea,
+          carpet_area: carpetArea,
+          carpet: carpetArea,
+          rera_carpet_area: carpetArea,
+          rate,
+          per_sqft_rate: rate,
+          base_rate: rate,
+          base: baseAmount,
+          base_amount: baseAmount,
+          parking: parkingCharge,
+          parking_open: openParkingTotal,
+          open_parking: openParkingTotal,
+          parking_stilt: stiltParkingTotal,
+          stilt_parking: stiltParkingTotal,
+          parking_slots: parkingSlotsCount,
+          water: waterCharge,
+          water_charge: waterCharge,
+          sinking: sinkingCharge,
+          sinking_fund: sinkingCharge,
+          repair: 200,
+          repairs: 200,
+          repair_fund: 200,
+          elevator: 150,
+          lift: 150,
+          security: 300,
+          gym: 100,
+          clubhouse: 100,
+        };
+
+        // 4. Calculate total maintenance using algebraic formula evaluator
+        let calculatedTotal = baseAmount + parkingCharge + waterCharge;
+        try {
+          calculatedTotal = evaluateFormula(formula, variables);
+        } catch (e) {
+          console.warn(`Formula evaluation fallback for Flat ${flat.number}:`, e);
+        }
+
+
+        // Line items add up to the formula total: anything the formula adds beyond base, parking and water
+        // (sinking fund, lift, repairs ...) becomes "Other charges".
+        rateApplied = rate;
+        monthlyLines.push({ head: 'Base Maintenance', amount: round(baseAmount) });
+        if (parkingCharge > 0) monthlyLines.push({ head: 'Parking Charges', amount: round(parkingCharge) });
+        monthlyLines.push({ head: 'Water Charges', amount: round(waterCharge) });
+        const other = round(calculatedTotal - baseAmount - parkingCharge - waterCharge);
+        if (Math.abs(other) >= 0.01) monthlyLines.push({ head: 'Other Charges', amount: other });
+      } else {
+        // Category rates: per sq ft or fixed, by floor, plus the category's own extras and (optionally) parking
+        const slots = await this.db
+          .select()
+          .from(parkingSlots)
+          .where(and(eq(parkingSlots.societyId, activeTenantId), eq(parkingSlots.flatId, flat.id)));
+        const parking = slots.reduce((sum, slot) => {
+          const explicit = Number(slot.charges);
+          const covered = ['COVERED', 'STILT'].includes((slot.type || 'OPEN').toUpperCase());
+          return sum + (explicit > 0 ? explicit : covered ? 500 : 250);
+        }, 0);
+        const superBuiltupArea = Number(flat.sqftArea) || 0;
+        const carpetArea = Number(flat.carpetArea) > 0 ? Number(flat.carpetArea) : superBuiltupArea;
+        const charges = this.billingCategoryService.monthlyCharges(category, { superBuiltupArea, carpetArea, floorNumber, parking });
+        rateApplied = charges.rateApplied;
+        monthlyLines.push({ head: `${category.name} Maintenance`, amount: charges.base });
+        for (const [name, amount] of Object.entries(charges.extras)) monthlyLines.push({ head: name, amount });
+        if (charges.parking > 0) monthlyLines.push({ head: 'Parking Charges', amount: round(charges.parking) });
+      }
+
+      const monthlySubtotal = round(monthlyLines.reduce((sum, l) => sum + l.amount, 0));
+      const bills = billingPeriods.map((p) => {
+        const lines = monthlyLines.map((l) => ({ head: l.head, amount: round(l.amount * p.months) }));
+        const subtotal = round(lines.reduce((sum, l) => sum + l.amount, 0));
+        const gst = this.billingCategoryService.gstFor(category, subtotal, p.months);
+        return {
+          start: p.start,
+          end: p.end,
+          months: p.months,
+          lines,
+          subtotal,
+          gstRate: gst?.rate ?? null,
+          gstAmount: gst?.amount ?? 0,
+          amount: round(subtotal + (gst?.amount ?? 0)),
+        };
+      });
+
+      rows.push({
+        flatId: flat.id,
+        flatNumber: flat.number,
+        flatType: flat.flatType,
+        floorNumber,
+        wingName,
+        buildingName,
+        ownerName: ownerByFlat.get(flat.id) || null,
+        category: { id: category.id, name: category.name, usage: category.usage, invoicePrefix: category.invoicePrefix },
+        rateApplied,
+        monthly: { lines: monthlyLines, total: monthlySubtotal },
+        bills,
+        subtotal: round(bills.reduce((sum, b) => sum + b.subtotal, 0)),
+        gstAmount: round(bills.reduce((sum, b) => sum + b.gstAmount, 0)),
+        total: round(bills.reduce((sum, b) => sum + b.amount, 0)),
+        conflicts: conflictsByFlat.get(flat.id) || [],
+      });
+    }
+
+    return {
+      activeTenantId,
+      periods: billingPeriods,
+      dueDate: dto.dueDate,
+      penaltyFromDate: dto.penaltyFromDate || null,
+      rows,
+    };
+  }
+
+  /** Dry run: what generation would create, with conflicts, without writing anything. */
+  async previewBills(dto: GenerateBillsDto) {
+    const plan = await this.planBills(dto);
+    const conflicting = plan.rows.filter((r) => r.conflicts.length > 0);
+    const billable = plan.rows.filter((r) => r.conflicts.length === 0);
+    return {
+      periods: plan.periods,
+      dueDate: plan.dueDate,
+      penaltyFromDate: plan.penaltyFromDate,
+      rows: plan.rows,
+      summary: {
+        flats: plan.rows.length,
+        conflictingFlats: conflicting.length,
+        billableFlats: billable.length,
+        billsToCreate: billable.reduce((n, r) => n + r.bills.length, 0),
+        totalAmount: Math.round(billable.reduce((sum, r) => sum + r.total, 0) * 100) / 100,
+        gstAmount: Math.round(billable.reduce((sum, r) => sum + r.gstAmount, 0) * 100) / 100,
+      },
+    };
+  }
+
+  async generateBills(dto: GenerateBillsDto, executorId?: string) {
+    const plan = await this.planBills(dto);
+    const activeTenantId = plan.activeTenantId;
+
+    // Never bill a month twice. Without skipConflicts the whole run is refused and the conflicts are listed.
+    const conflicting = plan.rows.filter((r) => r.conflicts.length > 0);
+    if (conflicting.length > 0 && !dto.skipConflicts) {
+      throw new ConflictException({
+        message: `${conflicting.length} flat(s) already have bills for part of ${dto.periodStart} to ${dto.periodEnd}. Preview the run to see them, or choose to skip those flats.`,
+        conflicts: conflicting.map((r) => ({ flatNumber: r.flatNumber, wingName: r.wingName, bills: r.conflicts })),
+      });
+    }
+    const toBill = plan.rows.filter((r) => r.conflicts.length === 0);
+    if (toBill.length === 0) {
+      throw new BadRequestException('No flats left to bill for this period.');
+    }
+
+    // Ledgers resolution for double-entry postings
+    const receivablesLedger = await this.ledgerResolver.system('RECEIVABLES');
+    const incomeLedger = await this.ledgerResolver.system('MAINTENANCE_INCOME');
+
+    const gstLedger = toBill.some((r) => r.gstAmount > 0) ? await this.ledgerResolver.system('GST_OUTPUT') : null;
+
+    // Charge heads (line item names) are created on first use
+    const headIds = new Map<string, string>();
+    const headId = async (name: string) => {
+      if (!headIds.has(name)) headIds.set(name, (await this.maintenanceRepository.findOrCreateHead(name)).id);
+      return headIds.get(name)!;
+    };
+    for (const row of toBill) for (const b of row.bills) {
+      for (const l of b.lines) await headId(l.head);
+      if (b.gstAmount > 0) await headId(`GST @ ${b.gstRate}%`);
+    }
+
+    const batchId = require('crypto').randomUUID();
+    const year = new Date().getFullYear();
+    let billsCreated = 0;
+    const billNumbersByFlat = new Map<string, string[]>();
+
+    // One transaction for the whole run: either every bill is created or none is.
+    await this.db.transaction(async (tx) => {
+      for (const row of toBill) {
+        const numbers: string[] = [];
+        billNumbersByFlat.set(row.flatId, numbers);
+        for (const b of row.bills) {
+          const billNumber = `${row.category.invoicePrefix || 'INV'}-${year}-${row.flatNumber}-${Math.floor(1000 + Math.random() * 9000)}`;
+          const [bill] = await tx.insert(maintenanceBills).values({
+            societyId: activeTenantId,
+            flatId: row.flatId,
+            billNumber,
+            billingPeriodStart: b.start,
+            billingPeriodEnd: b.end,
+            dueDate: dto.dueDate,
+            totalAmount: b.amount.toFixed(2),
+            subtotalAmount: b.subtotal.toFixed(2),
+            gstRate: b.gstRate === null ? null : b.gstRate.toFixed(2),
+            gstAmount: b.gstAmount > 0 ? b.gstAmount.toFixed(2) : null,
+            billingCategoryId: row.category.id,
+            status: 'UNPAID',
+            penaltyFromDate: dto.penaltyFromDate || null,
+            generationBatchId: batchId,
+          }).returning();
+          numbers.push(billNumber);
+          billsCreated++;
+
+          // Line items: one per charge (already multiplied by the months in this bill), then GST
+          for (const l of b.lines) {
+            if (l.amount === 0) continue;
+            await tx.insert(billItems).values({ id: require('crypto').randomUUID(), societyId: activeTenantId, billId: bill.id, headId: headIds.get(l.head)!, amount: l.amount.toFixed(2) });
+          }
+          if (b.gstAmount > 0) {
+            await tx.insert(billItems).values({ id: require('crypto').randomUUID(), societyId: activeTenantId, billId: bill.id, headId: headIds.get(`GST @ ${b.gstRate}%`)!, amount: b.gstAmount.toFixed(2) });
+          }
+
+          // Double-entry journal: debit receivables (total); credit income (subtotal) and GST payable (tax)
+          const voucherId = require('crypto').randomUUID();
+          await tx.insert(vouchers).values({
+            id: voucherId,
+            societyId: activeTenantId,
+            voucherNumber: `VOU-${billNumber}`,
+            type: 'JOURNAL',
+            date: new Date().toISOString().substring(0, 10),
+            narration: `Maintenance Invoice generation for Flat ${row.flatNumber}${b.gstAmount > 0 ? ` (incl. GST ₹${b.gstAmount.toFixed(2)})` : ''}`,
+          });
+          await tx.insert(transactions).values({ id: require('crypto').randomUUID(), societyId: activeTenantId, voucherId, ledgerId: receivablesLedger.id, type: 'DEBIT', amount: b.amount.toFixed(2) });
+          await tx.insert(transactions).values({ id: require('crypto').randomUUID(), societyId: activeTenantId, voucherId, ledgerId: incomeLedger.id, type: 'CREDIT', amount: b.subtotal.toFixed(2) });
+          if (b.gstAmount > 0 && gstLedger) {
+            await tx.insert(transactions).values({ id: require('crypto').randomUUID(), societyId: activeTenantId, voucherId, ledgerId: gstLedger.id, type: 'CREDIT', amount: b.gstAmount.toFixed(2) });
+          }
+        }
+      }
+    });
 
     await this.logAction({
       societyId: activeTenantId,
       userId: executorId,
       action: 'BILL_SWEEP_GENERATE',
       entityName: 'maintenance_bills',
-      newValues: { count: generatedCount },
+      newValues: { batchId, flats: toBill.length, bills: billsCreated, skippedFlats: conflicting.length },
     });
 
-    // Dispatch real-time board notifications
     await this.notificationService.notifyRoles(
       ['PRESIDENT', 'SECRETARY', 'TREASURER', 'ACCOUNTANT'],
       '📊 Bulk Maintenance Bills Generated',
-      `Batch billing sweep executed. Generated ${generatedCount} maintenance invoices for society flats for period ${dto.periodStart} to ${dto.periodEnd}.`
+      `Batch billing sweep executed. Generated ${billsCreated} maintenance invoices for ${toBill.length} flats for period ${dto.periodStart} to ${dto.periodEnd}.`
     );
 
     return {
-      count: generatedCount,
+      count: toBill.length,
+      billsCreated,
+      skippedFlats: conflicting.map((r) => ({ flatNumber: r.flatNumber, wingName: r.wingName })),
+      batchId,
+      periods: plan.periods,
+      dueDate: dto.dueDate,
+      penaltyFromDate: dto.penaltyFromDate || null,
+      // One row per flat, for the optional Excel / CSV download
+      rows: toBill.map((r) => {
+        const totals = new Map<string, number>();
+        for (const b of r.bills) for (const l of b.lines) totals.set(l.head, Math.round(((totals.get(l.head) || 0) + l.amount) * 100) / 100);
+        return {
+          flatNumber: r.flatNumber,
+          flatType: r.flatType,
+          wingName: r.wingName,
+          buildingName: r.buildingName,
+          floorNumber: r.floorNumber,
+          ownerName: r.ownerName,
+          category: r.category.name,
+          usage: r.category.usage,
+          rateApplied: r.rateApplied,
+          billNumbers: billNumbersByFlat.get(r.flatId) || [],
+          months: r.bills.reduce((n, b) => n + b.months, 0),
+          charges: Object.fromEntries(totals),
+          subtotal: r.subtotal,
+          gstAmount: r.gstAmount,
+          total: r.total,
+        };
+      }),
     };
   }
 
@@ -314,7 +502,20 @@ export class MaintenanceService {
       throw new NotFoundException('Maintenance bill invoice not found in this society.');
     }
 
-    const config = await this.getConfig();
+    const societyConfig = await this.getConfig();
+    // Late-fee rules: the bill's billing category may have its own (e.g. commercial units); unset fields fall back
+    // to the society settings.
+    let billCategory: any = null;
+    if ((details as any).billingCategoryId) {
+      billCategory = await this.billingCategoryService.get((details as any).billingCategoryId).catch(() => null);
+    }
+    const config = {
+      ...societyConfig,
+      penaltyType: billCategory?.penaltyType ?? societyConfig.penaltyType,
+      penaltyInterestRate: billCategory?.penaltyInterestRate ?? societyConfig.penaltyInterestRate,
+      penaltyFlatAmount: billCategory?.penaltyFlatAmount ?? societyConfig.penaltyFlatAmount,
+      penaltyGracePeriodDays: billCategory?.penaltyGracePeriodDays ?? societyConfig.penaltyGracePeriodDays,
+    };
     const dueDateStr = details.dueDate ? String(details.dueDate).substring(0, 10) : null;
     const dueDateObj = dueDateStr ? new Date(dueDateStr) : null;
     const today = new Date();
@@ -325,11 +526,22 @@ export class MaintenanceService {
     let effectiveOverdueDays = 0;
     let calculatedLateFee = 0;
 
+    // A bill can carry its own penalty start date (set at generation, e.g. for advance quarterly bills).
+    // Late fees then accrue from that date; otherwise from the due date plus the society's grace period.
+    const penaltyFromStr = (details as any).penaltyFromDate ? String((details as any).penaltyFromDate).substring(0, 10) : null;
+    const penaltyFromObj = penaltyFromStr ? new Date(penaltyFromStr) : null;
+
     if (dueDateObj && today > dueDateObj && details.status !== 'PAID') {
       isOverdue = true;
       overdueDays = Math.max(0, Math.floor((today.getTime() - dueDateObj.getTime()) / (1000 * 3600 * 24)));
-      const gracePeriod = Number(config.penaltyGracePeriodDays) || 0;
-      effectiveOverdueDays = Math.max(0, overdueDays - gracePeriod);
+      if (penaltyFromObj) {
+        effectiveOverdueDays = today >= penaltyFromObj
+          ? Math.floor((today.getTime() - penaltyFromObj.getTime()) / (1000 * 3600 * 24)) + 1
+          : 0;
+      } else {
+        const gracePeriod = Number(config.penaltyGracePeriodDays) || 0;
+        effectiveOverdueDays = Math.max(0, overdueDays - gracePeriod);
+      }
 
       const remainingPrincipal = Number(details.remainingBalance || details.amount || 0);
 
@@ -356,7 +568,10 @@ export class MaintenanceService {
       effectiveOverdueDays,
       calculatedLateFee,
       totalPayableWithLateFee: (Number(details.remainingBalance || 0) + calculatedLateFee).toFixed(2),
+      penaltyFromDate: penaltyFromStr,
+      billingCategory: billCategory ? { id: billCategory.id, name: billCategory.name, usage: billCategory.usage } : null,
       penaltySettings: {
+        source: billCategory && billCategory.penaltyType ? 'category' : 'society',
         penaltyType: config.penaltyType,
         penaltyInterestRate: config.penaltyInterestRate,
         penaltyFlatAmount: config.penaltyFlatAmount,
@@ -422,10 +637,9 @@ export class MaintenanceService {
       nextStatus = 'PARTIAL';
     }
 
-    const assetLedger = dto.paymentMode === 'CASH'
-      ? await this.maintenanceRepository.findLedgerByName('Cash in Hand Account')
-      : await this.maintenanceRepository.findLedgerByName('Bank Account SBI');
-    const receivablesLedger = await this.maintenanceRepository.findLedgerByName('Maintenance Receivables');
+    // Cash, or the bank account the money was deposited in (the default one if none was picked).
+    const assetLedger = await this.ledgerResolver.money({ mode: dto.paymentMode, bankAccountId: dto.depositAccountId });
+    const receivablesLedger = await this.ledgerResolver.system('RECEIVABLES');
 
     let receiptRecord: any = null;
 
@@ -451,7 +665,7 @@ export class MaintenanceService {
         discountReason: discountReason,
         paymentMode: dto.paymentMode,
         referenceNumber: dto.transactionId || null,
-        depositAccountId: dto.depositAccountId || null,
+        depositAccountId: assetLedger.bankAccountId,
         paymentDate: dto.paymentDate,
         status: isResident ? 'REVIEW' : 'CLEARED',
       }).returning();
@@ -508,7 +722,7 @@ export class MaintenanceService {
       });
       if (flatResident?.ownerId) {
         const ownerUser = await this.db.query.owners.findFirst({
-          where: eq(owners.id, flatResident.ownerId),
+          where: and(eq(owners.id, flatResident.ownerId), eq(owners.societyId, activeTenantId)),
         });
         if (ownerUser?.userId) {
           await this.notificationService.createInAppNotification({
@@ -574,10 +788,9 @@ export class MaintenanceService {
     const createdReceipts: any[] = [];
     const updatedBills: string[] = [];
 
-    const assetLedger = dto.paymentMode === 'CASH'
-      ? await this.maintenanceRepository.findLedgerByName('Cash in Hand Account')
-      : await this.maintenanceRepository.findLedgerByName('Bank Account SBI');
-    const receivablesLedger = await this.maintenanceRepository.findLedgerByName('Maintenance Receivables');
+    // Cash, or the bank account the money was deposited in (the default one if none was picked).
+    const assetLedger = await this.ledgerResolver.money({ mode: dto.paymentMode, bankAccountId: dto.depositAccountId });
+    const receivablesLedger = await this.ledgerResolver.system('RECEIVABLES');
 
     for (const billId of dto.billIds) {
       if (remainingLumpSum <= 0) break;
@@ -619,7 +832,7 @@ export class MaintenanceService {
           amountPaid: payThisBill.toFixed(2),
           paymentMode: dto.paymentMode,
           referenceNumber: dto.transactionId || null,
-          depositAccountId: dto.depositAccountId || null,
+          depositAccountId: assetLedger.bankAccountId,
           paymentDate: dto.paymentDate,
           status: isResident ? 'REVIEW' : 'CLEARED',
         }).returning();
@@ -666,7 +879,7 @@ export class MaintenanceService {
         });
         if (flatResident?.ownerId) {
           const ownerUser = await this.db.query.owners.findFirst({
-            where: eq(owners.id, flatResident.ownerId),
+            where: and(eq(owners.id, flatResident.ownerId), eq(owners.societyId, activeTenantId)),
           });
           if (ownerUser?.userId) {
             await this.notificationService.createInAppNotification({
@@ -860,10 +1073,8 @@ export class MaintenanceService {
       nextStatus = 'PARTIAL';
     }
 
-    const assetLedger = receipt.paymentMode === 'CASH'
-      ? await this.maintenanceRepository.findLedgerByName('Cash in Hand Account')
-      : await this.maintenanceRepository.findLedgerByName('Bank Account SBI');
-    const receivablesLedger = await this.maintenanceRepository.findLedgerByName('Maintenance Receivables');
+    const assetLedger = await this.ledgerResolver.money({ mode: receipt.paymentMode, bankAccountId: receipt.depositAccountId });
+    const receivablesLedger = await this.ledgerResolver.system('RECEIVABLES');
 
     await this.db.transaction(async (tx) => {
       // Approve receipt

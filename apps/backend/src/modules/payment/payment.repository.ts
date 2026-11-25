@@ -83,7 +83,7 @@ export class PaymentRepository extends TenantBaseRepository<typeof receipts> {
         .select({ flatId: flatOwners.flatId })
         .from(flatOwners)
         .innerJoin(owners, eq(flatOwners.ownerId, owners.id))
-        .where(eq(owners.userId, filters.userId));
+        .where(and(eq(owners.userId, filters.userId), eq(owners.societyId, this.activeTenantId)));
 
       const rentedFlats = await this.db
         .select({ flatId: flatTenants.flatId })
@@ -131,29 +131,4 @@ export class PaymentRepository extends TenantBaseRepository<typeof receipts> {
       .where(and(...whereClauses));
   }
 
-  /**
-   * Resolves a double-entry ledger by name.
-   */
-  async findLedgerByName(name: string) {
-    const ledger = await this.db
-      .select()
-      .from(ledgers)
-      .where(
-        and(
-          eq(ledgers.name, name),
-          eq(ledgers.societyId, this.activeTenantId)
-        )
-      );
-
-    if (ledger.length > 0) return ledger[0];
-
-    const newLedgers = await this.db.insert(ledgers).values({
-      id: require('crypto').randomUUID(),
-      societyId: this.activeTenantId,
-      name,
-      group: name.includes('Income') ? 'INCOME' : name.includes('Receivables') ? 'ASSETS' : 'LIABILITIES',
-    }).returning();
-
-    return newLedgers[0];
-  }
 }

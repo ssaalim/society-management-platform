@@ -5,7 +5,7 @@ import {
   maintenanceBills, 
   societies 
 } from '../../../database/schema';
-import { eq, and, sql } from 'drizzle-orm';
+import { eq, and, sql, notInArray } from 'drizzle-orm';
 import { ClsService } from 'nestjs-cls';
 
 @Injectable()
@@ -96,7 +96,7 @@ Management Committee
     const expensesList = await this.db
       .select()
       .from(expenses)
-      .where(eq(expenses.societyId, activeTenantId));
+      .where(and(eq(expenses.societyId, activeTenantId), notInArray(expenses.status, ['DRAFT', 'SKIPPED'])));
 
     const amounts = expensesList.map((e) => Number(e.amount) || 0);
     if (amounts.length === 0) {

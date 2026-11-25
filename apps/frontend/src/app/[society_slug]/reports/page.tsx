@@ -20,7 +20,7 @@ const pct = (n: number) => `${n.toFixed(1)}%`;
 function MiniBar({ value, max, color }: { value: number; max: number; color: string }) {
   const w = max > 0 ? Math.min(100, (value / max) * 100) : 0;
   return (
-    <div className="w-full bg-slate-800/60 rounded-full h-1.5 overflow-hidden">
+    <div className="w-full bg-slate-100 dark:bg-slate-800/60 rounded-full h-1.5 overflow-hidden">
       <div className={`h-full rounded-full transition-all duration-700 ${color}`} style={{ width: `${w}%` }} />
     </div>
   );
@@ -33,7 +33,7 @@ function StatCard({ label, value, sub, icon: Icon, color, trend }: {
     <div className={`relative p-4 rounded-xl border bg-white dark:bg-slate-950/40 space-y-2 overflow-hidden group hover:border-slate-300 dark:hover:border-slate-700 transition-all border-slate-200 dark:border-slate-800 shadow-xs`}>
       <div className={`absolute -top-3 -right-3 p-4 rounded-full opacity-10 ${color.replace('text-', 'bg-')}`} />
       <div className="flex items-center justify-between">
-        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">{label}</span>
+        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">{label}</span>
         <Icon className={`h-4 w-4 ${color}`} />
       </div>
       <div className={`text-xl font-black ${color}`}>{value}</div>
@@ -168,8 +168,6 @@ export default function ReportsCenterPage() {
 
   return (
     <main className="relative flex min-h-screen flex-col items-center justify-start overflow-x-hidden w-full py-4 sm:py-5 px-3 sm:px-5 lg:px-6">
-      {/* Background */}
-      <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
 
       <div className="w-full max-w-[1600px] mx-auto space-y-3.5 z-10">
 
@@ -180,7 +178,7 @@ export default function ReportsCenterPage() {
               <BarChart3 className="h-6 w-6" />
             </div>
             <div>
-              <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">Reports & Analytics Center</h2>
+              <h2 className="text-xl font-normal text-slate-900 dark:text-slate-100">Reports & Analytics Center</h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Society financial intelligence, occupancy, complaints & asset insights</p>
             </div>
           </div>
@@ -247,13 +245,13 @@ export default function ReportsCenterPage() {
 
                   {/* ── Collection Metrics ── */}
                   <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-950/20 p-4 space-y-3 shadow-xs">
-                    <div className="flex justify-between items-center border-b border-slate-800/40 pb-3">
-                      <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                        <TrendingUp className="h-4 w-4 text-emerald-400" /> Collection Metrics
+                    <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800/40 pb-3">
+                      <h3 className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                        <TrendingUp className="h-4 w-4 text-emerald-600 dark:text-emerald-400" /> Collection Metrics
                       </h3>
                       <button
                         onClick={() => handleDownloadCSV('collection')}
-                        className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1 transition-colors"
+                        className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-semibold flex items-center gap-1 transition-colors"
                       >
                         Export <FileDown className="h-3.5 w-3.5" />
                       </button>
@@ -262,71 +260,71 @@ export default function ReportsCenterPage() {
                     {collectionData.length === 0 ? (
                       <p className="text-xs text-slate-500 py-4 text-center">No collection data yet.</p>
                     ) : (
-                      <ul className="divide-y divide-slate-800/40 text-xs">
+                      <ul className="divide-y divide-slate-200 dark:divide-slate-800/40 text-xs">
                         {collectionData.map((row: any, idx: number) => (
                           <li key={idx} className="py-2.5 flex justify-between items-center gap-2">
                             <span className="text-slate-500 font-bold">
                               {row.paymentMode}
                               <span className="text-slate-600 font-normal ml-1">({row.count} txns)</span>
                             </span>
-                            <span className="font-mono text-slate-200 font-semibold">₹ {Number(row.totalCollected).toLocaleString('en-IN')}</span>
+                            <span className="font-mono text-slate-900 dark:text-slate-200 font-semibold">₹ {Number(row.totalCollected).toLocaleString('en-IN')}</span>
                           </li>
                         ))}
-                        <li className="py-2.5 flex justify-between items-center font-bold border-t-2 border-slate-700 mt-1 pt-3">
-                          <span className="text-emerald-400">Total Collected</span>
-                          <span className="font-mono text-emerald-300">₹ {totalCollected.toLocaleString('en-IN')}</span>
+                        <li className="py-2.5 flex justify-between items-center font-bold border-t-2 border-slate-300 dark:border-slate-700 mt-1 pt-3">
+                          <span className="text-emerald-600 dark:text-emerald-400">Total Collected</span>
+                          <span className="font-mono text-emerald-700 dark:text-emerald-300">₹ {totalCollected.toLocaleString('en-IN')}</span>
                         </li>
                       </ul>
                     )}
                   </div>
 
                   {/* ── Defaulters Registry ── */}
-                  <div className="border border-slate-800 rounded-xl bg-slate-950/20 p-6 space-y-4">
-                    <div className="flex justify-between items-center border-b border-slate-800/40 pb-3">
-                      <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                        <AlertTriangle className="h-4 w-4 text-red-400" /> Defaulters Registry
+                  <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950/20 p-6 space-y-4">
+                    <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800/40 pb-3">
+                      <h3 className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                        <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" /> Defaulters Registry
                       </h3>
                       <button
                         onClick={() => handleDownloadCSV('defaulter')}
-                        className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1 transition-colors"
+                        className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-semibold flex items-center gap-1 transition-colors"
                       >
                         Export <FileDown className="h-3.5 w-3.5" />
                       </button>
                     </div>
 
                     {defaulterData.length === 0 ? (
-                      <p className="text-xs text-emerald-400 font-semibold py-4 text-center">🎉 No defaulters! All dues are cleared.</p>
+                      <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold py-4 text-center">🎉 No defaulters! All dues are cleared.</p>
                     ) : (
-                      <ul className="divide-y divide-slate-800/40 text-xs">
+                      <ul className="divide-y divide-slate-200 dark:divide-slate-800/40 text-xs">
                         {defaulterData.slice(0, 8).map((row: any, idx: number) => (
                           <li key={idx} className="py-2.5 flex justify-between items-center gap-2">
                             <span className="text-slate-500 font-bold">
                               Flat {row.flatNumber}
                               <span className="text-slate-600 font-normal ml-1">({row.unpaidCount} bills)</span>
                             </span>
-                            <span className="font-mono text-red-400 font-semibold">₹ {Number(row.totalOutstanding).toLocaleString('en-IN')}</span>
+                            <span className="font-mono text-red-600 dark:text-red-400 font-semibold">₹ {Number(row.totalOutstanding).toLocaleString('en-IN')}</span>
                           </li>
                         ))}
                         {defaulterData.length > 8 && (
                           <li className="pt-2 text-center">
-                            <button onClick={() => setActiveTab('defaulters')} className="text-[11px] text-indigo-400 hover:text-indigo-300 font-semibold">
+                            <button onClick={() => setActiveTab('defaulters')} className="text-[11px] text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-semibold">
                               + {defaulterData.length - 8} more → View All
                             </button>
                           </li>
                         )}
-                        <li className="py-2.5 flex justify-between items-center font-bold border-t-2 border-slate-700 mt-1 pt-3">
-                          <span className="text-red-400">{defaulterData.length} Defaulter Flats</span>
-                          <span className="font-mono text-red-300">₹ {totalOutstanding.toLocaleString('en-IN')}</span>
+                        <li className="py-2.5 flex justify-between items-center font-bold border-t-2 border-slate-300 dark:border-slate-700 mt-1 pt-3">
+                          <span className="text-red-600 dark:text-red-400">{defaulterData.length} Defaulter Flats</span>
+                          <span className="font-mono text-red-700 dark:text-red-300">₹ {totalOutstanding.toLocaleString('en-IN')}</span>
                         </li>
                       </ul>
                     )}
                   </div>
 
                   {/* ── Occupancy Ratios ── */}
-                  <div className="border border-slate-800 rounded-xl bg-slate-950/20 p-6 space-y-4">
-                    <div className="flex justify-between items-center border-b border-slate-800/40 pb-3">
-                      <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                        <Users className="h-4 w-4 text-indigo-400" /> Occupancy Ratios
+                  <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950/20 p-6 space-y-4">
+                    <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800/40 pb-3">
+                      <h3 className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                        <Users className="h-4 w-4 text-indigo-600 dark:text-indigo-400" /> Occupancy Ratios
                       </h3>
                     </div>
 
@@ -334,16 +332,16 @@ export default function ReportsCenterPage() {
                       <p className="text-xs text-slate-500 py-4 text-center">No occupancy data available.</p>
                     ) : (
                       <>
-                        <ul className="divide-y divide-slate-800/40 text-xs">
+                        <ul className="divide-y divide-slate-200 dark:divide-slate-800/40 text-xs">
                           {occupancyData.map((row: any, idx: number) => {
                             const total = occupancyData.reduce((s: number, r: any) => s + r.count, 0);
-                            const colors = ['text-emerald-400', 'text-indigo-400', 'text-amber-400'];
+                            const colors = ['text-emerald-600 dark:text-emerald-400', 'text-indigo-600 dark:text-indigo-400', 'text-amber-600 dark:text-amber-400'];
                             const bars = ['bg-emerald-500', 'bg-indigo-500', 'bg-amber-500'];
                             return (
                               <li key={idx} className="py-2.5 space-y-1">
                                 <div className="flex justify-between">
                                   <span className={`font-bold ${colors[idx % colors.length]}`}>{row.status.replace(/_/g, ' ')}</span>
-                                  <span className="font-bold text-slate-200">{row.count} Flats</span>
+                                  <span className="font-bold text-slate-900 dark:text-slate-200">{row.count} Flats</span>
                                 </div>
                                 <MiniBar value={row.count} max={total} color={bars[idx % bars.length]} />
                                 <div className="text-[10px] text-slate-500 text-right">
@@ -353,9 +351,9 @@ export default function ReportsCenterPage() {
                             );
                           })}
                         </ul>
-                        <div className="border-t border-slate-800/40 pt-2 text-xs flex justify-between text-slate-500 font-semibold">
+                        <div className="border-t border-slate-200 dark:border-slate-800/40 pt-2 text-xs flex justify-between text-slate-500 font-semibold">
                           <span>Total Flats</span>
-                          <span className="text-slate-300">{occupancyData.reduce((s: number, r: any) => s + r.count, 0)}</span>
+                          <span className="text-slate-700 dark:text-slate-300">{occupancyData.reduce((s: number, r: any) => s + r.count, 0)}</span>
                         </div>
                       </>
                     )}
@@ -370,21 +368,21 @@ export default function ReportsCenterPage() {
               <div className="space-y-6">
                 {/* KPI Summary Tiles */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-                  <StatCard label="Total Collected" value={`₹${(totalCollected/100000).toFixed(1)}L`} sub={`${totalTransactions} transactions`} icon={Wallet} color="text-emerald-400" trend="up" />
-                  <StatCard label="Outstanding" value={`₹${(totalOutstanding/100000).toFixed(1)}L`} sub={`${totalDefaulters} defaulter flats`} icon={AlertTriangle} color="text-red-400" trend="down" />
-                  <StatCard label="Collection Efficiency" value={pct(maintenanceStatus?.summary?.collectionEfficiency || 0)} sub="of total billed" icon={Activity} color="text-indigo-400" />
-                  <StatCard label="Total Complaints" value={String(complaintsData?.summary?.total || 0)} sub={`${complaintsData?.summary?.resolutionRate || 0}% resolved`} icon={AlertCircle} color="text-amber-400" />
-                  <StatCard label="Asset Net Value" value={`₹${fmt(assetData?.summary?.netBookValue || 0)}`} sub={`${assetData?.summary?.totalAssets || 0} assets`} icon={Package} color="text-violet-400" />
-                  <StatCard label="Late Fees Collected" value={`₹${fmt(lateFeeData?.totalLateFeeCollected || 0)}`} sub={`₹${fmt(lateFeeData?.totalLateFeeWaived || 0)} waived`} icon={Clock} color="text-rose-400" />
+                  <StatCard label="Total Collected" value={`₹${(totalCollected/100000).toFixed(1)}L`} sub={`${totalTransactions} transactions`} icon={Wallet} color="text-emerald-600 dark:text-emerald-400" trend="up" />
+                  <StatCard label="Outstanding" value={`₹${(totalOutstanding/100000).toFixed(1)}L`} sub={`${totalDefaulters} defaulter flats`} icon={AlertTriangle} color="text-red-600 dark:text-red-400" trend="down" />
+                  <StatCard label="Collection Efficiency" value={pct(maintenanceStatus?.summary?.collectionEfficiency || 0)} sub="of total billed" icon={Activity} color="text-indigo-600 dark:text-indigo-400" />
+                  <StatCard label="Total Complaints" value={String(complaintsData?.summary?.total || 0)} sub={`${complaintsData?.summary?.resolutionRate || 0}% resolved`} icon={AlertCircle} color="text-amber-600 dark:text-amber-400" />
+                  <StatCard label="Asset Net Value" value={`₹${fmt(assetData?.summary?.netBookValue || 0)}`} sub={`${assetData?.summary?.totalAssets || 0} assets`} icon={Package} color="text-violet-600 dark:text-violet-400" />
+                  <StatCard label="Late Fees Collected" value={`₹${fmt(lateFeeData?.totalLateFeeCollected || 0)}`} sub={`₹${fmt(lateFeeData?.totalLateFeeWaived || 0)} waived`} icon={Clock} color="text-rose-600 dark:text-rose-400" />
                 </div>
 
                 {/* Monthly Trend Bar Chart */}
-                <div className="border border-slate-800 rounded-xl bg-slate-950/20 p-5 space-y-4">
+                <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950/20 p-5 space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                      <TrendingUp className="h-4 w-4 text-emerald-400" /> 12-Month Collection Trend
+                    <h3 className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                      <TrendingUp className="h-4 w-4 text-emerald-600 dark:text-emerald-400" /> 12-Month Collection Trend
                     </h3>
-                    <button onClick={() => handleDownloadCSV('monthly-trend')} className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1">
+                    <button onClick={() => handleDownloadCSV('monthly-trend')} className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 flex items-center gap-1">
                       Export CSV <FileDown className="h-3.5 w-3.5" />
                     </button>
                   </div>
@@ -404,7 +402,7 @@ export default function ReportsCenterPage() {
                               {row.month?.slice(5)}
                             </span>
                             {/* Tooltip */}
-                            <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 hidden group-hover:block z-20 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 shadow-xl whitespace-nowrap text-[10px] text-slate-200 font-mono">
+                            <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 hidden group-hover:block z-20 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 shadow-xl whitespace-nowrap text-[10px] text-slate-900 dark:text-slate-200 font-mono">
                               ₹{fmt(row.totalCollected)} • {row.count} receipts
                             </div>
                           </div>
@@ -418,15 +416,15 @@ export default function ReportsCenterPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
                   {/* Collection by mode */}
-                  <div className="border border-slate-800 rounded-xl bg-slate-950/20 p-4 space-y-3">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                      <PieChart className="h-4 w-4 text-indigo-400" /> Payment Mode Split
+                  <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950/20 p-4 space-y-3">
+                    <h3 className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                      <PieChart className="h-4 w-4 text-indigo-600 dark:text-indigo-400" /> Payment Mode Split
                     </h3>
                     {collectionData.map((row, i) => (
                       <div key={i} className="space-y-1">
                         <div className="flex justify-between text-xs">
                           <span className="text-slate-400 font-semibold">{row.paymentMode}</span>
-                          <span className="text-slate-200 font-mono">₹{fmt(row.totalCollected)}</span>
+                          <span className="text-slate-900 dark:text-slate-200 font-mono">₹{fmt(row.totalCollected)}</span>
                         </div>
                         <MiniBar value={Number(row.totalCollected)} max={totalCollected} color="bg-indigo-500" />
                       </div>
@@ -434,25 +432,25 @@ export default function ReportsCenterPage() {
                   </div>
 
                   {/* Complaints status */}
-                  <div className="border border-slate-800 rounded-xl bg-slate-950/20 p-4 space-y-3">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                      <AlertCircle className="h-4 w-4 text-amber-400" /> Complaints Status
+                  <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950/20 p-4 space-y-3">
+                    <h3 className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                      <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" /> Complaints Status
                     </h3>
                     {complaintsData.byStatus.map((row: any, i: number) => (
                       <div key={i} className="flex justify-between items-center text-xs">
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${STATUS_BG[row.status] || 'bg-slate-900/40 border-slate-800'} ${STATUS_COLORS[row.status] || 'text-slate-400'}`}>
+                        <span className={`px-2 py-0.5 rounded-sm text-[10px] font-bold border ${STATUS_BG[row.status] || 'bg-slate-50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800'} ${STATUS_COLORS[row.status] || 'text-slate-400'}`}>
                           {row.status}
                         </span>
-                        <span className="font-bold text-slate-200">{row.count} complaints</span>
+                        <span className="font-bold text-slate-900 dark:text-slate-200">{row.count} complaints</span>
                       </div>
                     ))}
                     {complaintsData.byStatus.length === 0 && <p className="text-xs text-slate-500">No complaints data.</p>}
                   </div>
 
                   {/* Occupancy split */}
-                  <div className="border border-slate-800 rounded-xl bg-slate-950/20 p-4 space-y-3">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                      <Building className="h-4 w-4 text-violet-400" /> Flat Occupancy
+                  <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950/20 p-4 space-y-3">
+                    <h3 className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                      <Building className="h-4 w-4 text-violet-600 dark:text-violet-400" /> Flat Occupancy
                     </h3>
                     {occupancyData.map((row, i) => {
                       const totalFlats = occupancyData.reduce((s, r) => s + r.count, 0);
@@ -461,7 +459,7 @@ export default function ReportsCenterPage() {
                         <div key={i} className="space-y-1">
                           <div className="flex justify-between text-xs">
                             <span className="text-slate-400 font-semibold">{row.status.replace(/_/g, ' ')}</span>
-                            <span className="text-slate-200 font-bold">{row.count} flats</span>
+                            <span className="text-slate-900 dark:text-slate-200 font-bold">{row.count} flats</span>
                           </div>
                           <MiniBar value={row.count} max={totalFlats} color={colors[i % colors.length]} />
                         </div>
@@ -476,35 +474,35 @@ export default function ReportsCenterPage() {
             {activeTab === 'collection' && (
               <div className="space-y-5">
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <StatCard label="Total Collected" value={`₹${fmt(totalCollected)}`} sub={`${totalTransactions} transactions`} icon={Wallet} color="text-emerald-400" />
-                  <StatCard label="Online / Digital" value={`₹${fmt(collectionData.filter(r => ['UPI', 'RAZORPAY', 'NEFT', 'CARD'].includes(r.paymentMode)).reduce((s, r) => s + Number(r.totalCollected), 0))}`} sub="UPI, NEFT, Card, Razorpay" icon={Activity} color="text-indigo-400" />
-                  <StatCard label="Cash Collections" value={`₹${fmt(collectionData.filter(r => r.paymentMode === 'CASH').reduce((s, r) => s + Number(r.totalCollected), 0))}`} sub="Physical cash received" icon={Coins} color="text-amber-400" />
-                  <StatCard label="Cheque / NEFT" value={`₹${fmt(collectionData.filter(r => ['CHEQUE', 'NEFT'].includes(r.paymentMode)).reduce((s, r) => s + Number(r.totalCollected), 0))}`} sub="Bank instruments" icon={FileText} color="text-violet-400" />
+                  <StatCard label="Total Collected" value={`₹${fmt(totalCollected)}`} sub={`${totalTransactions} transactions`} icon={Wallet} color="text-emerald-600 dark:text-emerald-400" />
+                  <StatCard label="Online / Digital" value={`₹${fmt(collectionData.filter(r => ['UPI', 'RAZORPAY', 'NEFT', 'CARD'].includes(r.paymentMode)).reduce((s, r) => s + Number(r.totalCollected), 0))}`} sub="UPI, NEFT, Card, Razorpay" icon={Activity} color="text-indigo-600 dark:text-indigo-400" />
+                  <StatCard label="Cash Collections" value={`₹${fmt(collectionData.filter(r => r.paymentMode === 'CASH').reduce((s, r) => s + Number(r.totalCollected), 0))}`} sub="Physical cash received" icon={Coins} color="text-amber-600 dark:text-amber-400" />
+                  <StatCard label="Cheque / NEFT" value={`₹${fmt(collectionData.filter(r => ['CHEQUE', 'NEFT'].includes(r.paymentMode)).reduce((s, r) => s + Number(r.totalCollected), 0))}`} sub="Bank instruments" icon={FileText} color="text-violet-600 dark:text-violet-400" />
                 </div>
 
                 {/* Monthly Trend */}
-                <div className="border border-slate-800 rounded-xl bg-slate-950/20 p-5 space-y-4">
+                <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950/20 p-5 space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                      <TrendingUp className="h-4 w-4 text-emerald-400" /> Monthly Collection Trend (Last 12 Months)
+                    <h3 className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                      <TrendingUp className="h-4 w-4 text-emerald-600 dark:text-emerald-400" /> Monthly Collection Trend (Last 12 Months)
                     </h3>
-                    <button onClick={() => handleDownloadCSV('monthly-trend')} className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1">Export <FileDown className="h-3.5 w-3.5" /></button>
+                    <button onClick={() => handleDownloadCSV('monthly-trend')} className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 flex items-center gap-1">Export <FileDown className="h-3.5 w-3.5" /></button>
                   </div>
                   <div className="overflow-x-auto">
                     <table className="w-full text-xs text-left border-collapse">
-                      <thead><tr className="border-b border-slate-800 text-slate-500 font-semibold">
+                      <thead><tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 font-semibold">
                         <th className="p-2">Month</th>
                         <th className="p-2 text-right">Receipts</th>
                         <th className="p-2 text-right">Amount Collected</th>
                         <th className="p-2">Progress</th>
                       </tr></thead>
-                      <tbody className="divide-y divide-slate-800/40">
+                      <tbody className="divide-y divide-slate-200 dark:divide-slate-800/40">
                         {monthlyTrend.length === 0 && <tr><td colSpan={4} className="p-4 text-center text-slate-500">No data for the last 12 months.</td></tr>}
                         {monthlyTrend.map((row, i) => (
-                          <tr key={i} className="text-slate-300 hover:bg-slate-900/30">
+                          <tr key={i} className="text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900/30">
                             <td className="p-2 font-mono font-bold">{row.month}</td>
-                            <td className="p-2 text-right text-indigo-400">{row.count}</td>
-                            <td className="p-2 text-right font-mono font-bold text-emerald-400">₹{fmt(row.totalCollected)}</td>
+                            <td className="p-2 text-right text-indigo-600 dark:text-indigo-400">{row.count}</td>
+                            <td className="p-2 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">₹{fmt(row.totalCollected)}</td>
                             <td className="p-2 w-40"><MiniBar value={Number(row.totalCollected)} max={maxMonthly} color="bg-emerald-500" /></td>
                           </tr>
                         ))}
@@ -514,12 +512,12 @@ export default function ReportsCenterPage() {
                 </div>
 
                 {/* Collection by Mode */}
-                <div className="border border-slate-800 rounded-xl bg-slate-950/20 p-5 space-y-3">
+                <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950/20 p-5 space-y-3">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                      <PieChart className="h-4 w-4 text-indigo-400" /> Collection By Payment Mode
+                    <h3 className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                      <PieChart className="h-4 w-4 text-indigo-600 dark:text-indigo-400" /> Collection By Payment Mode
                     </h3>
-                    <button onClick={() => handleDownloadCSV('collection')} className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1">Export <FileDown className="h-3.5 w-3.5" /></button>
+                    <button onClick={() => handleDownloadCSV('collection')} className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 flex items-center gap-1">Export <FileDown className="h-3.5 w-3.5" /></button>
                   </div>
                   {collectionData.map((row, i) => (
                     <div key={i} className="flex items-center gap-3">
@@ -531,7 +529,7 @@ export default function ReportsCenterPage() {
                           <span>{totalCollected > 0 ? pct((Number(row.totalCollected) / totalCollected) * 100) : '0%'}</span>
                         </div>
                       </div>
-                      <span className="w-28 text-right text-xs font-mono font-bold text-slate-200">₹{fmt(row.totalCollected)}</span>
+                      <span className="w-28 text-right text-xs font-mono font-bold text-slate-900 dark:text-slate-200">₹{fmt(row.totalCollected)}</span>
                     </div>
                   ))}
                 </div>
@@ -542,25 +540,25 @@ export default function ReportsCenterPage() {
             {activeTab === 'maintenance' && (
               <div className="space-y-5">
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <StatCard label="Total Billed" value={`₹${fmt(maintenanceStatus?.summary?.totalBilled || 0)}`} icon={Receipt} color="text-slate-300" />
-                  <StatCard label="Collected" value={`₹${fmt(maintenanceStatus?.summary?.totalCollected || 0)}`} sub="Fully paid invoices" icon={CheckCircle} color="text-emerald-400" />
-                  <StatCard label="Outstanding" value={`₹${fmt(maintenanceStatus?.summary?.totalOutstanding || 0)}`} sub="Unpaid + Partial" icon={AlertTriangle} color="text-red-400" />
-                  <StatCard label="Efficiency" value={pct(maintenanceStatus?.summary?.collectionEfficiency || 0)} sub="of total billed recovered" icon={Activity} color="text-indigo-400" />
+                  <StatCard label="Total Billed" value={`₹${fmt(maintenanceStatus?.summary?.totalBilled || 0)}`} icon={Receipt} color="text-slate-700 dark:text-slate-300" />
+                  <StatCard label="Collected" value={`₹${fmt(maintenanceStatus?.summary?.totalCollected || 0)}`} sub="Fully paid invoices" icon={CheckCircle} color="text-emerald-600 dark:text-emerald-400" />
+                  <StatCard label="Outstanding" value={`₹${fmt(maintenanceStatus?.summary?.totalOutstanding || 0)}`} sub="Unpaid + Partial" icon={AlertTriangle} color="text-red-600 dark:text-red-400" />
+                  <StatCard label="Efficiency" value={pct(maintenanceStatus?.summary?.collectionEfficiency || 0)} sub="of total billed recovered" icon={Activity} color="text-indigo-600 dark:text-indigo-400" />
                 </div>
 
-                <div className="border border-slate-800 rounded-xl bg-slate-950/20 p-5 space-y-3">
+                <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950/20 p-5 space-y-3">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                      <Scale className="h-4 w-4 text-indigo-400" /> Invoice Status Breakdown
+                    <h3 className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                      <Scale className="h-4 w-4 text-indigo-600 dark:text-indigo-400" /> Invoice Status Breakdown
                     </h3>
-                    <button onClick={() => handleDownloadCSV('maintenance-status')} className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1">Export <FileDown className="h-3.5 w-3.5" /></button>
+                    <button onClick={() => handleDownloadCSV('maintenance-status')} className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 flex items-center gap-1">Export <FileDown className="h-3.5 w-3.5" /></button>
                   </div>
                   {maintenanceStatus.breakdown.map((row: any, i: number) => (
-                    <div key={i} className={`flex items-center gap-3 p-3 rounded-lg border ${STATUS_BG[row.status] || 'bg-slate-900/40 border-slate-800'}`}>
+                    <div key={i} className={`flex items-center gap-3 p-3 rounded-lg border ${STATUS_BG[row.status] || 'bg-slate-50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800'}`}>
                       <div className="flex-1">
                         <div className="flex justify-between mb-1">
                           <span className={`text-xs font-bold ${STATUS_COLORS[row.status] || 'text-slate-400'}`}>{row.status}</span>
-                          <span className="text-xs text-slate-200 font-mono">₹{fmt(row.totalAmount)}</span>
+                          <span className="text-xs text-slate-900 dark:text-slate-200 font-mono">₹{fmt(row.totalAmount)}</span>
                         </div>
                         <MiniBar value={Number(row.totalAmount)} max={maintenanceStatus.summary.totalBilled || 1} color={row.status === 'PAID' ? 'bg-emerald-500' : row.status === 'PARTIAL' ? 'bg-amber-500' : 'bg-red-500'} />
                         <div className="text-[10px] text-slate-500 mt-0.5">{row.count} invoices</div>
@@ -576,35 +574,35 @@ export default function ReportsCenterPage() {
             {activeTab === 'defaulters' && (
               <div className="space-y-5">
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  <StatCard label="Defaulter Flats" value={String(totalDefaulters)} sub="with unpaid invoices" icon={ShieldAlert} color="text-red-400" />
-                  <StatCard label="Total Outstanding" value={`₹${fmt(totalOutstanding)}`} sub="across all defaulters" icon={AlertTriangle} color="text-amber-400" />
-                  <StatCard label="Avg Per Flat" value={`₹${fmt(totalDefaulters > 0 ? totalOutstanding / totalDefaulters : 0)}`} sub="average outstanding" icon={Coins} color="text-rose-400" />
+                  <StatCard label="Defaulter Flats" value={String(totalDefaulters)} sub="with unpaid invoices" icon={ShieldAlert} color="text-red-600 dark:text-red-400" />
+                  <StatCard label="Total Outstanding" value={`₹${fmt(totalOutstanding)}`} sub="across all defaulters" icon={AlertTriangle} color="text-amber-600 dark:text-amber-400" />
+                  <StatCard label="Avg Per Flat" value={`₹${fmt(totalDefaulters > 0 ? totalOutstanding / totalDefaulters : 0)}`} sub="average outstanding" icon={Coins} color="text-rose-600 dark:text-rose-400" />
                 </div>
 
-                <div className="border border-slate-800 rounded-xl bg-slate-950/20 p-5 space-y-3">
+                <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950/20 p-5 space-y-3">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                      <AlertTriangle className="h-4 w-4 text-red-400" /> Defaulters Registry
+                    <h3 className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                      <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" /> Defaulters Registry
                     </h3>
-                    <button onClick={() => handleDownloadCSV('defaulter')} className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1">Export <FileDown className="h-3.5 w-3.5" /></button>
+                    <button onClick={() => handleDownloadCSV('defaulter')} className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 flex items-center gap-1">Export <FileDown className="h-3.5 w-3.5" /></button>
                   </div>
                   <div className="overflow-x-auto">
                     <table className="w-full text-xs text-left border-collapse">
-                      <thead><tr className="border-b border-slate-800 text-slate-500 font-semibold">
+                      <thead><tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 font-semibold">
                         <th className="p-2">Flat No.</th>
                         <th className="p-2 text-center">Unpaid Bills</th>
                         <th className="p-2 text-right">Outstanding (₹)</th>
                         <th className="p-2">Balance Bar</th>
                       </tr></thead>
-                      <tbody className="divide-y divide-slate-800/40">
-                        {defaulterData.length === 0 && <tr><td colSpan={4} className="p-4 text-center text-emerald-400 font-semibold">🎉 No defaulters! All flats are up to date.</td></tr>}
+                      <tbody className="divide-y divide-slate-200 dark:divide-slate-800/40">
+                        {defaulterData.length === 0 && <tr><td colSpan={4} className="p-4 text-center text-emerald-600 dark:text-emerald-400 font-semibold">🎉 No defaulters! All flats are up to date.</td></tr>}
                         {defaulterData.sort((a, b) => Number(b.totalOutstanding) - Number(a.totalOutstanding)).map((row, i) => (
-                          <tr key={i} className="text-slate-300 hover:bg-slate-900/30">
-                            <td className="p-2 font-bold text-slate-100">Flat {row.flatNumber}</td>
+                          <tr key={i} className="text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900/30">
+                            <td className="p-2 font-bold text-slate-900 dark:text-slate-100">Flat {row.flatNumber}</td>
                             <td className="p-2 text-center">
-                              <span className="bg-red-950/60 border border-red-900/40 text-red-400 text-[10px] font-bold px-1.5 py-0.5 rounded-full">{row.unpaidCount}</span>
+                              <span className="bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-900/40 text-red-600 dark:text-red-400 text-[10px] font-bold px-1.5 py-0.5 rounded-sm">{row.unpaidCount}</span>
                             </td>
-                            <td className="p-2 text-right font-mono font-black text-red-400">₹{fmt(row.totalOutstanding)}</td>
+                            <td className="p-2 text-right font-mono font-black text-red-600 dark:text-red-400">₹{fmt(row.totalOutstanding)}</td>
                             <td className="p-2 w-32"><MiniBar value={Number(row.totalOutstanding)} max={totalOutstanding} color="bg-red-500" /></td>
                           </tr>
                         ))}
@@ -619,15 +617,15 @@ export default function ReportsCenterPage() {
             {activeTab === 'complaints' && (
               <div className="space-y-5">
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <StatCard label="Total Complaints" value={String(complaintsData?.summary?.total || 0)} icon={AlertCircle} color="text-amber-400" />
-                  <StatCard label="Resolved" value={String(complaintsData?.summary?.resolved || 0)} sub="closed or resolved" icon={CheckCircle} color="text-emerald-400" />
-                  <StatCard label="Pending" value={String(complaintsData?.summary?.pending || 0)} sub="open or in-progress" icon={Clock} color="text-red-400" />
-                  <StatCard label="Resolution Rate" value={pct(complaintsData?.summary?.resolutionRate || 0)} sub="of all complaints" icon={Activity} color="text-indigo-400" />
+                  <StatCard label="Total Complaints" value={String(complaintsData?.summary?.total || 0)} icon={AlertCircle} color="text-amber-600 dark:text-amber-400" />
+                  <StatCard label="Resolved" value={String(complaintsData?.summary?.resolved || 0)} sub="closed or resolved" icon={CheckCircle} color="text-emerald-600 dark:text-emerald-400" />
+                  <StatCard label="Pending" value={String(complaintsData?.summary?.pending || 0)} sub="open or in-progress" icon={Clock} color="text-red-600 dark:text-red-400" />
+                  <StatCard label="Resolution Rate" value={pct(complaintsData?.summary?.resolutionRate || 0)} sub="of all complaints" icon={Activity} color="text-indigo-600 dark:text-indigo-400" />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-950/20 p-5 space-y-3 shadow-xs">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-300">By Status</h3>
+                    <h3 className="text-xs font-bold text-slate-800 dark:text-slate-300">By Status</h3>
                     {complaintsData.byStatus.map((row: any, i: number) => (
                       <div key={i} className={`flex justify-between items-center p-2.5 rounded-lg border text-xs ${STATUS_BG[row.status] || 'bg-slate-50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800'}`}>
                         <span className={`font-bold ${STATUS_COLORS[row.status] || 'text-slate-700 dark:text-slate-400'}`}>{row.status}</span>
@@ -638,7 +636,7 @@ export default function ReportsCenterPage() {
                   </div>
 
                   <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-950/20 p-5 space-y-3 shadow-xs">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-300">By Priority</h3>
+                    <h3 className="text-xs font-bold text-slate-800 dark:text-slate-300">By Priority</h3>
                     {complaintsData.byPriority.map((row: any, i: number) => (
                       <div key={i} className={`flex justify-between items-center p-2.5 rounded-lg border text-xs ${STATUS_BG[row.priority] || 'bg-slate-50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800'}`}>
                         <span className={`font-bold ${STATUS_COLORS[row.priority] || 'text-slate-700 dark:text-slate-400'}`}>{row.priority}</span>
@@ -662,7 +660,7 @@ export default function ReportsCenterPage() {
                 </div>
 
                 <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-950/20 p-5 space-y-3 shadow-xs">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-300 flex items-center gap-1.5">
+                  <h3 className="text-xs font-bold text-slate-800 dark:text-slate-300 flex items-center gap-1.5">
                     <Package className="h-4 w-4 text-violet-600 dark:text-violet-400" /> Asset Register By Category
                   </h3>
                   {assetData.breakdown.length === 0 && <p className="text-xs text-slate-500 text-center py-4">No asset records found. Add assets in the Assets section.</p>}
@@ -694,7 +692,7 @@ export default function ReportsCenterPage() {
                 </div>
 
                 <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-950/20 p-5 space-y-4 shadow-xs">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-300 flex items-center gap-1.5">
+                  <h3 className="text-xs font-bold text-slate-800 dark:text-slate-300 flex items-center gap-1.5">
                     <Clock className="h-4 w-4 text-rose-600 dark:text-rose-400" /> Late Fee Summary
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -724,26 +722,26 @@ export default function ReportsCenterPage() {
                   return (
                     <>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        <StatCard label="Total Flats" value={String(totalFlats)} icon={Building} color="text-slate-300" />
-                        <StatCard label="Owner Occupied" value={String(occupancyData.find(r => r.status === 'OWNER_OCCUPIED')?.count || 0)} sub="Self-occupied units" icon={Users} color="text-emerald-400" />
-                        <StatCard label="Tenant Occupied" value={String(occupancyData.find(r => r.status === 'TENANT_OCCUPIED')?.count || 0)} sub="Rented out units" icon={Users} color="text-indigo-400" />
-                        <StatCard label="Vacant" value={String(occupancyData.find(r => r.status === 'VACANT')?.count || 0)} sub="Empty / unoccupied" icon={Building} color="text-amber-400" />
+                        <StatCard label="Total Flats" value={String(totalFlats)} icon={Building} color="text-slate-700 dark:text-slate-300" />
+                        <StatCard label="Owner Occupied" value={String(occupancyData.find(r => r.status === 'OWNER_OCCUPIED')?.count || 0)} sub="Self-occupied units" icon={Users} color="text-emerald-600 dark:text-emerald-400" />
+                        <StatCard label="Tenant Occupied" value={String(occupancyData.find(r => r.status === 'TENANT_OCCUPIED')?.count || 0)} sub="Rented out units" icon={Users} color="text-indigo-600 dark:text-indigo-400" />
+                        <StatCard label="Vacant" value={String(occupancyData.find(r => r.status === 'VACANT')?.count || 0)} sub="Empty / unoccupied" icon={Building} color="text-amber-600 dark:text-amber-400" />
                       </div>
 
-                      <div className="border border-slate-800 rounded-xl bg-slate-950/20 p-5 space-y-4">
-                        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                          <Building className="h-4 w-4 text-violet-400" /> Occupancy Distribution
+                      <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950/20 p-5 space-y-4">
+                        <h3 className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                          <Building className="h-4 w-4 text-violet-600 dark:text-violet-400" /> Occupancy Distribution
                         </h3>
                         {occupancyData.map((row, i) => {
                           const colors = ['bg-emerald-500', 'bg-indigo-500', 'bg-amber-500'];
-                          const textColors = ['text-emerald-400', 'text-indigo-400', 'text-amber-400'];
+                          const textColors = ['text-emerald-600 dark:text-emerald-400', 'text-indigo-600 dark:text-indigo-400', 'text-amber-600 dark:text-amber-400'];
                           return (
                             <div key={i} className="space-y-1.5">
                               <div className="flex justify-between text-xs">
                                 <span className={`font-bold ${textColors[i % textColors.length]}`}>{row.status.replace(/_/g, ' ')}</span>
-                                <span className="text-slate-200 font-bold">{row.count} flats ({totalFlats > 0 ? pct((row.count / totalFlats) * 100) : '0%'})</span>
+                                <span className="text-slate-900 dark:text-slate-200 font-bold">{row.count} flats ({totalFlats > 0 ? pct((row.count / totalFlats) * 100) : '0%'})</span>
                               </div>
-                              <div className="w-full bg-slate-800/60 rounded-full h-3 overflow-hidden">
+                              <div className="w-full bg-slate-100 dark:bg-slate-800/60 rounded-full h-3 overflow-hidden">
                                 <div
                                   className={`h-full rounded-full transition-all duration-700 ${colors[i % colors.length]}`}
                                   style={{ width: totalFlats > 0 ? `${(row.count / totalFlats) * 100}%` : '0%' }}

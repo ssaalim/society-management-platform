@@ -238,7 +238,7 @@ export class FlatRepository extends TenantBaseRepository<typeof flats> {
         .select({ flatId: flatOwners.flatId })
         .from(flatOwners)
         .innerJoin(owners, eq(flatOwners.ownerId, owners.id))
-        .where(eq(owners.userId, filters.userId));
+        .where(and(eq(owners.userId, filters.userId), eq(owners.societyId, this.activeTenantId)));
 
       const rentedFlats = await this.db
         .select({ flatId: flatTenants.flatId })
@@ -264,7 +264,7 @@ export class FlatRepository extends TenantBaseRepository<typeof flats> {
     }
 
     if (filters.ownerMemberId) {
-      const memberRec = await this.db.select().from(members).where(eq(members.id, filters.ownerMemberId));
+      const memberRec = await this.db.select().from(members).where(and(eq(members.id, filters.ownerMemberId), eq(members.societyId, this.activeTenantId)));
       if (memberRec.length > 0) {
         const targetUserId = memberRec[0].userId;
         const ownedByFilter = await this.db

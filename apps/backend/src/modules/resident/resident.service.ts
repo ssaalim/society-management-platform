@@ -5,9 +5,10 @@ import { DRIZZLE_PROVIDER, DrizzleDB } from '@core/database/database.module';
 import { 
   auditLogs, 
   visitors, 
-  pollVotes 
+  pollVotes,
+  polls 
 } from '../../../database/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 
 @Injectable()
 export class ResidentService {
@@ -207,19 +208,28 @@ export class ResidentService {
     }
 
     const visitor = await this.db.query.visitors.findFirst({
-      where: eq(visitors.id, visitorId),
+      where: and(eq(visitors.id, visitorId), eq(visitors.societyId, this.clsTenantId)),
     });
 
     if (!visitor || visitor.flatId !== flatContext.flatId) {
       throw new NotFoundException('Visitor record not found.');
     }
 
+    if (visitor.status !== 'PENDING') {
+      throw new BadRequestException('Someone has already answered for this visitor.');
+    }
+
     const nextStatus = approve ? 'APPROVED' : 'DENIED';
 
     await this.db
       .update(visitors)
-      .set({ status: nextStatus })
-      .where(eq(visitors.id, visitorId));
+      .set({
+        status: nextStatus,
+        approvalMethod: approve ? 'RESIDENT_APP' : null,
+        decidedBy: executorId || userId,
+        decidedAt: new Date(),
+      })
+      .where(and(eq(visitors.id, visitorId), eq(visitors.status, 'PENDING')));
 
     await this.logAction({
       societyId: this.clsTenantId,
@@ -241,6 +251,13 @@ export class ResidentService {
     const memberId = flatContext?.memberId;
     if (!memberId) {
       throw new NotFoundException('Member registration context not found for casting ballot.');
+    }
+
+    const poll = await this.db.query.polls.findFirst({
+      where: and(eq(polls.id, pollId), eq(polls.societyId, this.clsTenantId)),
+    });
+    if (!poll) {
+      throw new NotFoundException('Poll not found.');
     }
 
     const hasVoted = await this.residentRepository.checkHasVoted(pollId, memberId);

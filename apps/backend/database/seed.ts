@@ -186,7 +186,7 @@ async function seed() {
       { id: USER_RESIDENT_ID, email: 'resident@society.dev', name: 'Vikram Singh (Owner)', mobile: '+919000000005' },
       { id: USER_TENANT_1_ID, email: 'tenant1@society.dev', name: 'Rahul Mehta (Tenant)', mobile: '+919000000006' },
     ];
-    const defaultHashedPassword = bcrypt.hashSync('password123', 10);
+    const defaultHashedPassword = bcrypt.hashSync('demo1234', 10);
     for (const u of usersData) {
       await client`INSERT INTO users (id, email, password, name, mobile) VALUES (${u.id}, ${u.email}, ${defaultHashedPassword}, ${u.name}, ${u.mobile});`;
     }
@@ -220,8 +220,6 @@ async function seed() {
 
     // User Memberships
     const memberships = [
-      { userId: USER_SUPER_ADMIN_ID, societyId: SOCIETY_SUNVIEW_ID, roleId: ROLE_SUPER_ADMIN_ID },
-      { userId: USER_SUPER_ADMIN_ID, societyId: SOCIETY_GREENPARK_ID, roleId: ROLE_SUPER_ADMIN_ID },
       { userId: USER_PRESIDENT_ID, societyId: SOCIETY_SUNVIEW_ID, roleId: ROLE_PRESIDENT_ID },
       { userId: USER_SECRETARY_ID, societyId: SOCIETY_SUNVIEW_ID, roleId: ROLE_SECRETARY_ID },
       { userId: USER_TREASURER_ID, societyId: SOCIETY_SUNVIEW_ID, roleId: ROLE_TREASURER_ID },
@@ -231,6 +229,8 @@ async function seed() {
       { userId: USER_RESIDENT_ID, societyId: SOCIETY_SUNVIEW_ID, roleId: ROLE_OWNER_ID },
       { userId: USER_TENANT_1_ID, societyId: SOCIETY_SUNVIEW_ID, roleId: ROLE_TENANT_ID },
     ];
+    // The super admin runs the platform console and is not a member of any society.
+    await client`UPDATE users SET is_platform_admin = true WHERE id = ${USER_SUPER_ADMIN_ID};`;
     for (const m of memberships) {
       await client`INSERT INTO user_societies (id, user_id, society_id, role_id) VALUES (${uuidv4()}, ${m.userId}, ${m.societyId}, ${m.roleId});`;
     }

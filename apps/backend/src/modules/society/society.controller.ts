@@ -8,7 +8,8 @@ import {
   Param, 
   UseGuards, 
   Req, 
-  Query 
+  Query,
+  NotFoundException,
 } from '@nestjs/common';
 import { SocietyService } from './society.service';
 import { CreateSocietyDto, createSocietySchema } from './dto/create-society.dto';
@@ -16,6 +17,7 @@ import { UpdateSocietyDto, updateSocietySchema } from './dto/update-society.dto'
 import { SupabaseAuthGuard } from '@core/auth/supabase.guard';
 import { SuperAdminGuard } from '@core/auth/superadmin.guard';
 import { TenantGuard } from '@core/tenant/tenant.guard';
+import { SocietyParamGuard } from '@core/tenant/society-param.guard';
 import { RolesGuard } from '@core/auth/roles.guard';
 import { RequirePermissions } from '@core/auth/permissions.decorator';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
@@ -51,10 +53,15 @@ export class SocietyController {
     };
   }
 
-  @ApiOperation({ summary: 'Resolve society metadata details by Slug URL' })
+  @ApiOperation({ summary: 'Resolve the current society by its URL slug (members of that society only)' })
+  @UseGuards(TenantGuard)
   @Get('slug/:slug')
-  async getBySlug(@Param('slug') slug: string) {
+  async getBySlug(@Param('slug') slug: string, @Req() req: any) {
     const result = await this.societyService.findBySlug(slug);
+    // The slug must name the society this request was verified for; other societies look like they don't exist.
+    if (!result || result.id !== req.headers['x-tenant-id']) {
+      throw new NotFoundException('Society not found.');
+    }
     return {
       success: true,
       data: result,
@@ -62,7 +69,7 @@ export class SocietyController {
   }
 
   @ApiOperation({ summary: 'Get society profile details (requires read permission)' })
-  @UseGuards(TenantGuard, RolesGuard)
+  @UseGuards(TenantGuard, SocietyParamGuard, RolesGuard)
   @RequirePermissions('society:read')
   @Get(':id')
   async findOne(@Param('id') id: string) {
@@ -74,7 +81,7 @@ export class SocietyController {
   }
 
   @ApiOperation({ summary: 'Get society subscription plan status & expiry metadata' })
-  @UseGuards(TenantGuard, RolesGuard)
+  @UseGuards(TenantGuard, SocietyParamGuard, RolesGuard)
   @RequirePermissions('society:read')
   @Get(':id/subscription')
   async getSubscriptionStatus(@Param('id') id: string) {
@@ -86,7 +93,7 @@ export class SocietyController {
   }
 
   @ApiOperation({ summary: 'Get statutory society registration renewal and expiry status' })
-  @UseGuards(TenantGuard, RolesGuard)
+  @UseGuards(TenantGuard, SocietyParamGuard, RolesGuard)
   @RequirePermissions('society:read')
   @Get(':id/registration-expiry')
   async getRegistrationExpiry(@Param('id') id: string) {
@@ -98,7 +105,7 @@ export class SocietyController {
   }
 
   @ApiOperation({ summary: 'Get society profile and settings mutation change history' })
-  @UseGuards(TenantGuard, RolesGuard)
+  @UseGuards(TenantGuard, SocietyParamGuard, RolesGuard)
   @RequirePermissions('society:read')
   @Get(':id/history')
   async getHistory(@Param('id') id: string) {
@@ -110,7 +117,7 @@ export class SocietyController {
   }
 
   @ApiOperation({ summary: 'Update society profile (requires write permission)' })
-  @UseGuards(TenantGuard, RolesGuard)
+  @UseGuards(TenantGuard, SocietyParamGuard, RolesGuard)
   @RequirePermissions('society:write')
   @Patch(':id')
   async update(@Param('id') id: string, @Body() body: any, @Req() req: any) {
@@ -123,7 +130,7 @@ export class SocietyController {
   }
 
   @ApiOperation({ summary: 'Request pre-signed Cloudflare R2 upload URL for document upload' })
-  @UseGuards(TenantGuard, RolesGuard)
+  @UseGuards(TenantGuard, SocietyParamGuard, RolesGuard)
   @RequirePermissions('society:write')
   @Post(':id/documents/upload-url')
   async getUploadUrl(
@@ -142,6 +149,7 @@ export class SocietyController {
   }
 
   @ApiOperation({ summary: 'Soft delete a society (Super Admin scope)' })
+  @UseGuards(SuperAdminGuard)
   @Delete(':id')
   async remove(@Param('id') id: string, @Req() req: any) {
     const result = await this.societyService.remove(id, req.user.id);
@@ -152,7 +160,7 @@ export class SocietyController {
   }
 
   @ApiOperation({ summary: 'Get configured society bank accounts' })
-  @UseGuards(TenantGuard, RolesGuard)
+  @UseGuards(TenantGuard, SocietyParamGuard, RolesGuard)
   @RequirePermissions('society:read')
   @Get(':id/bank-accounts')
   async getBankAccounts(@Param('id') id: string) {
@@ -164,7 +172,7 @@ export class SocietyController {
   }
 
   @ApiOperation({ summary: 'Add a new bank account for society' })
-  @UseGuards(TenantGuard, RolesGuard)
+  @UseGuards(TenantGuard, SocietyParamGuard, RolesGuard)
   @RequirePermissions('society:write')
   @Post(':id/bank-accounts')
   async addBankAccount(@Param('id') id: string, @Body() body: any, @Req() req: any) {
@@ -176,7 +184,7 @@ export class SocietyController {
   }
 
   @ApiOperation({ summary: 'Update a society bank account' })
-  @UseGuards(TenantGuard, RolesGuard)
+  @UseGuards(TenantGuard, SocietyParamGuard, RolesGuard)
   @RequirePermissions('society:write')
   @Patch(':id/bank-accounts/:accountId')
   async updateBankAccount(
@@ -193,7 +201,7 @@ export class SocietyController {
   }
 
   @ApiOperation({ summary: 'Remove a society bank account' })
-  @UseGuards(TenantGuard, RolesGuard)
+  @UseGuards(TenantGuard, SocietyParamGuard, RolesGuard)
   @RequirePermissions('society:write')
   @Delete(':id/bank-accounts/:accountId')
   async deleteBankAccount(

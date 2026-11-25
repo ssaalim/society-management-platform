@@ -189,8 +189,6 @@ export default function LayoutSettingsPage() {
 
   return (
     <main className="relative flex min-h-screen flex-col items-center justify-start overflow-x-hidden w-full py-4 sm:py-5 px-3 sm:px-5 lg:px-6">
-      {/* Background Grids */}
-      <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
 
       <div className="w-full max-w-[1600px] mx-auto space-y-3.5 z-10">
         {/* Header */}
@@ -200,7 +198,7 @@ export default function LayoutSettingsPage() {
               <ArrowLeft className="h-4 w-4 text-slate-500 dark:text-slate-400" />
             </Link>
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <h1 className="text-xl sm:text-xl font-normal text-slate-900 dark:text-slate-100 flex items-center gap-2">
                 <Building2 className="h-5 w-5 text-indigo-500 dark:text-indigo-400" />
                 Layout Configuration
               </h1>
@@ -221,21 +219,21 @@ export default function LayoutSettingsPage() {
             <Loader2 className="h-8 w-8 text-indigo-500 animate-spin" />
           </div>
         ) : layoutHierarchy.length === 0 ? (
-          <div className="text-center py-12 border border-dashed border-slate-800 rounded-xl">
+          <div className="text-center py-12 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
             <Building2 className="h-10 w-10 text-slate-500 mx-auto mb-3" />
-            <h3 className="text-md font-semibold text-slate-300">No Layout Defined</h3>
+            <h3 className="text-md font-semibold text-slate-700 dark:text-slate-300">No Layout Defined</h3>
             <p className="text-xs text-slate-500 mt-1">Start by adding a new Building or Tower.</p>
           </div>
         ) : (
           <div className="space-y-6">
             {layoutHierarchy.map((building) => (
-              <div key={building.id} className="bg-slate-950/40 border border-slate-800 rounded-xl p-5 space-y-4">
+              <div key={building.id} className="bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 rounded-xl p-5 space-y-4">
                 
                 {/* Building Header */}
-                <div className="flex items-center justify-between pb-3 border-b border-slate-800/60">
-                  <h2 className="text-lg font-bold text-slate-200">{building.name}</h2>
+                <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800/60">
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-slate-200">{building.name}</h2>
                   <div className="flex items-center gap-2">
-                    <button onClick={() => handleEditBuilding(building.id, building.name)} className="p-1.5 rounded hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                    <button onClick={() => handleEditBuilding(building.id, building.name)} className="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
                       <Pencil className="h-3.5 w-3.5" />
                     </button>
                     <button onClick={() => handleAddWing(building.id)} className="text-xs px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded font-semibold transition-colors shadow-sm">
@@ -250,10 +248,10 @@ export default function LayoutSettingsPage() {
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {building.wings.map((wing) => (
-                      <div key={wing.id} className="bg-slate-900/60 border border-slate-800 rounded-lg p-4">
+                      <div key={wing.id} className="bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-lg p-4">
                         
                         <div className="flex items-center justify-between mb-3">
-                          <h3 className="font-semibold text-slate-300 text-sm">Wing {wing.name}</h3>
+                          <h3 className="font-semibold text-slate-700 dark:text-slate-300 text-sm">Wing {wing.name}</h3>
                           <div className="flex items-center gap-2">
                             <button onClick={() => handleEditWing(wing.id, wing.name)} className="p-1 rounded text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
                               <Pencil className="h-3 w-3" />
@@ -273,7 +271,7 @@ export default function LayoutSettingsPage() {
                               <button
                                 key={floor.id}
                                 onClick={() => handleEditFloor(floor.id, floor.number)}
-                                className="group relative flex items-center justify-center w-8 h-8 rounded bg-slate-950 border border-slate-800 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:border-indigo-500/50 hover:text-indigo-300 transition-colors"
+                                className="group relative flex items-center justify-center w-8 h-8 rounded bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:border-indigo-500/50 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
                                 title="Click to edit floor number"
                               >
                                 {floor.number}

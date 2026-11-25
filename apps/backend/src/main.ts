@@ -1,7 +1,10 @@
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { LOCAL_UPLOAD_ROOT } from '@core/storage/local-upload.controller';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from '@common/filters/all-exceptions.filter';
 import { ResponseInterceptor } from '@common/interceptors/response.interceptor';
+import { ErrorLogService } from '@core/errors/error-log.service';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import helmet from 'helmet';
@@ -10,7 +13,7 @@ import * as cookieParser from 'cookie-parser';
 import { Logger } from 'nestjs-pino';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { bufferLogs: true, rawBody: true });
   
   // Use Pino Logger
   const logger = app.get(Logger);
@@ -46,7 +49,18 @@ async function bootstrap() {
       preload: true,
     },
   }));
-  app.use(compression());
+  // Live streams (chat) must not be compressed: compression buffers them and messages would arrive late.
+  app.use(
+    compression({
+      filter: (req: any, res: any) =>
+        !String(req.headers.accept || '').includes('text/event-stream') && !String(req.url || '').endsWith('/chat/stream') && compression.filter(req, res),
+    }),
+  );
+
+  // Local development file storage (used only when Cloudflare R2 is not configured).
+  if (process.env.NODE_ENV !== 'production') {
+    app.useStaticAssets(LOCAL_UPLOAD_ROOT, { prefix: '/uploads/', index: false, dotfiles: 'deny' });
+  }
   app.use(cookieParser());
 
   // API Version Prefix
@@ -64,7 +78,7 @@ async function bootstrap() {
     transformOptions: { enableImplicitConversion: true }
   }));
   app.useGlobalInterceptors(new ResponseInterceptor());
-  app.useGlobalFilters(new AllExceptionsFilter());
+  app.useGlobalFilters(new AllExceptionsFilter(app.get(ErrorLogService)));
 
   // Graceful Shutdown Support (Railway/Docker)
   app.enableShutdownHooks();

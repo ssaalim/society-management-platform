@@ -2,7 +2,7 @@ import { Injectable, Inject } from '@nestjs/common';
 import { GlobalBaseRepository } from '@core/database/base.repository';
 import { societies, userSocieties, users, roles, bankAccounts, ledgers } from '../../../database/schema';
 import { DRIZZLE_PROVIDER, DrizzleDB } from '@core/database/database.module';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, like, notExists, or, isNull } from 'drizzle-orm';
 
 @Injectable()
 export class SocietyRepository extends GlobalBaseRepository<typeof societies> {
@@ -88,13 +88,38 @@ export class SocietyRepository extends GlobalBaseRepository<typeof societies> {
       return existing[0].id;
     }
 
+    // The society's general bank ledger ("Bank Account - Main"), if no bank account uses it yet, becomes this account's
+    // ledger, so anything posted to it before the account was set up is now in the right place.
+    const [general] = await this.db
+      .select({ id: ledgers.id })
+      .from(ledgers)
+      .where(
+        and(
+          eq(ledgers.societyId, societyId),
+          eq(ledgers.group, 'ASSETS'),
+          or(eq(ledgers.systemKey, 'BANK_FALLBACK'), and(isNull(ledgers.systemKey), eq(ledgers.name, 'Bank Account - Main'))),
+          notExists(this.db.select({ id: bankAccounts.id }).from(bankAccounts).where(eq(bankAccounts.ledgerId, ledgers.id))),
+        ),
+      )
+      .limit(1);
+    if (general) {
+      await this.db.update(ledgers).set({ name: ledgerName, systemKey: null, updatedAt: new Date() }).where(eq(ledgers.id, general.id));
+      return general.id;
+    }
+
+    const codes = await this.db
+      .select({ code: ledgers.code })
+      .from(ledgers)
+      .where(and(eq(ledgers.societyId, societyId), like(ledgers.code, 'BANK-%')));
+    const max = codes.reduce((m, r) => Math.max(m, Number(r.code?.slice(5)) || 0), 0);
+
     const [newLedger] = await this.db
       .insert(ledgers)
       .values({
         societyId,
         name: ledgerName,
-        group: 'ASSET',
-        code: `BANK-${Math.floor(100 + Math.random() * 900)}`,
+        group: 'ASSETS',
+        code: `BANK-${String(max + 1).padStart(2, '0')}`,
       })
       .returning();
 
@@ -114,6 +139,14 @@ export class SocietyRepository extends GlobalBaseRepository<typeof societies> {
     isDefault?: boolean;
   }) {
     const ledgerId = await this.findOrCreateBankLedger(societyId, data.bankName, data.accountNumber);
+
+    // The first bank account is the default one that receipts and payments use unless another is picked.
+    const [anyDefault] = await this.db
+      .select({ id: bankAccounts.id })
+      .from(bankAccounts)
+      .where(and(eq(bankAccounts.societyId, societyId), eq(bankAccounts.isDefault, true)))
+      .limit(1);
+    if (!anyDefault) data = { ...data, isDefault: true };
 
     if (data.isDefault) {
       // Clear previous default flags

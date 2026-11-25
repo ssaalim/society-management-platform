@@ -1,4 +1,6 @@
+import { LedgerResolver } from '@core/accounting/ledger-resolver.service';
 import { Injectable, NotFoundException, Inject, BadRequestException, Optional } from '@nestjs/common';
+import { ClsService } from 'nestjs-cls';
 import { ConfigService } from '@nestjs/config';
 import { PaymentRepository } from './payment.repository';
 import { CreateOrderDto } from './dto/create-order.dto';
@@ -19,6 +21,8 @@ export class PaymentService {
   constructor(
     private readonly paymentRepository: PaymentRepository,
     @Inject(DRIZZLE_PROVIDER) private readonly db: DrizzleDB,
+    private readonly cls: ClsService,
+    private readonly ledgerResolver: LedgerResolver,
     @Optional() private readonly configService?: ConfigService,
   ) {}
 
@@ -33,6 +37,15 @@ export class PaymentService {
    * Initializes order checkout payload (Mocking Razorpay Gateway Order API).
    */
   async createOrder(dto: CreateOrderDto, executorId?: string) {
+    const activeTenantId = this.paymentRepository['activeTenantId'];
+    if (dto.billId) {
+      const bill = await this.db.query.maintenanceBills.findFirst({
+        where: and(eq(maintenanceBills.id, dto.billId), eq(maintenanceBills.societyId, activeTenantId)),
+      });
+      if (!bill) {
+        throw new NotFoundException('Bill invoice not found.');
+      }
+    }
     const orderId = `order_${Math.random().toString(36).substring(2, 15)}`;
     
     await this.logAction({
@@ -64,22 +77,27 @@ export class PaymentService {
     const isProduction = this.configService?.get<string>('NODE_ENV') === 'production';
     const webhookSecret = this.configService?.get<string>('RAZORPAY_WEBHOOK_SECRET') || this.configService?.get<string>('RAZORPAY_KEY_SECRET');
 
-    // In production or when webhookSecret is configured, verify HMAC signature
-    if (webhookSecret && payload.razorpayOrderId && payload.razorpayPaymentId) {
+    // With a secret configured, every capture must carry a valid signature (omitting fields no longer skips it).
+    if (webhookSecret) {
+      if (!payload.razorpayOrderId || !payload.razorpayPaymentId || !payload.razorpaySignature) {
+        throw new BadRequestException('Razorpay order, payment and signature are required.');
+      }
       const generatedSignature = crypto
         .createHmac('sha256', webhookSecret)
         .update(`${payload.razorpayOrderId}|${payload.razorpayPaymentId}`)
         .digest('hex');
 
-      if (payload.razorpaySignature && payload.razorpaySignature !== generatedSignature) {
+      const given = Buffer.from(String(payload.razorpaySignature));
+      const expected = Buffer.from(generatedSignature);
+      if (given.length !== expected.length || !crypto.timingSafeEqual(given, expected)) {
         throw new BadRequestException('Invalid Razorpay payment signature.');
       }
-    } else if (isProduction && !webhookSecret) {
+    } else if (isProduction) {
       throw new BadRequestException('Razorpay webhook secret is not configured in production.');
     }
 
-    const activeTenantId = this.paymentRepository['activeTenantId'];
-
+    // The webhook is server-to-server, so there is no signed-in society. The bill decides the society, and every
+    // query below (ledgers, receipt, voucher) is pinned to that society.
     const bill = await this.db.query.maintenanceBills.findFirst({
       where: eq(maintenanceBills.id, payload.billId),
     });
@@ -87,6 +105,9 @@ export class PaymentService {
     if (!bill) {
       throw new NotFoundException('Bill invoice context not found.');
     }
+
+    const activeTenantId = bill.societyId;
+    this.cls.set('tenantId', activeTenantId);
 
     const payAmount = Number(payload.amount);
     const invoiceAmount = Number(bill.totalAmount);
@@ -96,8 +117,9 @@ export class PaymentService {
       nextStatus = 'PARTIAL';
     }
 
-    const bankLedger = await this.paymentRepository.findLedgerByName('Bank Account SBI');
-    const receivablesLedger = await this.paymentRepository.findLedgerByName('Maintenance Receivables');
+    // Online payments settle into the society's default bank account.
+    const bankLedger = await this.ledgerResolver.bank();
+    const receivablesLedger = await this.ledgerResolver.system('RECEIVABLES');
 
     let receiptRecord = null;
 
@@ -106,7 +128,7 @@ export class PaymentService {
       await tx
         .update(maintenanceBills)
         .set({ status: nextStatus })
-        .where(eq(maintenanceBills.id, payload.billId));
+        .where(and(eq(maintenanceBills.id, payload.billId), eq(maintenanceBills.societyId, activeTenantId)));
 
       // 2. Insert receipt
       const receiptsList = await tx.insert(receipts).values({
@@ -116,6 +138,7 @@ export class PaymentService {
         receiptNumber: `REC-ONLINE-${Date.now()}`,
         amountPaid: payAmount.toFixed(2),
         paymentMode: 'RAZORPAY',
+        depositAccountId: bankLedger.bankAccountId,
         paymentDate: new Date().toISOString().substring(0, 10),
         referenceNumber: payload.razorpayPaymentId,
         status: 'CLEARED',
@@ -188,8 +211,9 @@ export class PaymentService {
       throw new BadRequestException('Receipt is already refunded.');
     }
 
-    const bankLedger = await this.paymentRepository.findLedgerByName('Bank Account SBI');
-    const refundsLedger = await this.paymentRepository.findLedgerByName('Refund Expense Accounts');
+    // The refund goes out of the account the payment came into.
+    const bankLedger = await this.ledgerResolver.money({ mode: receipt.paymentMode, bankAccountId: receipt.depositAccountId });
+    const refundsLedger = await this.ledgerResolver.system('REFUNDS');
 
     await this.db.transaction(async (tx) => {
       // 1. Update receipt status
@@ -200,7 +224,7 @@ export class PaymentService {
           refundedAmount: dto.refundAmount.toString(),
           cancellationReason: dto.reason 
         })
-        .where(eq(receipts.id, receiptId));
+        .where(and(eq(receipts.id, receiptId), eq(receipts.societyId, activeTenantId)));
 
       // 2. Post reverse journal double-entry voucher
       const voucherId = require('crypto').randomUUID();
@@ -261,8 +285,9 @@ export class PaymentService {
       throw new BadRequestException('Receipt is already cancelled.');
     }
 
-    const bankLedger = await this.paymentRepository.findLedgerByName('Bank Account SBI');
-    const receivablesLedger = await this.paymentRepository.findLedgerByName('Maintenance Receivables');
+    // Reverse the entry on the account the payment came into.
+    const bankLedger = await this.ledgerResolver.money({ mode: receipt.paymentMode, bankAccountId: receipt.depositAccountId });
+    const receivablesLedger = await this.ledgerResolver.system('RECEIVABLES');
 
     await this.db.transaction(async (tx) => {
       // 1. Update receipt status
@@ -272,13 +297,13 @@ export class PaymentService {
           status: 'CANCELLED', 
           cancellationReason: reason 
         })
-        .where(eq(receipts.id, receiptId));
+        .where(and(eq(receipts.id, receiptId), eq(receipts.societyId, activeTenantId)));
 
       // 2. Set invoice status back to unpaid
       await tx
         .update(maintenanceBills)
         .set({ status: 'UNPAID' })
-        .where(eq(maintenanceBills.id, receipt.billId));
+        .where(and(eq(maintenanceBills.id, receipt.billId), eq(maintenanceBills.societyId, activeTenantId)));
 
       // 3. Post reverse double-entry vouchers
       const voucherId = require('crypto').randomUUID();

@@ -20,6 +20,7 @@ import {
 } from '../../../database/schema';
 import { DRIZZLE_PROVIDER, DrizzleDB } from '@core/database/database.module';
 import { ClsService } from 'nestjs-cls';
+import { LedgerResolver } from '@core/accounting/ledger-resolver.service';
 import { eq, and, like, inArray, desc } from 'drizzle-orm';
 
 @Injectable()
@@ -27,6 +28,7 @@ export class MaintenanceRepository extends TenantBaseRepository<typeof maintenan
   constructor(
     @Inject(DRIZZLE_PROVIDER) protected readonly db: DrizzleDB,
     protected readonly cls: ClsService,
+    private readonly ledgerResolver: LedgerResolver,
   ) {
     super(db, cls, maintenanceBills);
   }
@@ -217,7 +219,7 @@ export class MaintenanceRepository extends TenantBaseRepository<typeof maintenan
         .select({ flatId: flatOwners.flatId })
         .from(flatOwners)
         .innerJoin(owners, eq(flatOwners.ownerId, owners.id))
-        .where(eq(owners.userId, filters.userId));
+        .where(and(eq(owners.userId, filters.userId), eq(owners.societyId, this.activeTenantId)));
 
       const rentedFlats = await this.db
         .select({ flatId: flatTenants.flatId })
@@ -312,45 +314,6 @@ export class MaintenanceRepository extends TenantBaseRepository<typeof maintenan
   }
 
   /**
-   * Resolves double-entry ledger by name in active society scope.
-   */
-  async findLedgerByName(name: string) {
-    const ledger = await this.db
-      .select()
-      .from(ledgers)
-      .where(
-        and(
-          eq(ledgers.name, name),
-          eq(ledgers.societyId, this.activeTenantId)
-        )
-      );
-
-    if (ledger.length > 0) return ledger[0];
-
-    const code = name.toLowerCase().includes('cash')
-      ? 'CASH-01'
-      : name.toLowerCase().includes('bank')
-      ? 'BANK-01'
-      : name.toLowerCase().includes('income')
-      ? 'INC-01'
-      : name.toLowerCase().includes('receivables')
-      ? 'REC-01'
-      : 'GEN-01';
-
-    const group = (name.includes('Income') ? 'INCOME' : name.includes('Receivables') || name.includes('Cash') || name.includes('Bank') ? 'ASSETS' : 'LIABILITIES') as any;
-
-    const newLedgers = await this.db.insert(ledgers).values({
-      id: require('crypto').randomUUID(),
-      societyId: this.activeTenantId,
-      name,
-      code,
-      group,
-    }).returning();
-
-    return newLedgers[0];
-  }
-
-  /**
    * Resolves a billing category category head ID by name.
    */
   async findOrCreateHead(name: string) {
@@ -366,7 +329,7 @@ export class MaintenanceRepository extends TenantBaseRepository<typeof maintenan
 
     if (existing.length > 0) return existing[0];
 
-    const ledger = await this.findLedgerByName(`${name} Income`);
+    const ledger = await this.ledgerResolver.income(`${name} Income`);
 
     const newHeads = await this.db.insert(maintenanceHeads).values({
       id: require('crypto').randomUUID(),

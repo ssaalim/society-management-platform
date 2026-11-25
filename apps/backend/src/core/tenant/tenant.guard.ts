@@ -10,8 +10,8 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { ClsService } from 'nestjs-cls';
 import { DRIZZLE_PROVIDER, DrizzleDB } from '@core/database/database.module';
-import { subscriptions, userSocieties, roles } from '../../../database/schema';
-import { eq, and } from 'drizzle-orm';
+import { subscriptions, userSocieties, roles, societies } from '../../../database/schema';
+import { eq, and, isNull } from 'drizzle-orm';
 
 /**
  * TenantGuard ensures that every tenant-scoped request has a resolved tenant context.
@@ -20,16 +20,11 @@ import { eq, and } from 'drizzle-orm';
  */
 @Injectable()
 export class TenantGuard implements CanActivate {
-  private isDevAuth: boolean;
-
   constructor(
     private readonly cls: ClsService,
     private readonly configService: ConfigService,
     @Optional() @Inject(DRIZZLE_PROVIDER) private readonly db?: DrizzleDB,
   ) {
-    const isDev = this.configService.get<string>('DEV_AUTH') === 'true';
-    const isNotProd = this.configService.get<string>('NODE_ENV') !== 'production';
-    this.isDevAuth = isDev && isNotProd;
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -46,45 +41,33 @@ export class TenantGuard implements CanActivate {
       throw new BadRequestException('Invalid x-tenant-id header format. Must be a valid UUIDv4.');
     }
 
-    // Check database constraints
-    if (this.db) {
-      const user = request.user;
+    const user = request.user;
+    if (!user || !user.id) {
+      throw new ForbiddenException('Sign in to access this society.');
+    }
+    // Platform console sessions manage societies; they never read a society's data.
+    if (user.scope === 'platform') {
+      throw new ForbiddenException('Platform admin sessions cannot open society workspaces.');
+    }
+    if (!this.db) {
+      throw new ForbiddenException('Society access cannot be verified.');
+    }
 
-      // 1. If user is authenticated, ensure they belong to this society (unless SuperAdmin)
-      if (user && user.id && !this.isDevAuth) {
-        const membership = await this.db
-          .select({
-            roleName: roles.name,
-          })
-          .from(userSocieties)
-          .innerJoin(roles, eq(userSocieties.roleId, roles.id))
-          .where(
-            and(
-              eq(userSocieties.userId, user.id),
-              eq(userSocieties.societyId, tenantId),
-            ),
-          )
-          .limit(1);
+    {
+      // 1. The user must be a member of exactly this society. No role, environment or other membership bypasses
+      //    this check, so a user who belongs to several societies only ever sees the one named in the request.
+      const membership = await this.db
+        .select({ roleName: roles.name })
+        .from(userSocieties)
+        .innerJoin(roles, eq(userSocieties.roleId, roles.id))
+        .innerJoin(societies, eq(userSocieties.societyId, societies.id))
+        .where(and(eq(userSocieties.userId, user.id), eq(userSocieties.societyId, tenantId), isNull(societies.deletedAt)))
+        .limit(1);
 
-        if (!membership || membership.length === 0) {
-          // Check if user is a global SuperAdmin
-          const isGlobalSuperAdmin = await this.db
-            .select({ id: userSocieties.id })
-            .from(userSocieties)
-            .innerJoin(roles, eq(userSocieties.roleId, roles.id))
-            .where(
-              and(
-                eq(userSocieties.userId, user.id),
-                eq(roles.name, 'SUPER_ADMIN'),
-              ),
-            )
-            .limit(1);
-
-          if (!isGlobalSuperAdmin || isGlobalSuperAdmin.length === 0) {
-            throw new ForbiddenException('You do not have access to this society workspace.');
-          }
-        }
+      if (membership.length === 0) {
+        throw new ForbiddenException('You do not have access to this society workspace.');
       }
+      request.tenantRole = membership[0].roleName;
 
       // 2. Check subscription status
       const path = request.url || '';

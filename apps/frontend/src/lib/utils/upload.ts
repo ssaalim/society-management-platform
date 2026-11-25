@@ -1,4 +1,5 @@
 import { apiClient } from '../api/client';
+import { prepareFileForUpload, type PreparedFile } from './compress';
 
 export const MAX_IMAGE_SIZE_BYTES = 2 * 1024 * 1024;    // 2 MB
 export const MAX_DOCUMENT_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
@@ -18,7 +19,8 @@ export interface UploadOptions {
     | 'circular' 
     | 'notice' 
     | 'document' 
-    | 'avatar';
+    | 'avatar'
+    | 'chat_photo';
   societyId?: string;
   onProgress?: (percent: number) => void;
 }
@@ -27,29 +29,40 @@ export interface UploadResult {
   publicUrl: string;
   fileKey: string;
   fileName: string;
+  /** Size details when the file was compressed before upload. */
+  prepared?: PreparedFile;
+}
+
+/** PUTs a file to a pre-signed URL and fails loudly if storage rejects it. */
+export async function putToSignedUrl(uploadUrl: string, file: File): Promise<void> {
+  const response = await fetch(uploadUrl, {
+    method: 'PUT',
+    headers: { 'Content-Type': file.type || 'application/octet-stream' },
+    body: file,
+  });
+  if (!response.ok) {
+    throw new Error(`Upload failed (${response.status}). Please try again.`);
+  }
 }
 
 /**
  * Validates file size and uploads directly to Cloudflare R2 via pre-signed URL.
  */
 export async function uploadFileToR2(options: UploadOptions): Promise<UploadResult> {
-  const { file, fileType, societyId } = options;
+  const { fileType, societyId } = options;
 
-  if (!file) {
+  if (!options.file) {
     throw new Error('No file selected for upload.');
   }
 
-  const isImageScope = ['logo', 'avatar', 'bank_passbook'].includes(fileType);
-  const maxSize = isImageScope ? MAX_IMAGE_SIZE_BYTES : MAX_DOCUMENT_SIZE_BYTES;
-  const maxMb = isImageScope ? 2 : 5;
+  const isImageScope = ['logo', 'avatar', 'bank_passbook', 'chat_photo'].includes(fileType);
+  // Compress images and size-check PDFs before asking for an upload URL.
+  const prepared = await prepareFileForUpload(options.file, {
+    maxBytes: isImageScope ? MAX_IMAGE_SIZE_BYTES : MAX_DOCUMENT_SIZE_BYTES,
+  });
+  const file = prepared.file;
 
-  // 1. Client-side Size Validation
-  if (file.size > maxSize) {
-    const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
-    throw new Error(`File size (${sizeMb} MB) exceeds maximum allowed limit of ${maxMb} MB.`);
-  }
-
-  // 2. Request Presigned R2 Upload URL from Backend
+  // Request a pre-signed upload URL (the server files it under the signed-in society)
   const res = await apiClient.post('/storage/upload-url', {
     fileName: file.name,
     fileType,
@@ -63,23 +76,12 @@ export async function uploadFileToR2(options: UploadOptions): Promise<UploadResu
   }
 
   const { uploadUrl, publicUrl, fileKey } = res.data.data;
-
-  // 3. Upload directly to Cloudflare R2 via HTTP PUT
-  const uploadResponse = await fetch(uploadUrl, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': file.type || 'application/octet-stream',
-    },
-    body: file,
-  });
-
-  if (!uploadResponse.ok) {
-    throw new Error(`Cloud storage upload failed with status ${uploadResponse.status} ${uploadResponse.statusText}`);
-  }
+  await putToSignedUrl(uploadUrl, file);
 
   return {
     publicUrl,
     fileKey,
     fileName: file.name,
+    prepared,
   };
 }

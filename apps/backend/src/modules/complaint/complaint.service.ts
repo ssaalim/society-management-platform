@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Inject } from '@nestjs/common';
+import { Injectable, NotFoundException, Inject, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { DRIZZLE_PROVIDER, DrizzleDB } from '@core/database/database.module';
 import { 
   auditLogs, 
@@ -9,9 +9,11 @@ import {
   flatOwners,
   flatTenants,
   flats,
-  users
+  users,
+  floors,
+  wings
 } from '../../../database/schema';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, sql, isNull, asc } from 'drizzle-orm';
 import { ClsService } from 'nestjs-cls';
 import { NotificationService } from '../notification/notification.service';
 
@@ -27,28 +29,61 @@ export class ComplaintService {
     return this.cls.get<string>('tenantId');
   }
 
+  /** The caller's flats in this society (current owner or active tenant) and whether they are a resident. */
+  private async flatContext(userId: string): Promise<{ isResident: boolean; flatIds: string[] }> {
+    const [membership] = await this.db
+      .select({ roleName: roles.name })
+      .from(userSocieties)
+      .innerJoin(roles, eq(userSocieties.roleId, roles.id))
+      .where(and(eq(userSocieties.userId, userId), eq(userSocieties.societyId, this.activeTenantId)));
+    const isResident = !membership || ['OWNER', 'CO_OWNER', 'TENANT', 'FAMILY_MEMBER', 'MEMBER'].includes(membership.roleName);
+    const rows = (await this.db.execute(sql`
+      select fo.flat_id as "flatId" from owners o join flat_owners fo on fo.owner_id = o.id and fo.is_current
+      where o.user_id = ${userId} and o.society_id = ${this.activeTenantId}
+      union
+      select ft.flat_id from tenants t join flat_tenants ft on ft.tenant_id = t.id and ft.is_active
+      where t.user_id = ${userId} and ft.society_id = ${this.activeTenantId}
+    `)) as unknown as { flatId: string }[];
+    return { isResident, flatIds: rows.map((r) => r.flatId) };
+  }
+
+  /** Flats this person can tag on a complaint: their own as a resident, every flat for the office. */
+  async flatOptions(userId: string) {
+    const { isResident, flatIds } = await this.flatContext(userId);
+    if (isResident && !flatIds.length) return { isResident, flats: [] };
+    const rows = await this.db
+      .select({ id: flats.id, number: flats.number, wing: wings.name })
+      .from(flats)
+      .leftJoin(floors, eq(floors.id, flats.floorId))
+      .leftJoin(wings, eq(wings.id, floors.wingId))
+      .where(and(eq(flats.societyId, this.activeTenantId), isNull(flats.deletedAt), isResident ? sql`${flats.id} in ${flatIds}` : undefined))
+      .orderBy(asc(wings.name), asc(flats.number));
+    return {
+      isResident,
+      flats: rows
+        .map((r) => ({ id: r.id, label: r.wing ? `${r.wing}-${r.number}` : r.number }))
+        .sort((a, b) => a.label.localeCompare(b.label, 'en', { numeric: true })),
+    };
+  }
+
   async createComplaint(dto: { title: string; description: string; priority?: string; category?: string; flatId?: string }, executorId: string) {
     const activeTenantId = this.activeTenantId;
     const ticketId = require('crypto').randomUUID();
 
-    let targetFlatId = dto.flatId;
-
-    if (!targetFlatId) {
-      // Resolve user flat
-      const userFlatOwner = await this.db.query.flatOwners.findFirst({
-        where: eq(flatOwners.ownerId, executorId),
-      });
-      const userFlatTenant = await this.db.query.flatTenants.findFirst({
-        where: eq(flatTenants.tenantId, executorId),
-      });
-      targetFlatId = userFlatOwner?.flatId || userFlatTenant?.flatId;
-
-      if (!targetFlatId) {
-        const anyFlat = await this.db.query.flats.findFirst({
-          where: eq(flats.societyId, activeTenantId),
-        });
-        targetFlatId = anyFlat?.id || '';
+    // Residents raise complaints for their own flat; the office can tag any flat, or none for a common area.
+    const { isResident, flatIds } = await this.flatContext(executorId);
+    let targetFlatId: string | null = dto.flatId || null;
+    if (targetFlatId) {
+      const [flat] = await this.db
+        .select({ id: flats.id })
+        .from(flats)
+        .where(and(eq(flats.id, targetFlatId), eq(flats.societyId, activeTenantId)));
+      if (!flat) throw new BadRequestException('That flat is not part of this society.');
+      if (isResident && !flatIds.includes(targetFlatId)) {
+        throw new ForbiddenException('You can raise complaints only for your own flat, or leave the flat empty for a common area.');
       }
+    } else if (isResident && flatIds.length === 1) {
+      targetFlatId = flatIds[0];
     }
 
     const newTicket = await this.db.insert(complaints).values({
@@ -185,8 +220,11 @@ export class ComplaintService {
     let resolvedStaffName = dto.staffName || null;
     if (dto.staffId && !resolvedStaffName) {
       const staffMember = await this.db.query.staff.findFirst({
-        where: eq(staff.id, dto.staffId),
+        where: and(eq(staff.id, dto.staffId), eq(staff.societyId, this.activeTenantId)),
       });
+      if (!staffMember) {
+        throw new NotFoundException('Staff member not found in this society.');
+      }
       resolvedStaffName = staffMember ? `${staffMember.name} (${staffMember.role})` : null;
     }
 
@@ -198,7 +236,7 @@ export class ComplaintService {
         status: (dto.staffId || resolvedStaffName) ? 'ASSIGNED' : 'OPEN',
         updatedAt: new Date(),
       })
-      .where(eq(complaints.id, id));
+      .where(and(eq(complaints.id, id), eq(complaints.societyId, this.activeTenantId)));
 
     await this.logAction({
       societyId: this.activeTenantId,
@@ -237,7 +275,7 @@ export class ComplaintService {
         status: 'RESOLVED',
         updatedAt: resolvedAt,
       })
-      .where(eq(complaints.id, id));
+      .where(and(eq(complaints.id, id), eq(complaints.societyId, this.activeTenantId)));
 
     await this.logAction({
       societyId: this.activeTenantId,
@@ -273,7 +311,7 @@ export class ComplaintService {
         status: 'OPEN',
         updatedAt: new Date(),
       })
-      .where(eq(complaints.id, id));
+      .where(and(eq(complaints.id, id), eq(complaints.societyId, this.activeTenantId)));
 
     await this.logAction({
       societyId: this.activeTenantId,
@@ -307,7 +345,7 @@ export class ComplaintService {
         status: 'CLOSED',
         updatedAt: new Date(),
       })
-      .where(eq(complaints.id, id));
+      .where(and(eq(complaints.id, id), eq(complaints.societyId, this.activeTenantId)));
 
     await this.logAction({
       societyId: this.activeTenantId,

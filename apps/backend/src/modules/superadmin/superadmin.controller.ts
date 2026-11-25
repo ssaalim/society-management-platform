@@ -18,7 +18,7 @@ import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 
 @ApiTags('Super Admin Control')
 @ApiBearerAuth()
-@UseGuards(SupabaseAuthGuard, SuperAdminGuard, RolesGuard)
+@UseGuards(SupabaseAuthGuard, SuperAdminGuard)
 @Controller('superadmin')
 export class SuperAdminController {
   constructor(private readonly superAdminService: SuperAdminService) {}

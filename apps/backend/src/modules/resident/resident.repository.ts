@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, UnauthorizedException } from '@nestjs/common';
 import { 
   flats, 
   members, 
@@ -24,8 +24,10 @@ export class ResidentRepository {
     private readonly cls: ClsService,
   ) {}
 
-  private get activeTenantId() {
-    return this.cls.get<string>('tenantId');
+  private get activeTenantId(): string {
+    const tenantId = this.cls.get<string>('tenantId');
+    if (!tenantId) throw new UnauthorizedException('Society context is missing.');
+    return tenantId;
   }
 
   /**
@@ -50,8 +52,20 @@ export class ResidentRepository {
       );
 
     if (ownerRecord.length > 0) {
+      const memberRecord = await this.db
+        .select({ id: members.id })
+        .from(members)
+        .where(
+          and(
+            eq(members.userId, userId),
+            eq(members.societyId, this.activeTenantId)
+          )
+        )
+        .limit(1);
+
       return {
-        memberId: ownerRecord[0].ownerId,
+        memberId: memberRecord[0]?.id || ownerRecord[0].ownerId,
+        ownerId: ownerRecord[0].ownerId,
         flatId: ownerRecord[0].flatId,
         flatNumber: ownerRecord[0].flatNumber,
         role: 'OWNER',
@@ -77,8 +91,20 @@ export class ResidentRepository {
       );
 
     if (tenantRecord.length > 0) {
+      const memberRecord = await this.db
+        .select({ id: members.id })
+        .from(members)
+        .where(
+          and(
+            eq(members.userId, userId),
+            eq(members.societyId, this.activeTenantId)
+          )
+        )
+        .limit(1);
+
       return {
-        memberId: tenantRecord[0].tenantId,
+        memberId: memberRecord[0]?.id || tenantRecord[0].tenantId,
+        tenantId: tenantRecord[0].tenantId,
         flatId: tenantRecord[0].flatId,
         flatNumber: tenantRecord[0].flatNumber,
         role: 'TENANT',
@@ -100,17 +126,12 @@ export class ResidentRepository {
       );
 
     if (memberRecord.length > 0) {
-      // Find any flat in society if exists or null
-      const firstFlat = await this.db
-        .select({ id: flats.id, number: flats.number })
-        .from(flats)
-        .where(eq(flats.societyId, this.activeTenantId))
-        .limit(1);
-
+      // A member without a flat sees no flat data. (Previously this borrowed the society's first flat, which
+      // showed a neighbour's dues, visitors and vehicles.)
       return {
         memberId: memberRecord[0].memberId,
-        flatId: firstFlat[0]?.id || null,
-        flatNumber: firstFlat[0]?.number || null,
+        flatId: null,
+        flatNumber: null,
         role: memberRecord[0].role || 'OWNER',
       };
     }

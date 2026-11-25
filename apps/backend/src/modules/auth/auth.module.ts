@@ -1,3 +1,4 @@
+import { jwtSecret } from '@core/auth/jwt-secret';
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -12,7 +13,7 @@ import { UserModule } from '../user/user.module';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET') || 'society-app-super-secret-jwt-key-2026',
+        secret: jwtSecret(configService),
         signOptions: { expiresIn: '30d' },
       }),
     }),

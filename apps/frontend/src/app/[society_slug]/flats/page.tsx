@@ -346,8 +346,6 @@ export default function FlatsListingPage() {
 
   return (
     <main className="relative flex min-h-screen flex-col items-center justify-start overflow-x-hidden w-full py-4 sm:py-5 px-3 sm:px-5 lg:px-6">
-      {/* Background Grids */}
-      <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
 
       <div className="w-full max-w-[1600px] mx-auto space-y-3.5 z-10">
         
@@ -356,7 +354,7 @@ export default function FlatsListingPage() {
           <div className="flex items-center gap-2.5">
             <Building className="h-6 w-6 text-indigo-500 dark:text-indigo-400" />
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+              <h2 className="text-xl font-normal text-slate-900 dark:text-slate-100">
                 {isOwner ? 'My Housing Unit' : 'Flats Roster & Master Config'}
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -442,7 +440,7 @@ export default function FlatsListingPage() {
               <select
                 value={wingFilter}
                 onChange={(e) => setWingFilter(e.target.value)}
-                className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2 px-3.5 text-sm text-slate-500 dark:text-slate-400 focus:border-slate-700 focus:outline-none appearance-none"
+                className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 py-2 px-3.5 text-sm text-slate-500 dark:text-slate-400 focus:border-slate-300 dark:focus:border-slate-700 focus:outline-none appearance-none"
               >
                 <option value="">All Wings</option>
                 {wingsList.map((w) => (
@@ -456,7 +454,7 @@ export default function FlatsListingPage() {
               <select
                 value={occupancyFilter}
                 onChange={(e) => setOccupancyFilter(e.target.value)}
-                className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2 px-3.5 text-sm text-slate-500 dark:text-slate-400 focus:border-slate-700 focus:outline-none appearance-none"
+                className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 py-2 px-3.5 text-sm text-slate-500 dark:text-slate-400 focus:border-slate-300 dark:focus:border-slate-700 focus:outline-none appearance-none"
               >
                 <option value="">All Occupancies</option>
                 <option value="VACANT">Vacant</option>
@@ -470,7 +468,7 @@ export default function FlatsListingPage() {
               <select
                 value={ownerFilter}
                 onChange={(e) => setOwnerFilter(e.target.value)}
-                className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2 px-3.5 text-sm text-slate-500 dark:text-slate-400 focus:border-slate-700 focus:outline-none appearance-none"
+                className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 py-2 px-3.5 text-sm text-slate-500 dark:text-slate-400 focus:border-slate-300 dark:focus:border-slate-700 focus:outline-none appearance-none"
               >
                 <option value="">All Owners</option>
                 {membersList.filter(m => m.memberType === 'OWNER' || m.memberType === 'CO_OWNER').map((m) => (
@@ -486,9 +484,9 @@ export default function FlatsListingPage() {
             <Loader2 className="h-8 w-8 text-indigo-500 animate-spin" />
           </div>
         ) : flatsList.length === 0 ? (
-          <div className="text-center py-12 border border-dashed border-slate-800 rounded-xl space-y-3">
+          <div className="text-center py-12 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl space-y-3">
             <ShieldAlert className="h-10 w-10 text-slate-500 mx-auto" />
-            <h3 className="text-md font-semibold text-slate-300">
+            <h3 className="text-md font-semibold text-slate-700 dark:text-slate-300">
               {isOwner ? 'No assigned flat found' : 'No flats found'}
             </h3>
             <p className="text-xs text-slate-500 max-w-xs mx-auto">
@@ -499,7 +497,7 @@ export default function FlatsListingPage() {
           /* List View of Flats */
           <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/40 shadow-xs">
             <table className="w-full text-left text-xs text-slate-600 dark:text-slate-400 whitespace-nowrap">
-              <thead className="bg-slate-50 dark:bg-slate-900/50 text-[10px] uppercase font-semibold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-800">
+              <thead className="bg-slate-50 dark:bg-slate-900/50 text-[10px] font-semibold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-800">
                 <tr>
                   <th className="px-3.5 py-2.5 font-semibold">Flat</th>
                   <th className="px-3.5 py-2.5 font-semibold">Building & Wing</th>
@@ -533,7 +531,7 @@ export default function FlatsListingPage() {
                         <div className="text-[11px] text-slate-500 font-mono">{flat.sqftArea} SqFt</div>
                       </td>
                       <td className="px-3.5 py-2.5">
-                        <span className={`text-[10px] font-semibold border rounded-full px-2 py-0.5 uppercase tracking-wider ${badgeStyle}`}>
+                        <span className={`text-[10px] font-semibold border rounded-sm px-2 py-0.5 ${badgeStyle}`}>
                           {(flat.occupancyStatus || 'VACANT').replace('_', ' ')}
                         </span>
                       </td>
@@ -575,7 +573,7 @@ export default function FlatsListingPage() {
                           <h4 className="text-base font-bold text-slate-900 dark:text-slate-200">Flat {flat.number}</h4>
                           <p className="text-xs text-slate-500">{flat.buildingName} • {flat.wingName} • Floor {flat.floorNumber}</p>
                         </div>
-                        <span className={`text-[10px] font-semibold border rounded-full px-2 py-0.5 uppercase tracking-wider ${badgeStyle}`}>
+                        <span className={`text-[10px] font-semibold border rounded-sm px-2 py-0.5 ${badgeStyle}`}>
                           {(flat.occupancyStatus || 'VACANT').replace('_', ' ')}
                         </span>
                       </div>
@@ -712,7 +710,7 @@ export default function FlatsListingPage() {
 
               {/* Layout Configuration: Building -> Wing -> Floor */}
               <div className="border-t border-slate-100 dark:border-slate-800 pt-3 space-y-3.5">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Location Configuration</h4>
+                <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300">Location Configuration</h4>
                 
                 {/* Building Selection */}
                 <div className="flex items-end gap-2">
@@ -910,7 +908,7 @@ export default function FlatsListingPage() {
                     </div>
 
                     <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-slate-800">
-                      <label className="text-[11px] font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider block">Tenancy Document Details & Links</label>
+                      <label className="text-[11px] font-bold text-slate-800 dark:text-slate-200 block">Tenancy Document Details & Links</label>
 
                       <div>
                         <label className="text-[10px] text-slate-500 dark:text-slate-400 block">Registered Rental Agreement Document URL</label>

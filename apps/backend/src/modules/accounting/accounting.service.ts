@@ -1,3 +1,4 @@
+import { LedgerResolver } from '@core/accounting/ledger-resolver.service';
 import { Injectable, NotFoundException, Inject, BadRequestException } from '@nestjs/common';
 import { AccountingRepository } from './accounting.repository';
 import { CreateVoucherDto } from './dto/create-voucher.dto';
@@ -19,6 +20,7 @@ export class AccountingService {
     private readonly accountingRepository: AccountingRepository,
     @Inject(DRIZZLE_PROVIDER) private readonly db: DrizzleDB,
     private readonly notificationService: NotificationService,
+    private readonly ledgerResolver: LedgerResolver,
   ) {}
 
   /**
@@ -119,22 +121,21 @@ export class AccountingService {
     amount: number;
     date: string;
     paymentMode?: string;
+    bankAccountId?: string | null;
     status?: 'PAID' | 'UNPAID';
   }, executorId?: string) {
     const activeTenantId = this.accountingRepository['activeTenantId'];
 
-    const expenseLedger = await this.accountingRepository.findLedgerByName(dto.expenseHeadName || 'Repairs & Building Maintenance');
-
-    const creditLedger = dto.status === 'PAID'
-      ? (dto.paymentMode === 'CASH'
-          ? await this.accountingRepository.findLedgerByName('Cash in Hand Account')
-          : await this.accountingRepository.findLedgerByName('Bank Account SBI'))
-      : await this.accountingRepository.findLedgerByName('Vendor & Service Payables');
+    // Unpaid bills go to vendor payables; paid ones come out of cash or the chosen bank account.
+    const status = dto.status === 'UNPAID' ? 'UNPAID' : 'PAID';
+    const expenseLedger = await this.ledgerResolver.expense(dto.expenseHeadName || 'Repairs & Building Maintenance');
+    const paidFrom = status === 'PAID' ? await this.ledgerResolver.money({ mode: dto.paymentMode, bankAccountId: dto.bankAccountId }) : null;
+    const creditLedger = paidFrom ?? (await this.ledgerResolver.system('VENDOR_PAYABLES'));
 
     const voucherNumber = `VOU-EXP-${Date.now()}`;
     const voucherRecord = await this.createVoucher({
       voucherNumber,
-      type: dto.status === 'PAID' ? 'PAYMENT' : 'JOURNAL',
+      type: status === 'PAID' ? 'PAYMENT' : 'JOURNAL',
       date: dto.date,
       narration: `Expenditure for Bill ${dto.billNumber} (${dto.vendorName || 'General Vendor'})`,
       lines: [
@@ -150,8 +151,11 @@ export class AccountingService {
       billNumber: dto.billNumber,
       amount: Number(dto.amount).toFixed(2),
       date: dto.date,
-      status: dto.status || 'PAID',
+      status,
       approvalStatus: 'APPROVED',
+      expenseHead: expenseLedger.name,
+      paymentMode: status === 'PAID' ? (dto.paymentMode === 'CASH' ? 'CASH' : 'BANK') : null,
+      bankAccountId: paidFrom?.bankAccountId ?? null,
     }).returning();
 
     return expenseRecord[0];
@@ -257,8 +261,8 @@ export class AccountingService {
 
     if (surplus === 0) return { success: true, narration: 'No surplus to carry forward.' };
 
-    const surplusLedger = await this.accountingRepository.findLedgerByName('Maintenance Income');
-    const reservesLedger = await this.accountingRepository.findLedgerByName('Retained Earnings Reserves');
+    const surplusLedger = await this.ledgerResolver.system('MAINTENANCE_INCOME');
+    const reservesLedger = await this.ledgerResolver.system('RESERVE_SURPLUS');
 
     // 2. Post closing journal voucher inside transaction block
     let closingVoucher: any = null;

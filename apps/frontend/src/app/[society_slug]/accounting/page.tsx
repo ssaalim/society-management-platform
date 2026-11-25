@@ -3,12 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../providers/auth-context';
 import { apiClient } from '../../../lib/api/client';
+import { PaidFromSelect, useBankAccounts } from '@/components/accounting/paid-from-select';
 import { 
   BookOpen, Search, ShieldAlert, Plus, Calculator, Settings, Receipt, Loader2, 
   CheckCircle, AlertCircle, FileText, Scale, Banknote, Wallet, Landmark, Coins, 
   History, Layers, Building, Eye, X, Filter, Printer, FileCheck, Scissors 
 } from 'lucide-react';
 import { useParams } from 'next/navigation';
+import { RecurringExpensesPanel } from '@/components/accounting/recurring-expenses-panel';
 
 type VoucherPrintFormat = 'a4_voucher' | 'thermal_pos' | 'a5_voucher' | 'compact_remittance';
 
@@ -90,7 +92,7 @@ export default function AccountingDashboardPage() {
   const { activeSociety } = useAuth();
   
   const isManagementRole = ['SUPER_ADMIN', 'PRESIDENT', 'SECRETARY', 'TREASURER', 'ACCOUNTANT'].includes(activeSociety?.role || '');
-  const [activeTab, setActiveTab] = useState<'expenditure' | 'vouchers' | 'trial' | 'income' | 'balance' | 'voucher' | 'bank_accounts'>('expenditure');
+  const [activeTab, setActiveTab] = useState<'expenditure' | 'recurring' | 'vouchers' | 'trial' | 'income' | 'balance' | 'voucher' | 'bank_accounts'>('expenditure');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -132,7 +134,10 @@ export default function AccountingDashboardPage() {
   const [expHeadName, setExpHeadName] = useState<string>('Repairs & Building Maintenance');
   const [expAmount, setExpAmount] = useState<number>(0);
   const [expDate, setExpDate] = useState<string>(new Date().toISOString().substring(0, 10));
-  const [expPaymentMode, setExpPaymentMode] = useState<string>('BANK');
+  const [expPaymentMode, setExpPaymentMode] = useState<'BANK' | 'CASH'>('BANK');
+  const [expBankAccountId, setExpBankAccountId] = useState<string | null>(null);
+  const [expenseHeads, setExpenseHeads] = useState<{ id: string; name: string; code: string | null }[]>([]);
+  const payFromAccounts = useBankAccounts();
   const [expStatus, setExpStatus] = useState<'PAID' | 'UNPAID'>('PAID');
 
   // View Voucher Detail Modal state
@@ -270,6 +275,20 @@ export default function AccountingDashboardPage() {
     }
   };
 
+  // Expense heads are the society's expense ledgers, so new bills never land under the wrong group.
+  useEffect(() => {
+    if (!isExpenseModalOpen) return;
+    apiClient
+      .get('/accounting/recurring-expenses/expense-heads')
+      .then((res) => {
+        const list = res.data?.data || [];
+        setExpenseHeads(list);
+        if (list.length && !list.some((h: { name: string }) => h.name === expHeadName)) setExpHeadName(list[0].name);
+      })
+      .catch(() => setExpenseHeads([]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isExpenseModalOpen]);
+
   const handleRecordExpenseSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (expAmount <= 0) return;
@@ -284,6 +303,7 @@ export default function AccountingDashboardPage() {
         amount: expAmount,
         date: expDate,
         paymentMode: expPaymentMode,
+        bankAccountId: expPaymentMode === 'BANK' ? expBankAccountId : null,
         status: expStatus,
       });
 
@@ -348,8 +368,6 @@ export default function AccountingDashboardPage() {
 
   return (
     <main className="relative flex min-h-screen flex-col items-center justify-start overflow-x-hidden w-full py-4 sm:py-5 px-3 sm:px-5 lg:px-6">
-      {/* Background Grids */}
-      <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
 
       <div className="w-full max-w-[1600px] mx-auto space-y-3.5 z-10">
         
@@ -358,7 +376,7 @@ export default function AccountingDashboardPage() {
           <div className="flex items-center gap-2.5">
             <BookOpen className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Accounting Ledger & Bookkeeping</h2>
+              <h2 className="text-xl font-normal text-slate-900 dark:text-slate-100">Accounting Ledger & Bookkeeping</h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Capture vendor bills, track expenditures, inspect voucher registers & balance sheets</p>
             </div>
           </div>
@@ -371,6 +389,15 @@ export default function AccountingDashboardPage() {
               }`}
             >
               Expenditure & Bills
+            </button>
+
+            <button
+              onClick={() => setActiveTab('recurring')}
+              className={`rounded-xl border py-1.5 px-3 text-xs font-semibold shrink-0 transition-all cursor-pointer ${
+                activeTab === 'recurring' ? 'bg-indigo-600 border-indigo-500 text-white shadow-xs' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900'
+              }`}
+            >
+              Recurring Expenses
             </button>
 
             <button
@@ -464,7 +491,7 @@ export default function AccountingDashboardPage() {
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 mb-3.5">
                   <div className="rounded-xl border border-emerald-200 dark:border-emerald-900/50 bg-emerald-50/80 dark:bg-emerald-950/20 p-3 sm:p-3.5 space-y-0.5 shadow-xs">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-emerald-800 dark:text-emerald-400 uppercase tracking-wider">Cash In Hand</span>
+                      <span className="text-xs font-bold text-emerald-800 dark:text-emerald-400">Cash In Hand</span>
                       <Banknote className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                     </div>
                     <span className="block text-xl font-black text-slate-900 dark:text-slate-100">₹ {cashInHand.toLocaleString('en-IN')}</span>
@@ -473,7 +500,7 @@ export default function AccountingDashboardPage() {
 
                   <div className="rounded-xl border border-indigo-200 dark:border-indigo-900/50 bg-indigo-50/80 dark:bg-indigo-950/20 p-3 sm:p-3.5 space-y-0.5 shadow-xs">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-indigo-800 dark:text-indigo-400 uppercase tracking-wider">Bank Balance</span>
+                      <span className="text-xs font-bold text-indigo-800 dark:text-indigo-400">Bank Balance</span>
                       <Landmark className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
                     </div>
                     <span className="block text-xl font-black text-slate-900 dark:text-slate-100">₹ {bankBalance.toLocaleString('en-IN')}</span>
@@ -482,7 +509,7 @@ export default function AccountingDashboardPage() {
 
                   <div className="rounded-xl border border-cyan-200 dark:border-cyan-900/50 bg-cyan-50/80 dark:bg-cyan-950/20 p-3 sm:p-3.5 space-y-0.5 shadow-xs">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-cyan-800 dark:text-cyan-400 uppercase tracking-wider">Total Liquid Reserve</span>
+                      <span className="text-xs font-bold text-cyan-800 dark:text-cyan-400">Total Liquid Reserve</span>
                       <Wallet className="h-4 w-4 text-cyan-600 dark:text-cyan-400" />
                     </div>
                     <span className="block text-xl font-black text-slate-900 dark:text-slate-100">₹ {totalLiquid.toLocaleString('en-IN')}</span>
@@ -491,7 +518,7 @@ export default function AccountingDashboardPage() {
 
                   <div className="rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-50/80 dark:bg-amber-950/20 p-3 sm:p-3.5 space-y-0.5 shadow-xs">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-amber-800 dark:text-amber-400 uppercase tracking-wider">Net Surplus</span>
+                      <span className="text-xs font-bold text-amber-800 dark:text-amber-400">Net Surplus</span>
                       <Coins className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                     </div>
                     <span className="block text-xl font-black text-slate-900 dark:text-slate-100">
@@ -503,12 +530,14 @@ export default function AccountingDashboardPage() {
               );
             })()}
 
+            {activeTab === 'recurring' && <RecurringExpensesPanel canWrite={isManagementRole} onPosted={fetchReports} />}
+
             {/* TAB 1: Expenditure & Vendor Bills */}
             {activeTab === 'expenditure' && (
               <div className="space-y-3.5">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 p-3 rounded-xl">
                   <div>
-                    <h3 className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider">Expenditure & Vendor Bills Log</h3>
+                    <h3 className="text-xs font-bold text-slate-900 dark:text-slate-200">Expenditure & Vendor Bills Log</h3>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400">Capture vendor invoices for repairs, utilities, security guard agency, AMC payouts</p>
                   </div>
                   {isManagementRole && (
@@ -537,7 +566,7 @@ export default function AccountingDashboardPage() {
                 <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/20 shadow-xs">
                   <table className="w-full text-left text-xs border-collapse whitespace-nowrap">
                     <thead>
-                      <tr className="bg-slate-50 dark:bg-black/60 text-slate-700 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800 text-[10px] uppercase">
+                      <tr className="bg-slate-50 dark:bg-black/60 text-slate-700 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800 text-[10px]">
                         <th className="px-3.5 py-2.5">Bill Invoice No</th>
                         <th className="px-3.5 py-2.5">Vendor / Service Provider</th>
                         <th className="px-3.5 py-2.5">Bill Date</th>
@@ -558,7 +587,7 @@ export default function AccountingDashboardPage() {
                           </td>
                           <td className="px-3.5 py-2.5">
                             <span
-                              className={`text-[10px] font-bold border rounded-full px-2 py-0.5 uppercase tracking-wider ${
+                              className={`text-[10px] font-bold border rounded-sm px-2 py-0.5 ${
                                 exp.status === 'PAID'
                                   ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-400'
                                   : 'bg-rose-50 dark:bg-red-950/30 border-rose-200 dark:border-red-900/50 text-rose-800 dark:text-red-400'
@@ -601,14 +630,14 @@ export default function AccountingDashboardPage() {
             {activeTab === 'vouchers' && (
               <div className="space-y-3.5">
                 <div className="bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 p-3 rounded-xl">
-                  <h3 className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider">Accounting Voucher Registers Log</h3>
+                  <h3 className="text-xs font-bold text-slate-900 dark:text-slate-200">Accounting Voucher Registers Log</h3>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400">Audit trail of all double-entry Receipts, Payments, and Journal vouchers</p>
                 </div>
 
                 <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/20 shadow-xs">
                   <table className="w-full text-left text-xs border-collapse whitespace-nowrap">
                     <thead>
-                      <tr className="bg-slate-50 dark:bg-black/60 text-slate-700 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800 text-[10px] uppercase">
+                      <tr className="bg-slate-50 dark:bg-black/60 text-slate-700 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800 text-[10px]">
                         <th className="px-3.5 py-2.5">Voucher Number</th>
                         <th className="px-3.5 py-2.5">Voucher Type</th>
                         <th className="px-3.5 py-2.5">Posting Date</th>
@@ -623,7 +652,7 @@ export default function AccountingDashboardPage() {
                           <td className="px-3.5 py-2.5 font-mono font-bold text-indigo-700 dark:text-indigo-400">{v.voucherNumber}</td>
                           <td className="px-3.5 py-2.5">
                             <span
-                              className={`text-[10px] font-bold border rounded-full px-2 py-0.5 uppercase tracking-wider ${
+                              className={`text-[10px] font-bold border rounded-sm px-2 py-0.5 ${
                                 v.type === 'RECEIPT'
                                   ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-400'
                                   : v.type === 'PAYMENT'
@@ -666,12 +695,12 @@ export default function AccountingDashboardPage() {
               <div className="space-y-3.5">
                 <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 p-3 rounded-xl">
                   <div>
-                    <h3 className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider">Statement of Trial Balance</h3>
+                    <h3 className="text-xs font-bold text-slate-900 dark:text-slate-200">Statement of Trial Balance</h3>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400">Mathematical validation summarizing all double-entry debit and credit lines</p>
                   </div>
                   {trialTotals && (
                     <div className="flex items-center gap-2">
-                      <span className={`text-[10px] font-semibold border rounded-full px-2 py-0.5 uppercase tracking-wider ${
+                      <span className={`text-[10px] font-semibold border rounded-sm px-2 py-0.5 ${
                         trialTotals.isBalanced 
                           ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-400'
                           : 'bg-rose-50 dark:bg-red-950/30 border-rose-200 dark:border-red-900/50 text-rose-800 dark:text-red-400'
@@ -685,7 +714,7 @@ export default function AccountingDashboardPage() {
                 <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/20 shadow-xs">
                   <table className="w-full text-left text-xs border-collapse whitespace-nowrap">
                     <thead>
-                      <tr className="bg-slate-50 dark:bg-black/60 text-slate-700 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800 text-[10px] uppercase">
+                      <tr className="bg-slate-50 dark:bg-black/60 text-slate-700 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800 text-[10px]">
                         <th className="px-3.5 py-2.5">Ledger Account Code Name</th>
                         <th className="px-3.5 py-2.5">Group Classification</th>
                         <th className="px-3.5 py-2.5 text-right">Debit (₹)</th>
@@ -728,14 +757,14 @@ export default function AccountingDashboardPage() {
             {activeTab === 'income' && (
               <div className="space-y-3.5">
                 <div className="bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 p-3 rounded-xl">
-                  <h3 className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider">Statement of Income & Expenditure</h3>
+                  <h3 className="text-xs font-bold text-slate-900 dark:text-slate-200">Statement of Income & Expenditure</h3>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400">Summary of revenue inflows vs operational expenditure outflows</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                   {/* Income */}
                   <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-950/20 p-3.5 sm:p-4 space-y-3 shadow-xs">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 border-b border-slate-200 dark:border-slate-800/40 pb-2">Revenue Inflows (Income)</h4>
+                    <h4 className="text-xs font-bold text-emerald-700 dark:text-emerald-400 border-b border-slate-200 dark:border-slate-800/40 pb-2">Revenue Inflows (Income)</h4>
                     <ul className="divide-y divide-slate-100 dark:divide-slate-800/40 text-xs text-slate-700 dark:text-slate-300">
                       {incomeList.map((row) => (
                         <li key={row.ledgerId} className="flex justify-between py-2">
@@ -748,7 +777,7 @@ export default function AccountingDashboardPage() {
 
                   {/* Expenses */}
                   <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-950/20 p-3.5 sm:p-4 space-y-3 shadow-xs">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-rose-700 dark:text-red-400 border-b border-slate-200 dark:border-slate-800/40 pb-2">Operational Outflows (Expenditure)</h4>
+                    <h4 className="text-xs font-bold text-rose-700 dark:text-red-400 border-b border-slate-200 dark:border-slate-800/40 pb-2">Operational Outflows (Expenditure)</h4>
                     <ul className="divide-y divide-slate-100 dark:divide-slate-800/40 text-xs text-slate-700 dark:text-slate-300">
                       {expenseList.map((row) => (
                         <li key={row.ledgerId} className="flex justify-between py-2">
@@ -785,14 +814,14 @@ export default function AccountingDashboardPage() {
             {activeTab === 'balance' && (
               <div className="space-y-3.5">
                 <div className="bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 p-3 rounded-xl">
-                  <h3 className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider">Statement of Balance Sheet</h3>
+                  <h3 className="text-xs font-bold text-slate-900 dark:text-slate-200">Statement of Balance Sheet</h3>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400">Asset valuation collections compared side-by-side with liabilities, reserves, & surplus</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                   {/* Assets */}
                   <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-950/20 p-3.5 sm:p-4 space-y-3 shadow-xs">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-400 border-b border-slate-200 dark:border-slate-800/40 pb-2">Assets (Property & Receivables)</h4>
+                    <h4 className="text-xs font-bold text-indigo-700 dark:text-indigo-400 border-b border-slate-200 dark:border-slate-800/40 pb-2">Assets (Property & Receivables)</h4>
                     <ul className="divide-y divide-slate-100 dark:divide-slate-800/40 text-xs text-slate-700 dark:text-slate-300">
                       {assetList.map((row) => (
                         <li key={row.ledgerId} className="flex justify-between py-2">
@@ -808,7 +837,7 @@ export default function AccountingDashboardPage() {
 
                   {/* Liabilities */}
                   <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-950/20 p-3.5 sm:p-4 space-y-3 shadow-xs">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-400 border-b border-slate-200 dark:border-slate-800/40 pb-2">Liabilities, Capital & Reserves</h4>
+                    <h4 className="text-xs font-bold text-indigo-700 dark:text-indigo-400 border-b border-slate-200 dark:border-slate-800/40 pb-2">Liabilities, Capital & Reserves</h4>
                     <ul className="divide-y divide-slate-100 dark:divide-slate-800/40 text-xs text-slate-700 dark:text-slate-300">
                       {liabilityList.map((row) => (
                         <li key={row.ledgerId} className="flex justify-between py-2">
@@ -888,11 +917,11 @@ export default function AccountingDashboardPage() {
                               <p className="text-xs text-slate-500 dark:text-slate-400 font-mono mt-0.5">A/C: {acc.accountNumber}</p>
                             </div>
                             {acc.isDefault ? (
-                              <span className="text-[10px] font-extrabold bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                              <span className="text-[10px] font-extrabold bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-sm">
                                 Primary Default
                               </span>
                             ) : (
-                              <span className="text-[10px] font-semibold bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded-full uppercase">
+                              <span className="text-[10px] font-semibold bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded-sm">
                                 Secondary
                               </span>
                             )}
@@ -900,16 +929,16 @@ export default function AccountingDashboardPage() {
 
                           <div className="grid grid-cols-2 gap-2 text-xs border-t border-b border-slate-100 dark:border-slate-800/60 py-2.5 mt-2 text-slate-600 dark:text-slate-400">
                             <div>
-                              <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-semibold">IFSC Code</span>
+                              <span className="text-slate-400 dark:text-slate-500 block text-[10px] font-semibold">IFSC Code</span>
                               <span className="font-mono text-slate-900 dark:text-slate-200 font-bold">{acc.ifsc}</span>
                             </div>
                             <div>
-                              <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-semibold">Account Type</span>
+                              <span className="text-slate-400 dark:text-slate-500 block text-[10px] font-semibold">Account Type</span>
                               <span className="text-slate-800 dark:text-slate-200 font-semibold">{acc.type || 'SAVINGS'}</span>
                             </div>
                             {acc.branchName && (
                               <div className="col-span-2">
-                                <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-semibold">Branch</span>
+                                <span className="text-slate-400 dark:text-slate-500 block text-[10px] font-semibold">Branch</span>
                                 <span className="text-slate-700 dark:text-slate-300">{acc.branchName}</span>
                               </div>
                             )}
@@ -933,7 +962,7 @@ export default function AccountingDashboardPage() {
             {activeTab === 'voucher' && (
               <form onSubmit={handlePostVoucher} className="space-y-6 bg-white dark:bg-slate-950/20 border border-slate-200 dark:border-slate-800 p-6 sm:p-8 rounded-xl shadow-xs max-w-4xl">
                 <div className="bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 p-4 rounded-xl">
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-slate-200 uppercase flex items-center gap-2">
                     <BookOpen className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
                     Post Double-Entry Journal Entry
                   </h3>
@@ -975,7 +1004,7 @@ export default function AccountingDashboardPage() {
 
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-xs font-bold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider">Journal Lines</span>
+                    <span className="text-xs font-bold text-indigo-700 dark:text-indigo-400">Journal Lines</span>
                     <button
                       type="button"
                       onClick={() => setVoucherLines([...voucherLines, { ledgerId: '', type: 'DEBIT', amount: 0 }])}
@@ -1045,10 +1074,10 @@ export default function AccountingDashboardPage() {
             {/* Bank Accounts Configuration Tab */}
             {activeTab === 'bank_accounts' && (
               <div className="space-y-6">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-900/60 border border-slate-800 p-6 rounded-2xl">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl">
                   <div>
-                    <h3 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-                      <Landmark className="h-5 w-5 text-emerald-400" /> Society Multiple Bank Accounts
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                      <Landmark className="h-5 w-5 text-emerald-600 dark:text-emerald-400" /> Society Multiple Bank Accounts
                     </h3>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                       Manage official society bank accounts for dues collections, vendor payments, and financial auditing.
@@ -1065,9 +1094,9 @@ export default function AccountingDashboardPage() {
                 </div>
 
                 {bankAccountsList.length === 0 ? (
-                  <div className="text-center py-12 border border-slate-800 rounded-2xl bg-slate-950/40">
+                  <div className="text-center py-12 border border-slate-200 dark:border-slate-800 rounded-2xl bg-slate-50 dark:bg-slate-950/40">
                     <Landmark className="h-10 w-10 text-slate-500 mx-auto mb-3" />
-                    <h4 className="text-sm font-semibold text-slate-300">No bank accounts configured yet</h4>
+                    <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300">No bank accounts configured yet</h4>
                     <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
                       Click 'Add Bank Account' to configure society bank accounts for accounting ledger tracking.
                     </p>
@@ -1077,38 +1106,38 @@ export default function AccountingDashboardPage() {
                     {bankAccountsList.map((acc: any) => (
                       <div 
                         key={acc.id} 
-                        className="rounded-2xl border border-slate-800 bg-slate-950/60 p-6 space-y-4 hover:border-slate-700 transition-all flex flex-col justify-between shadow-lg"
+                        className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 p-6 space-y-4 hover:border-slate-300 dark:hover:border-slate-700 transition-all flex flex-col justify-between shadow-lg"
                       >
                         <div className="space-y-2">
                           <div className="flex items-start justify-between">
                             <div>
-                              <h4 className="text-base font-bold text-slate-100">{acc.bankName}</h4>
+                              <h4 className="text-base font-bold text-slate-900 dark:text-slate-100">{acc.bankName}</h4>
                               <p className="text-xs text-slate-500 dark:text-slate-400 font-mono mt-0.5">A/C: {acc.accountNumber}</p>
                             </div>
                             {acc.isDefault ? (
-                              <span className="text-[10px] font-extrabold bg-emerald-950/60 border border-emerald-800 text-emerald-400 px-2.5 py-1 rounded-full uppercase tracking-wider">
+                              <span className="text-[10px] font-extrabold bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 px-2.5 py-1 rounded-sm">
                                 Primary Default
                               </span>
                             ) : (
-                              <span className="text-[10px] font-semibold bg-slate-900 border border-slate-800 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded-full uppercase">
+                              <span className="text-[10px] font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded-sm">
                                 Secondary
                               </span>
                             )}
                           </div>
 
-                          <div className="grid grid-cols-2 gap-2 text-xs border-t border-b border-slate-800/60 py-3 mt-3 text-slate-500 dark:text-slate-400">
+                          <div className="grid grid-cols-2 gap-2 text-xs border-t border-b border-slate-200 dark:border-slate-800/60 py-3 mt-3 text-slate-500 dark:text-slate-400">
                             <div>
-                              <span className="text-slate-500 block text-[10px] uppercase font-semibold">IFSC Code</span>
-                              <span className="font-mono text-slate-200 font-bold">{acc.ifsc}</span>
+                              <span className="text-slate-500 block text-[10px] font-semibold">IFSC Code</span>
+                              <span className="font-mono text-slate-900 dark:text-slate-200 font-bold">{acc.ifsc}</span>
                             </div>
                             <div>
-                              <span className="text-slate-500 block text-[10px] uppercase font-semibold">Account Type</span>
-                              <span className="text-slate-200 font-semibold">{acc.type || 'SAVINGS'}</span>
+                              <span className="text-slate-500 block text-[10px] font-semibold">Account Type</span>
+                              <span className="text-slate-900 dark:text-slate-200 font-semibold">{acc.type || 'SAVINGS'}</span>
                             </div>
                             {acc.branchName && (
                               <div className="col-span-2">
-                                <span className="text-slate-500 block text-[10px] uppercase font-semibold">Branch</span>
-                                <span className="text-slate-300">{acc.branchName}</span>
+                                <span className="text-slate-500 block text-[10px] font-semibold">Branch</span>
+                                <span className="text-slate-700 dark:text-slate-300">{acc.branchName}</span>
                               </div>
                             )}
                           </div>
@@ -1116,7 +1145,7 @@ export default function AccountingDashboardPage() {
 
                         <div className="pt-2 flex items-center justify-between">
                           <span className="text-xs text-slate-500 dark:text-slate-400">Opening Balance:</span>
-                          <span className="text-sm font-bold text-slate-100 font-mono">
+                          <span className="text-sm font-bold text-slate-900 dark:text-slate-100 font-mono">
                             ₹{Number(acc.openingBalance || 0).toLocaleString()}
                           </span>
                         </div>
@@ -1194,7 +1223,7 @@ export default function AccountingDashboardPage() {
                       placeholder="e.g. HDFC0001234"
                       value={ifsc}
                       onChange={(e) => setIfsc(e.target.value.toUpperCase())}
-                      className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-emerald-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none mt-1 font-mono uppercase transition shadow-xs"
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-emerald-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none mt-1 font-mono transition shadow-xs"
                       required
                     />
                   </div>
@@ -1348,10 +1377,11 @@ export default function AccountingDashboardPage() {
                     onChange={(e) => setExpHeadName(e.target.value)}
                     className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none mt-1 transition shadow-xs"
                   >
-                    <option value="Repairs & Building Maintenance">EXP-01 - Repairs & Building Maintenance</option>
-                    <option value="Security Guard Agency Expenses">EXP-02 - Security Guard Agency Expenses</option>
-                    <option value="Electricity & Water Utilities">EXP-03 - Electricity & Water Utilities</option>
-                    <option value="Administrative & Accounting Expenses">EXP-04 - Administrative & Accounting Expenses</option>
+                    {(expenseHeads.length ? expenseHeads : [{ id: 'default', name: expHeadName, code: null }]).map((h) => (
+                      <option key={h.id} value={h.name}>
+                        {h.code ? `${h.code} - ` : ''}{h.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -1369,15 +1399,18 @@ export default function AccountingDashboardPage() {
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Payment Mode</label>
-                    <select
-                      value={expPaymentMode}
-                      onChange={(e) => setExpPaymentMode(e.target.value)}
-                      className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none mt-1 transition shadow-xs"
-                    >
-                      <option value="BANK">BANK (Bank Account)</option>
-                      <option value="CASH">CASH (Cash in Hand)</option>
-                    </select>
+                    <label htmlFor="exp-paid-from" className="text-xs font-semibold text-slate-700 dark:text-slate-300">Paid from</label>
+                    <PaidFromSelect
+                      id="exp-paid-from"
+                      className="mt-1"
+                      accounts={payFromAccounts}
+                      disabled={expStatus === 'UNPAID'}
+                      value={{ paymentMode: expPaymentMode, bankAccountId: expBankAccountId }}
+                      onChange={(v) => {
+                        setExpPaymentMode(v.paymentMode);
+                        setExpBankAccountId(v.bankAccountId);
+                      }}
+                    />
                   </div>
 
                   <div>
@@ -1435,7 +1468,7 @@ export default function AccountingDashboardPage() {
                 <div>
                   <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                     <span className="font-mono text-indigo-600 dark:text-indigo-400">{selectedVoucherForModal.voucherNumber}</span>
-                    <span className="text-[10px] font-bold border rounded-full px-2 py-0.5 uppercase bg-indigo-50 dark:bg-indigo-950/30 border-indigo-200 dark:border-indigo-900/50 text-indigo-600 dark:text-indigo-400">
+                    <span className="text-[10px] font-bold border rounded-sm px-2 py-0.5 bg-indigo-50 dark:bg-indigo-950/30 border-indigo-200 dark:border-indigo-900/50 text-indigo-600 dark:text-indigo-400">
                       {selectedVoucherForModal.type}
                     </span>
                   </h3>
@@ -1470,7 +1503,7 @@ export default function AccountingDashboardPage() {
                           {line.ledgerName}
                         </td>
                         <td className="p-3">
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded border uppercase ${
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
                             line.type === 'DEBIT' ? 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400' : 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400'
                           }`}>
                             {line.type}
@@ -1526,21 +1559,21 @@ export default function AccountingDashboardPage() {
             <div className="relative w-full max-w-4xl max-h-[88dvh] sm:max-h-[92vh] bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col my-auto z-10">
 
               {/* Header with Format Selector & Action (no-print) */}
-              <div className="no-print flex-shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 sm:p-5 border-b border-slate-800 bg-slate-900/90 backdrop-blur-sm">
+              <div className="no-print flex-shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/90 backdrop-blur-sm">
                 <div className="flex items-center gap-2.5">
                   <div className="p-2 rounded-xl bg-indigo-600/20 border border-indigo-500/30">
-                    <Printer className="h-5 w-5 text-indigo-400" />
+                    <Printer className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
-                      Print Voucher: <span className="font-mono text-indigo-400">{printVoucherData.voucherNumber}</span>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                      Print Voucher: <span className="font-mono text-indigo-600 dark:text-indigo-400">{printVoucherData.voucherNumber}</span>
                     </h3>
                     <p className="text-[11px] text-slate-400">Choose printable layout and send to printer</p>
                   </div>
                 </div>
 
                 {/* Format Pills */}
-                <div className="grid grid-cols-2 sm:flex sm:items-center gap-1 bg-slate-950/80 p-1 rounded-xl border border-slate-800">
+                <div className="grid grid-cols-2 sm:flex sm:items-center gap-1 bg-white dark:bg-slate-950/80 p-1 rounded-xl border border-slate-200 dark:border-slate-800">
                   {[
                     { key: 'a4_voucher', label: 'A4 Voucher', icon: FileText },
                     { key: 'thermal_pos', label: 'Thermal (80mm)', icon: Receipt },
@@ -1557,7 +1590,7 @@ export default function AccountingDashboardPage() {
                         className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition-all cursor-pointer ${
                           isActive
                             ? 'bg-indigo-600 text-white shadow-xs'
-                            : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                            : 'text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60'
                         }`}
                       >
                         <IconComp className="h-3 w-3" />
@@ -1576,7 +1609,7 @@ export default function AccountingDashboardPage() {
                   </button>
                   <button
                     onClick={() => setPrintVoucherData(null)}
-                    className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition cursor-pointer"
+                    className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition cursor-pointer"
                   >
                     <X className="h-5 w-5" />
                   </button>
@@ -1584,7 +1617,7 @@ export default function AccountingDashboardPage() {
               </div>
 
               {/* Scrollable Document Preview Body */}
-              <div className="p-4 sm:p-6 overflow-y-auto bg-slate-900/40 flex justify-center">
+              <div className="p-4 sm:p-6 overflow-y-auto bg-slate-50 dark:bg-slate-900/40 flex justify-center">
                 <div id="voucher-printable-frame" className="w-full">
                   
                   {/* FORMAT 1: A4 VOUCHER */}
@@ -1600,11 +1633,11 @@ export default function AccountingDashboardPage() {
                           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Housing Co-Operative Society Ltd. • Accounting Division</p>
                         </div>
                         <div className="text-left sm:text-right space-y-1">
-                          <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 block">
+                          <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 block">
                             OFFICIAL ACCOUNTING VOUCHER
                           </span>
                           <h3 className="text-lg font-extrabold text-slate-900 dark:text-slate-100 font-mono">{printVoucherData.voucherNumber}</h3>
-                          <span className="inline-block text-[10px] font-bold border rounded-full px-3 py-0.5 uppercase bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300">
+                          <span className="inline-block text-[10px] font-bold border rounded-sm px-3 py-0.5 bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300">
                             {printVoucherData.type} VOUCHER
                           </span>
                         </div>
@@ -1613,22 +1646,22 @@ export default function AccountingDashboardPage() {
                       {/* Meta Details */}
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-xs bg-slate-50 dark:bg-slate-900/60 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800">
                         <div>
-                          <span className="text-slate-500 dark:text-slate-400 block text-[10px] uppercase">Posting Date</span>
+                          <span className="text-slate-500 dark:text-slate-400 block text-[10px]">Posting Date</span>
                           <span className="font-bold text-slate-900 dark:text-slate-100">{printVoucherData.date}</span>
                         </div>
                         <div>
-                          <span className="text-slate-500 dark:text-slate-400 block text-[10px] uppercase">Payee / Entity</span>
+                          <span className="text-slate-500 dark:text-slate-400 block text-[10px]">Payee / Entity</span>
                           <span className="font-bold text-slate-900 dark:text-slate-100">{printVoucherData.vendorName || 'Society General Account'}</span>
                         </div>
                         <div>
-                          <span className="text-slate-500 dark:text-slate-400 block text-[10px] uppercase">Voucher Total</span>
+                          <span className="text-slate-500 dark:text-slate-400 block text-[10px]">Voucher Total</span>
                           <span className="font-extrabold text-slate-900 dark:text-slate-100 font-mono text-sm">₹ {totalNum.toLocaleString('en-IN')}</span>
                         </div>
                       </div>
 
                       {/* Line Breakdown Table */}
                       <div className="space-y-2">
-                        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Double-Entry Particulars</h4>
+                        <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400">Double-Entry Particulars</h4>
                         <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
                           <table className="w-full text-left text-xs border-collapse whitespace-nowrap">
                             <thead>
@@ -1648,7 +1681,7 @@ export default function AccountingDashboardPage() {
                                       {line.ledgerName}
                                     </td>
                                     <td className="p-3">
-                                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded border uppercase ${
+                                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
                                         line.type === 'DEBIT' ? 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400' : 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400'
                                       }`}>
                                         {line.type}
@@ -1665,7 +1698,7 @@ export default function AccountingDashboardPage() {
                               ) : (
                                 <tr className="text-slate-800 dark:text-slate-200">
                                   <td className="p-3 font-medium">{printVoucherData.vendorName || 'Sundry Creditors / Expense Head'}</td>
-                                  <td className="p-3"><span className="text-[10px] font-bold px-2 py-0.5 rounded border uppercase bg-red-50 dark:bg-red-950/40 border-red-200 text-red-700">DEBIT</span></td>
+                                  <td className="p-3"><span className="text-[10px] font-bold px-2 py-0.5 rounded border bg-red-50 dark:bg-red-950/40 border-red-200 text-red-700">DEBIT</span></td>
                                   <td className="p-3 text-right font-mono font-semibold">₹ {totalNum.toLocaleString('en-IN')}</td>
                                   <td className="p-3 text-right font-mono font-semibold">-</td>
                                 </tr>
@@ -1711,9 +1744,9 @@ export default function AccountingDashboardPage() {
                   {voucherPrintFormat === 'thermal_pos' && (
                     <div className="w-[320px] max-w-full mx-auto bg-white text-slate-900 font-mono text-[11px] p-5 border border-dashed border-slate-400 rounded-xl shadow-md space-y-3 select-none">
                       <div className="text-center space-y-0.5 border-b border-dashed border-slate-400 pb-2">
-                        <h3 className="font-black text-xs uppercase tracking-wider">{societyName}</h3>
+                        <h3 className="font-black text-xs">{societyName}</h3>
                         <p className="text-[9px] text-slate-600">Accounting Payout Slip</p>
-                        <p className="font-bold text-[10px] uppercase tracking-widest pt-1">*** {printVoucherData.type} VOUCHER ***</p>
+                        <p className="font-bold text-[10px] pt-1">*** {printVoucherData.type} VOUCHER ***</p>
                       </div>
 
                       <div className="space-y-0.5 text-[10px] border-b border-dashed border-slate-400 pb-2">
@@ -1784,8 +1817,8 @@ export default function AccountingDashboardPage() {
                   {voucherPrintFormat === 'a5_voucher' && (
                     <div className="w-full max-w-2xl mx-auto bg-amber-50/30 dark:bg-slate-900 border-2 border-indigo-900/30 dark:border-indigo-500/40 p-6 rounded-2xl shadow-md space-y-4 text-slate-800 dark:text-slate-200">
                       <div className="text-center border-b-2 border-indigo-900/20 dark:border-indigo-500/30 pb-3 space-y-0.5">
-                        <h3 className="text-base font-black uppercase tracking-wider text-indigo-900 dark:text-indigo-400">{societyName}</h3>
-                        <div className="inline-block bg-indigo-100 dark:bg-indigo-950/80 text-indigo-800 dark:text-indigo-300 font-extrabold text-[10px] px-3 py-0.5 rounded-full border border-indigo-300 dark:border-indigo-800 uppercase tracking-widest mt-1">
+                        <h3 className="text-base font-black uppercase text-indigo-900 dark:text-indigo-400">{societyName}</h3>
+                        <div className="inline-block bg-indigo-100 dark:bg-indigo-950/80 text-indigo-800 dark:text-indigo-300 font-extrabold text-[10px] px-3 py-0.5 rounded-sm border border-indigo-300 dark:border-indigo-800 mt-1">
                           {printVoucherData.type} PAYMENT VOUCHER SLIP
                         </div>
                       </div>
@@ -1808,13 +1841,13 @@ export default function AccountingDashboardPage() {
                       </div>
 
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
-                        <div className="inline-flex items-center gap-2 bg-indigo-900 text-white font-mono px-4 py-2 rounded-xl text-base font-black shadow-sm">
+                        <div className="inline-flex items-center gap-2 bg-indigo-50 dark:bg-indigo-900 text-white font-mono px-4 py-2 rounded-xl text-base font-black shadow-sm">
                           <span>AMOUNT:</span>
                           <span>₹ {totalNum.toLocaleString('en-IN')}</span>
                         </div>
 
                         <div className="flex items-center gap-6 text-center text-xs">
-                          <div className="border border-dashed border-slate-400 p-2 rounded-lg text-[9px] text-slate-400 uppercase">
+                          <div className="border border-dashed border-slate-400 p-2 rounded-lg text-[9px] text-slate-400">
                             [ SOCIETY SEAL ]
                           </div>
                           <div>
@@ -1840,28 +1873,28 @@ export default function AccountingDashboardPage() {
                             <p className="text-[10px] text-slate-500">Double-Entry Accounting Verification Card</p>
                           </div>
                           <div className="text-right font-mono text-xs">
-                            <span className="text-[9px] text-slate-400 block uppercase">Voucher ID</span>
+                            <span className="text-[9px] text-slate-400 block">Voucher ID</span>
                             <span className="font-bold text-slate-900 dark:text-slate-100">{printVoucherData.voucherNumber}</span>
                           </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-2 text-xs pt-1">
                           <div>
-                            <span className="text-[10px] text-slate-500 block uppercase">Payee / Account</span>
+                            <span className="text-[10px] text-slate-500 block">Payee / Account</span>
                             <p className="font-bold text-slate-900 dark:text-slate-100 truncate">{printVoucherData.vendorName || 'Sundry Creditor'}</p>
                             <p className="text-slate-500 text-[10px]">Date: {printVoucherData.date}</p>
                           </div>
                           <div className="text-right">
-                            <span className="text-[10px] text-slate-500 block uppercase">Voucher Amount</span>
+                            <span className="text-[10px] text-slate-500 block">Voucher Amount</span>
                             <p className="text-base font-black text-slate-900 dark:text-slate-100">₹ {totalNum.toLocaleString('en-IN')}</p>
-                            <p className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold uppercase">{printVoucherData.type} ENTRY</p>
+                            <p className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold">{printVoucherData.type} ENTRY</p>
                           </div>
                         </div>
                       </div>
 
                       <div className="p-5 space-y-3 bg-white dark:bg-slate-900 text-xs border-t border-slate-200 dark:border-slate-800">
                         <div className="space-y-1">
-                          <span className="text-slate-400 block text-[9px] uppercase font-bold">Narration / Account Ledger</span>
+                          <span className="text-slate-400 block text-[9px] font-bold">Narration / Account Ledger</span>
                           <p className="text-slate-700 dark:text-slate-300 font-medium">{printVoucherData.narration || 'Accounting entry posted.'}</p>
                         </div>
 

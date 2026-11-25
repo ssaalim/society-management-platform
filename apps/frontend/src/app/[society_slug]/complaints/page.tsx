@@ -103,7 +103,8 @@ export default function ComplaintManagementPage() {
   const [newDescription, setNewDescription] = useState<string>('');
   const [newPriority, setNewPriority] = useState<string>('MEDIUM');
   const [selectedFlatId, setSelectedFlatId] = useState<string>('');
-  const [flatsList, setFlatsList] = useState<Array<{ id: string; number: string; floor?: number }>>([]);
+  const [flatsList, setFlatsList] = useState<Array<{ id: string; label: string }>>([]);
+  const [flatPickerIsResident, setFlatPickerIsResident] = useState(false);
 
   const [selectedStaffId, setSelectedStaffId] = useState<string>('');
   const [customStaffName, setCustomStaffName] = useState<string>('');
@@ -153,9 +154,12 @@ export default function ComplaintManagementPage() {
 
   const fetchFlats = async () => {
     try {
-      const res = await apiClient.get('/flats');
+      // Residents get only their own flats; the office gets every flat.
+      const res = await apiClient.get('/complaints/flat-options');
       if (res.data?.success) {
-        setFlatsList(res.data.data);
+        setFlatsList(res.data.data.flats);
+        setFlatPickerIsResident(res.data.data.isResident);
+        if (res.data.data.isResident && res.data.data.flats.length === 1) setSelectedFlatId(res.data.data.flats[0].id);
       }
     } catch (err) {
       console.warn('Failed to load flats list:', err);
@@ -189,7 +193,7 @@ export default function ComplaintManagementPage() {
         setIsCreateOpen(false);
         setNewTitle('');
         setNewDescription('');
-        setSelectedFlatId('');
+        setSelectedFlatId(flatPickerIsResident && flatsList.length === 1 ? flatsList[0].id : '');
         fetchTickets();
       }
     } catch (err: any) {
@@ -377,8 +381,6 @@ export default function ComplaintManagementPage() {
 
   return (
     <main className="relative flex min-h-screen flex-col items-center justify-start overflow-x-hidden w-full py-4 sm:py-5 px-3 sm:px-5 lg:px-6">
-      {/* Background Grids */}
-      <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
 
       <div className="w-full max-w-[1600px] mx-auto space-y-3.5 z-10">
         
@@ -387,7 +389,7 @@ export default function ComplaintManagementPage() {
           <div className="flex items-center gap-2.5">
             <MessageSquare className="h-6 w-6 text-indigo-500 dark:text-indigo-400" />
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Complaints & Tickets Center</h2>
+              <h2 className="text-xl font-normal text-slate-900 dark:text-slate-100">Complaints & Tickets Center</h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Raise maintenance tickets, assign technicians, manage society staff team, and track resolutions</p>
             </div>
           </div>
@@ -414,19 +416,19 @@ export default function ComplaintManagementPage() {
         {/* Metrics Bar */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
           <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/40 p-3 shadow-xs">
-            <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">Open Complaints</span>
+            <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold">Open Complaints</span>
             <p className="text-xl font-black text-amber-500 dark:text-amber-400 mt-0.5">{openCount}</p>
           </div>
           <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/40 p-3 shadow-xs">
-            <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">Assigned & Active</span>
+            <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold">Assigned & Active</span>
             <p className="text-xl font-black text-sky-500 dark:text-sky-400 mt-0.5">{assignedCount}</p>
           </div>
           <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/40 p-3 shadow-xs">
-            <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">Resolved</span>
+            <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold">Resolved</span>
             <p className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5">{resolvedCount}</p>
           </div>
           <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/40 p-3 shadow-xs">
-            <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">Closed & Rated</span>
+            <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold">Closed & Rated</span>
             <p className="text-xl font-black text-slate-700 dark:text-slate-300 mt-0.5">{closedCount}</p>
           </div>
         </div>
@@ -506,7 +508,7 @@ export default function ComplaintManagementPage() {
                   {/* Meta Badges */}
                   <div className="flex justify-between items-start gap-2">
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <span className={`text-[10px] font-bold border rounded-full px-2.5 py-0.5 uppercase tracking-wider ${
+                      <span className={`text-[10px] font-bold border rounded-sm px-2.5 py-0.5 ${
                         ticket.priority === 'URGENT'
                           ? 'bg-rose-50 dark:bg-red-950/40 border-rose-200 dark:border-red-900/60 text-rose-800 dark:text-red-400'
                           : ticket.priority === 'HIGH'
@@ -517,19 +519,17 @@ export default function ComplaintManagementPage() {
                       }`}>
                         {ticket.priority}
                       </span>
-                      {ticket.flatNumber && (
-                        <span className="text-[10px] font-semibold bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded-full flex items-center gap-1">
-                          <Building className="h-3 w-3 text-indigo-600 dark:text-indigo-400" /> Flat {ticket.flatNumber}
-                        </span>
-                      )}
+                      <span className="text-[10px] font-semibold bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded-sm flex items-center gap-1">
+                        <Building className="h-3 w-3 text-indigo-600 dark:text-indigo-400" /> {ticket.flatNumber ? `Flat ${ticket.flatNumber}` : 'Common area'}
+                      </span>
                       {ticket.escalationLevel > 0 && (
-                        <span className="text-[10px] font-bold border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-400 rounded-full px-2.5 py-0.5 uppercase">
+                        <span className="text-[10px] font-bold border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-400 rounded-sm px-2.5 py-0.5">
                           Escalated Lvl {ticket.escalationLevel}
                         </span>
                       )}
                     </div>
 
-                    <span className={`text-[10px] font-bold border rounded-full px-2.5 py-0.5 uppercase tracking-wider ${
+                    <span className={`text-[10px] font-bold border rounded-sm px-2.5 py-0.5 ${
                       ticket.status === 'CLOSED'
                         ? 'bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-400'
                         : ticket.status === 'RESOLVED'
@@ -569,8 +569,8 @@ export default function ComplaintManagementPage() {
 
                   {/* Resolution Remarks Box */}
                   {ticket.resolutionComment && (
-                    <div className="bg-emerald-950/30 border border-emerald-900/50 p-3 rounded-xl space-y-1 mt-2">
-                      <div className="flex items-center justify-between text-[10px] text-emerald-400 font-bold">
+                    <div className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/50 p-3 rounded-xl space-y-1 mt-2">
+                      <div className="flex items-center justify-between text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
                         <span className="flex items-center gap-1.5">
                           <CheckCircle2 className="h-3.5 w-3.5" /> Resolution Remarks & Action Taken:
                         </span>
@@ -588,26 +588,26 @@ export default function ComplaintManagementPage() {
 
                   {/* Resident Feedback Remarks Box */}
                   {ticket.residentFeedback && (
-                    <div className="bg-slate-950/60 border border-slate-800 p-3 rounded-xl space-y-1 mt-2">
+                    <div className="bg-white dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 p-3 rounded-xl space-y-1 mt-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold text-amber-400 flex items-center gap-1">
-                          <Star className="h-3 w-3 fill-amber-400 text-amber-400" /> Resident Feedback Remarks:
+                        <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                          <Star className="h-3 w-3 fill-amber-400 text-amber-600 dark:text-amber-400" /> Resident Feedback Remarks:
                         </span>
                         {ticket.rating && (
-                          <div className="flex items-center gap-0.5 text-amber-400">
+                          <div className="flex items-center gap-0.5 text-amber-600 dark:text-amber-400">
                             {[...Array(ticket.rating)].map((_, i) => (
                               <Star key={i} className="h-3 w-3 fill-amber-400" />
                             ))}
                           </div>
                         )}
                       </div>
-                      <p className="text-xs text-slate-300 italic">{ticket.residentFeedback}</p>
+                      <p className="text-xs text-slate-700 dark:text-slate-300 italic">{ticket.residentFeedback}</p>
                     </div>
                   )}
                 </div>
 
                 {/* Actions Panel */}
-                <div className="flex flex-wrap justify-end gap-2 border-t border-slate-800/60 pt-4 mt-4">
+                <div className="flex flex-wrap justify-end gap-2 border-t border-slate-200 dark:border-slate-800/60 pt-4 mt-4">
                   {ticket.status !== 'CLOSED' && (
                     <>
                       {/* Assign Staff (Management Only) */}
@@ -619,9 +619,9 @@ export default function ComplaintManagementPage() {
                             setCustomStaffName(ticket.assignedStaffName || '');
                             setIsInlineAddStaff(false);
                           }}
-                          className="rounded-lg border border-slate-700 bg-slate-900 hover:bg-slate-800 text-slate-200 py-1.5 px-3 font-semibold transition-all flex items-center gap-1"
+                          className="rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-slate-200 py-1.5 px-3 font-semibold transition-all flex items-center gap-1"
                         >
-                          <UserCheck className="h-3.5 w-3.5 text-sky-400" /> Assign Staff
+                          <UserCheck className="h-3.5 w-3.5 text-sky-600 dark:text-sky-400" /> Assign Staff
                         </button>
                       )}
 
@@ -641,7 +641,7 @@ export default function ComplaintManagementPage() {
                       {/* Escalate (Available to all) */}
                       <button
                         onClick={() => handleEscalate(ticket.id)}
-                        className="rounded-lg border border-slate-800 bg-slate-950/60 py-1.5 px-3 hover:bg-slate-900 font-semibold text-slate-400 hover:text-amber-400 transition-all"
+                        className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 py-1.5 px-3 hover:bg-white dark:hover:bg-slate-900 font-semibold text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 transition-all"
                       >
                         Escalate
                       </button>
@@ -705,10 +705,10 @@ export default function ComplaintManagementPage() {
                     onChange={(e) => setSelectedFlatId(e.target.value)}
                     className="w-full mt-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition shadow-xs"
                   >
-                    <option value="">-- Auto-Detect My Flat / Common Area --</option>
+                    <option value="">Common area (no flat)</option>
                     {flatsList.map((f) => (
                       <option key={f.id} value={f.id}>
-                        Flat {f.number} {f.floor !== undefined ? `(Floor ${f.floor})` : ''}
+                        {flatPickerIsResident ? `My flat ${f.label}` : `Flat ${f.label}`}
                       </option>
                     ))}
                   </select>
@@ -1026,7 +1026,7 @@ export default function ComplaintManagementPage() {
                       <Star
                         className={`h-6 w-6 ${
                           star <= feedbackRating
-                            ? 'text-amber-400 fill-amber-400'
+                            ? 'text-amber-600 dark:text-amber-400 fill-amber-400'
                             : 'text-slate-300 dark:text-slate-600'
                         }`}
                       />
@@ -1179,7 +1179,7 @@ export default function ComplaintManagementPage() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full">
+                      <span className="text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-sm">
                         Active
                       </span>
                       <button

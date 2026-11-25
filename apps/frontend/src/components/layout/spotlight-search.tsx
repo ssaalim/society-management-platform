@@ -616,12 +616,12 @@ export const SpotlightSearch: React.FC<SpotlightSearchProps> = ({ isOpen, onClos
 
       {/* Spotlight Window Card */}
       <div
-        className="relative w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-200 dark:border-neutral-800 bg-white/98 dark:bg-black/95 text-slate-900 dark:text-neutral-100 shadow-2xl shadow-slate-900/10 dark:shadow-black backdrop-blur-2xl transition-all animate-in fade-in zoom-in-95 duration-200"
+        className="relative w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/98 dark:bg-slate-900 text-slate-900 dark:text-neutral-100 shadow-2xl shadow-slate-900/10 dark:shadow-black backdrop-blur-2xl transition-all animate-in fade-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleKeyDown}
       >
         {/* Search Header Bar */}
-        <div className="relative flex items-center px-4 py-3.5 border-b border-slate-200 dark:border-neutral-800 bg-slate-50/50 dark:bg-black/40">
+        <div className="relative flex items-center px-4 py-3.5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40">
           <div className="flex items-center justify-center p-2 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 mr-3 shrink-0">
             <Search className="h-5 w-5" />
           </div>
@@ -688,12 +688,12 @@ export const SpotlightSearch: React.FC<SpotlightSearchProps> = ({ isOpen, onClos
               categories.map((cat) => (
                 <div key={cat.category} className="space-y-1">
                   {/* Category Header */}
-                  <div className="flex items-center justify-between px-3 py-1.5 text-[11px] font-extrabold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                  <div className="flex items-center justify-between px-3 py-1.5 text-[11px] font-extrabold text-slate-600 dark:text-slate-400">
                     <div className="flex items-center gap-1.5">
                       <span className="text-indigo-600 dark:text-indigo-400">{getEntityIcon(cat.icon)}</span>
                       <span>{cat.category}</span>
                     </div>
-                    <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-[10px] font-mono font-bold">
+                    <span className="px-2 py-0.5 rounded-sm bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-[10px] font-mono font-bold">
                       {cat.count}
                     </span>
                   </div>
@@ -738,7 +738,7 @@ export const SpotlightSearch: React.FC<SpotlightSearchProps> = ({ isOpen, onClos
                               </span>
                               {item.badge && (
                                 <span
-                                  className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md border uppercase tracking-wider shrink-0 ${
+                                  className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md border shrink-0 ${
                                     isSelected
                                       ? 'bg-white/20 text-white border-white/30'
                                       : getBadgeStyle(item.badgeColor)
@@ -784,7 +784,7 @@ export const SpotlightSearch: React.FC<SpotlightSearchProps> = ({ isOpen, onClos
               {/* Recent Searches */}
               {recents.length > 0 && (
                 <div className="space-y-1">
-                  <div className="flex items-center justify-between px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  <div className="flex items-center justify-between px-3 py-1 text-[11px] font-extrabold text-slate-500 dark:text-slate-400">
                     <div className="flex items-center gap-1.5">
                       <Clock className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
                       <span>Recent Searches</span>
@@ -846,7 +846,7 @@ export const SpotlightSearch: React.FC<SpotlightSearchProps> = ({ isOpen, onClos
               {/* Quick Actions Group */}
               {visibleQuickActions.length > 0 && (
                 <div className="space-y-1">
-                  <div className="px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                  <div className="px-3 py-1 text-[11px] font-extrabold text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
                     <Sparkles className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
                     <span>Quick Actions & Shortcuts</span>
                   </div>
@@ -906,7 +906,7 @@ export const SpotlightSearch: React.FC<SpotlightSearchProps> = ({ isOpen, onClos
               {/* Quick Navigation Pages Group */}
               {visibleQuickNavigation.length > 0 && (
                 <div className="space-y-1">
-                  <div className="px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                  <div className="px-3 py-1 text-[11px] font-extrabold text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
                     <Building className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
                     <span>Modules & Navigation</span>
                   </div>
@@ -965,7 +965,7 @@ export const SpotlightSearch: React.FC<SpotlightSearchProps> = ({ isOpen, onClos
         </div>
 
         {/* Footer with macOS-style keyboard hints */}
-        <div className="flex items-center justify-between px-4 py-2.5 border-t border-slate-200 dark:border-neutral-800 bg-slate-50 dark:bg-black text-[11px] text-slate-600 dark:text-slate-400">
+        <div className="flex items-center justify-between px-4 py-2.5 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-[11px] text-slate-600 dark:text-slate-400">
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-1">
               <kbd className="px-1.5 py-0.5 rounded bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-mono text-[10px] shadow-xs">

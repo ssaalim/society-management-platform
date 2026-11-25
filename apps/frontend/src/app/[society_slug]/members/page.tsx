@@ -312,37 +312,37 @@ export default function MembersListingPage() {
     switch (type) {
       case 'OWNER':
         return (
-          <span className="inline-flex items-center gap-1 text-[10px] font-bold border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 rounded-full px-2.5 py-0.5 uppercase tracking-wide">
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 rounded-sm px-2.5 py-0.5">
             <Home className="h-2.5 w-2.5" /> Owner
           </span>
         );
       case 'CO_OWNER':
         return (
-          <span className="inline-flex items-center gap-1 text-[10px] font-bold border border-teal-200 dark:border-teal-900/60 bg-teal-50 dark:bg-teal-950/40 text-teal-800 dark:text-teal-300 rounded-full px-2.5 py-0.5 uppercase tracking-wide">
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold border border-teal-200 dark:border-teal-900/60 bg-teal-50 dark:bg-teal-950/40 text-teal-800 dark:text-teal-300 rounded-sm px-2.5 py-0.5">
             <Home className="h-2.5 w-2.5" /> Co-owner
           </span>
         );
       case 'TENANT':
         return (
-          <span className="inline-flex items-center gap-1 text-[10px] font-bold border border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-300 rounded-full px-2.5 py-0.5 uppercase tracking-wide">
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold border border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-300 rounded-sm px-2.5 py-0.5">
             <Key className="h-2.5 w-2.5" /> Tenant
           </span>
         );
       case 'FAMILY_MEMBER':
         return (
-          <span className="inline-flex items-center gap-1 text-[10px] font-bold border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-300 rounded-full px-2.5 py-0.5 uppercase tracking-wide">
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-300 rounded-sm px-2.5 py-0.5">
             <Users className="h-2.5 w-2.5" /> Family
           </span>
         );
       case 'ASSOCIATE_MEMBER':
         return (
-          <span className="inline-flex items-center gap-1 text-[10px] font-bold border border-purple-200 dark:border-purple-900/60 bg-purple-50 dark:bg-purple-950/40 text-purple-800 dark:text-purple-300 rounded-full px-2.5 py-0.5 uppercase tracking-wide">
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold border border-purple-200 dark:border-purple-900/60 bg-purple-50 dark:bg-purple-950/40 text-purple-800 dark:text-purple-300 rounded-sm px-2.5 py-0.5">
             <UserCheck className="h-2.5 w-2.5" /> Associate
           </span>
         );
       default:
         return (
-          <span className="text-[10px] font-bold border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-400 rounded-full px-2 py-0.5">
+          <span className="text-[10px] font-bold border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-400 rounded-sm px-2 py-0.5">
             {type}
           </span>
         );
@@ -353,7 +353,7 @@ export default function MembersListingPage() {
     if (!designation || designation === 'NONE') return null;
     const isExecutive = ['PRESIDENT', 'SECRETARY', 'TREASURER'].includes(designation);
     return (
-      <span className={`inline-flex items-center gap-1 text-[10px] font-bold border rounded-full px-2.5 py-0.5 uppercase tracking-wider ${
+      <span className={`inline-flex items-center gap-1 text-[10px] font-bold border rounded-sm px-2.5 py-0.5 ${
         isExecutive
           ? 'bg-indigo-50 dark:bg-indigo-950/50 border-indigo-200 dark:border-indigo-700/60 text-indigo-800 dark:text-indigo-300 shadow-xs'
           : 'bg-slate-100 dark:bg-slate-900/60 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-300'
@@ -368,19 +368,19 @@ export default function MembersListingPage() {
     switch (roleName) {
       case 'ACCOUNTANT':
         return (
-          <span className="inline-flex items-center gap-1 text-[10px] font-bold border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 rounded-full px-2.5 py-0.5 uppercase">
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 rounded-sm px-2.5 py-0.5">
             <Briefcase className="h-3 w-3" /> Accountant
           </span>
         );
       case 'AUDITOR':
         return (
-          <span className="inline-flex items-center gap-1 text-[10px] font-bold border border-teal-200 dark:border-teal-800 bg-teal-50 dark:bg-teal-950/40 text-teal-800 dark:text-teal-300 rounded-full px-2.5 py-0.5 uppercase">
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold border border-teal-200 dark:border-teal-800 bg-teal-50 dark:bg-teal-950/40 text-teal-800 dark:text-teal-300 rounded-sm px-2.5 py-0.5">
             <ShieldCheck className="h-3 w-3" /> Auditor
           </span>
         );
       case 'ESTATE_MANAGER':
         return (
-          <span className="inline-flex items-center gap-1 text-[10px] font-bold border border-sky-200 dark:border-sky-800 bg-sky-50 dark:bg-sky-950/40 text-sky-800 dark:text-sky-300 rounded-full px-2.5 py-0.5 uppercase">
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold border border-sky-200 dark:border-sky-800 bg-sky-50 dark:bg-sky-950/40 text-sky-800 dark:text-sky-300 rounded-sm px-2.5 py-0.5">
             <Building className="h-3 w-3" /> Estate Manager
           </span>
         );
@@ -388,7 +388,7 @@ export default function MembersListingPage() {
       case 'SECRETARY':
       case 'TREASURER':
         return (
-          <span className="inline-flex items-center gap-1 text-[10px] font-bold border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-800 dark:text-indigo-300 rounded-full px-2.5 py-0.5 uppercase">
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-800 dark:text-indigo-300 rounded-sm px-2.5 py-0.5">
             <Award className="h-3 w-3 text-amber-500 dark:text-amber-400" /> {roleName}
           </span>
         );
@@ -396,13 +396,13 @@ export default function MembersListingPage() {
       case 'SECURITY_SUPERVISOR':
       case 'MAINTENANCE_INCHARGE':
         return (
-          <span className="inline-flex items-center gap-1 text-[10px] font-bold border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-full px-2.5 py-0.5 uppercase">
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-sm px-2.5 py-0.5">
             <UserCheck className="h-3 w-3" /> {roleName.replace('_', ' ')}
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1 text-[10px] font-bold border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-300 rounded-full px-2.5 py-0.5 uppercase">
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-300 rounded-sm px-2.5 py-0.5">
             {roleName}
           </span>
         );
@@ -428,15 +428,13 @@ export default function MembersListingPage() {
 
   return (
     <main className="relative flex min-h-screen flex-col items-center justify-start overflow-x-hidden w-full py-4 sm:py-5 px-3 sm:px-5 lg:px-6">
-      {/* Dynamic Background Grids */}
-      <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
 
       <div className="w-full max-w-[1600px] mx-auto space-y-3.5 z-10">
 
         {/* Header & Tabs */}
         <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 dark:border-slate-800/80 pb-3">
           <div>
-            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2.5">
+            <h2 className="text-xl font-normal text-slate-900 dark:text-slate-100 flex items-center gap-2.5">
               <Users className="h-6 w-6 text-indigo-500 dark:text-indigo-400" /> Society Directory & User Access
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -498,7 +496,7 @@ export default function MembersListingPage() {
           >
             <Home className="h-3.5 w-3.5" />
             <span>Society Members & Residents</span>
-            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-sm ${
               activeTab === 'members'
                 ? 'bg-white/20 text-white'
                 : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
@@ -517,7 +515,7 @@ export default function MembersListingPage() {
           >
             <ShieldCheck className="h-3.5 w-3.5" />
             <span>System Users & Staff Access</span>
-            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-sm ${
               activeTab === 'system_users'
                 ? 'bg-white/20 text-white'
                 : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
@@ -607,7 +605,7 @@ export default function MembersListingPage() {
               <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/40 shadow-xs">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
-                    <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 text-slate-700 dark:text-slate-400 font-semibold uppercase tracking-wider text-[10px]">
+                    <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 text-slate-700 dark:text-slate-400 font-semibold text-[10px]">
                       <th className="py-2.5 px-3.5">Member Info</th>
                       <th className="py-2.5 px-3.5">Contact</th>
                       <th className="py-2.5 px-3.5">Membership Type</th>
@@ -645,7 +643,7 @@ export default function MembersListingPage() {
                           {getCommitteeBadge(m.committeeDesignation) || <span className="text-slate-600">-</span>}
                         </td>
                         <td className="py-2.5 px-3.5">
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-sm ${
                             m.canLogin ?? true
                                 ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50'
                                 : 'bg-rose-50 dark:bg-red-950/40 text-rose-800 dark:text-red-400 border border-rose-200 dark:border-red-900/50'
@@ -728,7 +726,7 @@ export default function MembersListingPage() {
               <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/40 shadow-xs">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
-                    <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 text-slate-700 dark:text-slate-400 font-semibold uppercase tracking-wider text-[10px]">
+                    <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 text-slate-700 dark:text-slate-400 font-semibold text-[10px]">
                       <th className="py-2.5 px-3.5">User Details</th>
                       <th className="py-2.5 px-3.5">Assigned System Role</th>
                       <th className="py-2.5 px-3.5">Society Affiliation</th>
@@ -762,11 +760,11 @@ export default function MembersListingPage() {
                         </td>
                         <td className="py-3.5 px-4">
                           {u.flatNumber ? (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded-full">
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded-sm">
                               <Building className="h-3 w-3 text-indigo-600 dark:text-indigo-400" /> Flat {u.flatNumber}
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-900/60 text-sky-800 dark:text-sky-300 px-2.5 py-1 rounded-full">
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-900/60 text-sky-800 dark:text-sky-300 px-2.5 py-1 rounded-sm">
                               <Briefcase className="h-3 w-3 text-sky-600 dark:text-sky-400" /> Non-Inventory Professional / Staff
                             </span>
                           )}
@@ -783,14 +781,14 @@ export default function MembersListingPage() {
                                     setEditingUserRole(u);
                                     setNewRoleSelection(u.roleName);
                                   }}
-                                  className="p-1.5 rounded-lg border border-slate-700 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white transition-all"
+                                  className="p-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-white transition-all"
                                   title="Change System Role"
                                 >
                                   <Edit2 className="h-3.5 w-3.5" />
                                 </button>
                                 <button
                                   onClick={() => handleRevokeUserAccess(u)}
-                                  className="p-1.5 rounded-lg border border-red-900/50 bg-red-950/30 hover:bg-red-900/50 text-red-400 hover:text-red-300 transition-all"
+                                  className="p-1.5 rounded-lg border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 hover:bg-red-50 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-all"
                                   title="Revoke System Login Access"
                                 >
                                   <UserX className="h-3.5 w-3.5" />

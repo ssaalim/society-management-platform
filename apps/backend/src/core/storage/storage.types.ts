@@ -13,7 +13,8 @@ export interface UploadUrlRequestDto {
     | 'circular' 
     | 'notice' 
     | 'document' 
-    | 'avatar';
+    | 'avatar'
+    | 'chat_photo';
   contentType: string;
   fileSize?: number; // Size in bytes
 }

@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // A second local dev server (e.g. on another port) needs its own build folder: NEXT_DIST_DIR=.next-3001.
+  distDir: process.env.NEXT_DIST_DIR || '.next',
   reactStrictMode: true,
   poweredByHeader: false, // Disables the 'X-Powered-By: Next.js' header
   async headers() {

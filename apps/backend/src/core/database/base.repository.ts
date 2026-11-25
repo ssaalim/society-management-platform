@@ -108,9 +108,11 @@ export abstract class TenantBaseRepository<TTable extends { societyId: any; id: 
   }
 
   async update(id: string, data: any) {
+    // A record can never be moved to another society (or re-keyed) through an update payload.
+    const { societyId: _society, id: _id, ...changes } = data || {};
     const results = await this.db
       .update(this.table as any)
-      .set(data)
+      .set(changes)
       .where(
         and(
           eq((this.table as any).id, id),

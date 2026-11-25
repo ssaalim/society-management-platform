@@ -1,7 +1,9 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { apiClient } from '../../lib/api/client';
+import { usePathname } from 'next/navigation';
+import { apiClient, currentSocietySlug, setSocietyDirectory } from '../../lib/api/client';
+import { setDiagnosticsUser } from '../../lib/diagnostics';
 
 export interface AuthUser {
   id: string;
@@ -33,7 +35,12 @@ interface AuthContextType {
   session: any | null;
   loading: boolean;
   memberships: Membership[];
+  /** The society named by the current URL (null when the user is not a member of it, or outside a workspace). */
   activeSociety: Membership | null;
+  /** Where to land after sign-in: the default or last-used society. */
+  homeSociety: Membership | null;
+  /** The society slug in the current URL, if any. */
+  urlSocietySlug: string | null;
   defaultSocietyId: string | null;
   allSocietiesExpired: boolean;
   requiresDefaultSelection: boolean;
@@ -142,6 +149,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState<boolean>(true);
 
   const applyMemberships = useCallback((newList: Membership[], userProfileDefault?: string | null) => {
+    setSocietyDirectory(newList);
     setMemberships(newList);
     const { resolvedActive, resolvedDefaultId, isAllExpired, needsDefaultSelection } = resolveSocieties(
       newList,
@@ -169,6 +177,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const newMemberships: Membership[] = response.data.data.memberships || [];
         
         setUser(profileUser);
+        setDiagnosticsUser(profileUser?.email || profileUser?.name || null);
         applyMemberships(newMemberships, profileUser?.defaultSocietyId);
       }
     } catch (e: any) {
@@ -188,6 +197,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     refreshProfile();
   }, [refreshProfile]);
+
+  // Inside a society workspace the URL decides the society: /<slug>/... is that society or nothing (if the user is
+  // not a member). The stored "last society" only picks where to land after sign-in; it never selects data.
+  const pathname = usePathname();
+  const urlSlug = currentSocietySlug(pathname || '');
+  const urlSociety = urlSlug ? memberships.find((m) => m.societySlug === urlSlug) ?? null : null;
+  const effectiveActiveSociety = urlSlug ? urlSociety : activeSociety;
+
+  useEffect(() => {
+    if (urlSociety) localStorage.setItem('active_society_id', urlSociety.societyId);
+  }, [urlSociety?.societyId]);
 
   const switchSociety = (societyId: string): boolean => {
     const selected = memberships.find((m) => m.societyId === societyId);
@@ -235,6 +255,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('active_society_id');
     localStorage.removeItem('default_society_id');
     sessionStorage.removeItem('default_selection_dismissed');
+    setSocietyDirectory([]);
     setUser(null);
     setMemberships([]);
     setActiveSociety(null);
@@ -250,7 +271,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         session: null,
         loading,
         memberships,
-        activeSociety,
+        activeSociety: effectiveActiveSociety,
+        homeSociety: activeSociety,
+        urlSocietySlug: urlSlug,
         defaultSocietyId,
         allSocietiesExpired,
         requiresDefaultSelection,

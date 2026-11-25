@@ -1,3 +1,4 @@
+import { jwtSecret } from './jwt-secret';
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
@@ -25,7 +26,7 @@ export class JwtAuthGuard implements CanActivate {
     this.isDevMode = isDev && isNotProd;
     this.devAuthGuard = new DevAuthGuard(configService, cls);
 
-    const secret = this.configService.get<string>('JWT_SECRET') || 'society-app-super-secret-jwt-key-2026';
+    const secret = jwtSecret(this.configService);
     this.jwtService = jwtService || new JwtService({ secret });
   }
 
@@ -49,7 +50,7 @@ export class JwtAuthGuard implements CanActivate {
     const token = authHeader.split(' ')[1];
 
     try {
-      const secret = this.configService.get<string>('JWT_SECRET') || 'society-app-super-secret-jwt-key-2026';
+      const secret = jwtSecret(this.configService);
       const payload = this.jwtService.verify(token, { secret });
 
       if (!payload || (!payload.sub && !payload.id)) {
@@ -61,7 +62,8 @@ export class JwtAuthGuard implements CanActivate {
         id: userId,
         email: payload.email,
         name: payload.name,
-        role: payload.role,
+        // 'platform' tokens come only from /auth/platform-login; everything else is a society session.
+        scope: payload.scope === 'platform' ? 'platform' : 'society',
       };
 
       request.user = user;

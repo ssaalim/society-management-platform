@@ -120,7 +120,7 @@ export const DefaultSocietyModal: React.FC = () => {
                       <div className="font-bold text-xs sm:text-sm text-slate-900 dark:text-slate-100 flex items-center gap-2">
                         <span className="truncate">{m.societyName}</span>
                         {m.isDefault && (
-                          <span className="inline-flex items-center gap-0.5 text-[9px] bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60 px-1.5 py-0.5 rounded-full font-bold shrink-0">
+                          <span className="inline-flex items-center gap-0.5 text-[9px] bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60 px-1.5 py-0.5 rounded-sm font-bold shrink-0">
                             <Star className="h-2.5 w-2.5 fill-amber-500 text-amber-500 dark:fill-amber-400 dark:text-amber-400" /> Default
                           </span>
                         )}
@@ -157,7 +157,7 @@ export const DefaultSocietyModal: React.FC = () => {
                   <div className="min-w-0 flex-1">
                     <div className="font-bold text-xs sm:text-sm text-slate-800 dark:text-slate-300 flex items-center gap-2">
                       <span className="truncate">{m.societyName}</span>
-                      <span className="text-[9px] bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-900/60 px-1.5 py-0.5 rounded-full font-bold flex items-center gap-1 shrink-0">
+                      <span className="text-[9px] bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-900/60 px-1.5 py-0.5 rounded-sm font-bold flex items-center gap-1 shrink-0">
                         <AlertCircle className="h-2.5 w-2.5" /> Expired
                       </span>
                     </div>

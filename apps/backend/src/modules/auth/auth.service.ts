@@ -6,6 +6,7 @@ import { DRIZZLE_PROVIDER, DrizzleDB } from '@core/database/database.module';
 import { users, userSocieties, societies, roles, subscriptions, rolePermissions, permissions } from '../../../database/schema';
 import { eq, and } from 'drizzle-orm';
 import { UserService } from '../user/user.service';
+import { jwtSecret } from '@core/auth/jwt-secret';
 
 @Injectable()
 export class AuthService {
@@ -17,75 +18,87 @@ export class AuthService {
   ) {}
 
   /**
-   * Authenticates user via email and password, returning a signed JWT token and user memberships.
+   * Verifies email + password and returns the user row. Shared by society sign-in and platform sign-in.
    */
-  async login(dto: { email: string; password?: string }) {
+  private async verifyCredentials(dto: { email: string; password?: string }) {
     if (!dto.email) {
       throw new BadRequestException('Email is required.');
     }
-
     const email = dto.email.trim().toLowerCase();
     const inputPassword = dto.password || '';
 
-    // 1. Query user from Neon database
     const userRecord = await this.db.query.users.findFirst({
       where: eq(users.email, email),
     });
-
     if (!userRecord) {
       throw new UnauthorizedException('Invalid email or password.');
     }
-
     if (!userRecord.isActive) {
       throw new UnauthorizedException('This account has been deactivated. Please contact support.');
     }
 
-    // 2. Validate password
     let isPasswordValid = false;
-
-    if (userRecord.password) {
-      // Check bcrypt hash
-      if (userRecord.password.startsWith('$2a$') || userRecord.password.startsWith('$2b$')) {
-        isPasswordValid = await bcrypt.compare(inputPassword, userRecord.password);
-      } else {
-        // Plain text fallback (e.g. initial demo seed) -> auto-upgrade to bcrypt
-        isPasswordValid = userRecord.password === inputPassword || inputPassword === 'password123';
-        if (isPasswordValid) {
-          const hashed = await bcrypt.hash(inputPassword || 'password123', 10);
-          await this.db.update(users).set({ password: hashed }).where(eq(users.id, userRecord.id));
-        }
-      }
-    } else {
-      // If user had no password set yet (e.g. imported from Supabase), allow default demo password and save hash
-      if (inputPassword === 'password123' || !inputPassword) {
-        isPasswordValid = true;
-        const hashed = await bcrypt.hash(inputPassword || 'password123', 10);
-        await this.db.update(users).set({ password: hashed }).where(eq(users.id, userRecord.id));
-      }
+    if (userRecord.password && (userRecord.password.startsWith('$2a$') || userRecord.password.startsWith('$2b$'))) {
+      isPasswordValid = await bcrypt.compare(inputPassword, userRecord.password);
+    } else if (userRecord.password) {
+      // Legacy plain-text password (initial demo seed): must match exactly, then it is upgraded to bcrypt.
+      isPasswordValid = inputPassword.length > 0 && userRecord.password === inputPassword;
     }
+    // Accounts without a password cannot sign in until one is set.
 
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid email or password.');
     }
 
-    // 3. Resolve user profile and memberships
-    const profile = await this.userService.getUserMemberships(userRecord.id, userRecord.email, userRecord.name || undefined);
-    
-    // 4. Resolve primary role for JWT claim
-    const primaryRole = profile.memberships[0]?.role || (email.includes('superadmin') ? 'SUPER_ADMIN' : 'MEMBER');
+    if (!userRecord.password || !userRecord.password.startsWith('$2')) {
+      const hashed = await bcrypt.hash(inputPassword, 10);
+      await this.db.update(users).set({ password: hashed }).where(eq(users.id, userRecord.id));
+    }
 
-    // 5. Generate signed JWT token
+    return userRecord;
+  }
+
+  /**
+   * Society sign-in: returns a society-scoped JWT and the user's memberships. The token carries no society or role;
+   * every request names its society (x-tenant-id) and the server checks membership in that society each time.
+   */
+  async login(dto: { email: string; password?: string }) {
+    const userRecord = await this.verifyCredentials(dto);
+    const profile = await this.userService.getUserMemberships(userRecord.id);
+
     const token = this.generateToken({
       id: userRecord.id,
       email: userRecord.email,
-      name: userRecord.name || email.split('@')[0],
-      role: primaryRole,
+      name: userRecord.name || userRecord.email.split('@')[0],
+      scope: 'society',
     });
 
     return {
       token,
       user: profile.user,
       memberships: profile.memberships,
+      isPlatformAdmin: userRecord.isPlatformAdmin,
+    };
+  }
+
+  /**
+   * Platform console sign-in (/platform). Only users flagged as platform admins get a platform-scoped token, which
+   * the SuperAdminGuard requires and the TenantGuard refuses, so platform and society sessions never mix.
+   */
+  async platformLogin(dto: { email: string; password?: string }) {
+    const userRecord = await this.verifyCredentials(dto);
+    if (!userRecord.isPlatformAdmin) {
+      throw new UnauthorizedException('This account is not a platform administrator.');
+    }
+    const token = this.generateToken({
+      id: userRecord.id,
+      email: userRecord.email,
+      name: userRecord.name || userRecord.email.split('@')[0],
+      scope: 'platform',
+    });
+    return {
+      token,
+      admin: { id: userRecord.id, email: userRecord.email, name: userRecord.name },
     };
   }
 
@@ -123,14 +136,14 @@ export class AuthService {
       })
       .returning();
 
-    const profile = await this.userService.getUserMemberships(newUser.id, newUser.email, newUser.name || undefined);
-    const primaryRole = profile.memberships[0]?.role || (email.includes('superadmin') ? 'SUPER_ADMIN' : 'MEMBER');
+    // A new account belongs to no society until a society admin adds it.
+    const profile = await this.userService.getUserMemberships(newUser.id);
 
     const token = this.generateToken({
       id: newUser.id,
       email: newUser.email,
       name: newUser.name || email.split('@')[0],
-      role: primaryRole,
+      scope: 'society',
     });
 
     return {
@@ -143,19 +156,18 @@ export class AuthService {
   /**
    * Signs a JWT payload using server's JWT_SECRET.
    */
-  private generateToken(payload: { id: string; email: string; name: string; role: string }) {
-    const secret = this.configService.get<string>('JWT_SECRET') || 'society-app-super-secret-jwt-key-2026';
+  private generateToken(payload: { id: string; email: string; name: string; scope: 'society' | 'platform' }) {
     return this.jwtService.sign(
       {
         sub: payload.id,
         id: payload.id,
         email: payload.email,
         name: payload.name,
-        role: payload.role,
+        scope: payload.scope,
       },
       {
-        secret,
-        expiresIn: '30d',
+        secret: jwtSecret(this.configService),
+        expiresIn: payload.scope === 'platform' ? '12h' : '30d',
       },
     );
   }

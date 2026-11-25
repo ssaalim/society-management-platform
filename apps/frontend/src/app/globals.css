@@ -2,599 +2,175 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  :root {
-    --background: 210 40% 98%;
-    --foreground: 222.2 84% 4.9%;
+/*
+ * Theme: EspoCRM-style CRM look (same system as DealCust).
+ * Inter, neutral greys, squarish corners, flat tables, light sidebar and top bar.
+ * Palettes are RGB channels so Tailwind's opacity modifiers (bg-slate-900/60) keep working.
+ */
+:root {
+  color-scheme: light;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+  /* Neutral day scale from EspoCRM's default theme: text #212121, soft #757575, muted #969696,
+     borders #e0e2e3, page grey #f1f3f5. */
+  --slate-50: 247 248 249;
+  --slate-100: 241 243 245;
+  --slate-200: 224 226 227;
+  --slate-300: 201 205 208;
+  --slate-400: 150 150 150;
+  --slate-500: 117 117 117;
+  --slate-600: 106 106 106;
+  --slate-700: 83 83 83;
+  --slate-800: 51 55 59;
+  --slate-900: 33 33 33;
+  --slate-950: 20 20 20;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+  /* Brand: EspoCRM classic blue. */
+  --brand-50: 239 245 252;
+  --brand-100: 229 243 255;
+  --brand-200: 201 220 242;
+  --brand-300: 162 193 231;
+  --brand-400: 119 163 218;
+  --brand-500: 85 137 202;
+  --brand-600: 63 114 181;
+  --brand-700: 36 91 140;
+  --brand-800: 32 76 116;
+  --brand-900: 29 63 95;
+  --brand-950: 18 39 60;
 
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
+  /* shadcn/ui tokens, as RGB channels so opacity modifiers (bg-primary/90) work. */
+  --background: 255 255 255;
+  --foreground: var(--slate-900);
+  --card: 255 255 255;
+  --card-foreground: var(--slate-900);
+  --popover: 255 255 255;
+  --popover-foreground: var(--slate-900);
+  --primary: var(--brand-500);
+  --primary-foreground: 255 255 255;
+  --secondary: var(--slate-100);
+  --secondary-foreground: var(--slate-900);
+  --muted: var(--slate-100);
+  --muted-foreground: var(--slate-500);
+  --accent: var(--slate-100);
+  --accent-foreground: var(--slate-900);
+  --destructive: 220 74 74;
+  --destructive-foreground: 255 255 255;
+  --border: var(--slate-200);
+  --input: var(--slate-300);
+  --ring: var(--brand-400);
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+  --sidebar-bg: #f1f3f5;
+  --sidebar-border: #e0e2e3;
+  --sidebar-hover: #e7e9ee;
+  --sidebar-active: #dee1e7;
+}
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+/* Night: deep navy canvas with slate cards (the scale keeps its order, so dark: classes read the same). */
+.dark {
+  color-scheme: dark;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+  --slate-50: 248 250 252;
+  --slate-100: 241 245 249;
+  --slate-200: 226 232 240;
+  --slate-300: 203 213 225;
+  --slate-400: 148 169 191;
+  --slate-500: 124 152 182;
+  --slate-600: 71 97 127;
+  --slate-700: 45 64 87;
+  --slate-800: 34 51 71;
+  --slate-900: 22 34 50;
+  --slate-950: 13 21 32;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+  --background: 13 21 32;
+  --foreground: 241 245 249;
+  --card: 22 34 50;
+  --card-foreground: 241 245 249;
+  --popover: 22 34 50;
+  --popover-foreground: 241 245 249;
+  --secondary: 34 51 71;
+  --secondary-foreground: 241 245 249;
+  --muted: 28 43 62;
+  --muted-foreground: 148 169 191;
+  --accent: 34 51 71;
+  --accent-foreground: 241 245 249;
+  --destructive: 229 100 106;
+  --border: 34 51 71;
+  --input: 45 64 87;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
-
-    --radius: 0.75rem;
-  }
-
-  .dark {
-    --background: 224 71% 4%;
-    --foreground: 213 31% 91%;
-
-    --card: 224 71% 4%;
-    --card-foreground: 213 31% 91%;
-
-    --popover: 224 71% 4%;
-    --popover-foreground: 213 31% 91%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 222.2 47.4% 11.2%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 223 47% 11%;
-    --muted-foreground: 215.4 16.3% 56.9%;
-
-    --accent: 216 34% 17%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 216 34% 17%;
-    --input: 216 34% 17%;
-    --ring: 212.7 26.8% 83.9%;
-  }
+  --sidebar-bg: #0f1926;
+  --sidebar-border: #1e2c3d;
+  --sidebar-hover: #182536;
+  --sidebar-active: #223347;
 }
 
 @layer base {
+  html, body { min-height: 100%; }
+  * { border-color: rgb(var(--border)); }
+  /* Weights the CRM way: links and headings medium, body and labels regular. */
+  :where(h1, h2, h3, h4) { font-weight: 500; }
+  :where(h5, h6, b, strong) { font-weight: 600; }
   body {
-    font-family: 'Outfit', sans-serif;
-    font-feature-settings: "rlig" 1, "calt" 1;
-    transition: background-color 0.2s ease, color 0.2s ease;
+    background-color: rgb(var(--background));
+    color: rgb(var(--foreground));
+    font-family: theme("fontFamily.sans");
+    font-feature-settings: "cv11", "ss01";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  /* Flat CRM-style tables: hairline row rules, no zebra. Utilities on a table still win. */
+  :where(table) { border-collapse: collapse; }
+  :where(tbody) :where(tr) { border-top: 1px solid rgb(var(--border)); }
+  input[type="checkbox"], input[type="radio"] { accent-color: rgb(var(--primary)); }
+  /* Grid children default to sizing to their content; letting them shrink keeps wide tables inside the page. */
+  .grid > * { min-width: 0; }
+}
+
+/* Table headers the CRM way: same surface as the table, plain muted labels. Outside any layer so it wins
+   over per-page uppercase / tracking / bold utilities on the many <thead>s. */
+@media screen {
+  thead,
+  thead > tr {
+    background-color: transparent !important;
+  }
+  thead th {
+    font-weight: 400;
+    color: rgb(var(--slate-500));
+    text-transform: none;
+    letter-spacing: normal;
   }
 }
 
-/* ==========================================================================
-   DAY / LIGHT THEME OVERRIDES (Comprehensive System-Wide Design Overhaul)
-   ========================================================================== */
-
-/* 1. Global Page Canvas & Main Area Height / Width Expansion */
-html, body {
-  min-height: 100vh;
-}
-
-main {
-  min-height: calc(100vh - 4rem) !important;
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  width: 100% !important;
-}
-
-html.light, 
-html.light body, 
-html.light main, 
-html.light .bg-\[\#030712\] {
-  background-color: #f8fafc !important;
-  color: #0f172a !important;
-}
-
-html.light .bg-\[linear-gradient\(to_right\,\#0f172a_1px\,transparent_1px\)\,\linear-gradient\(to_bottom\,\#0f172a_1px\,transparent_1px\)\] {
-  background-image: linear-gradient(to right, #e2e8f0 1px, transparent 1px), linear-gradient(to bottom, #e2e8f0 1px, transparent 1px) !important;
-}
-
-/* 2. Top Header Navigation Bar & Left Sidebar */
-html.light header,
-html.light aside {
-  background-color: #ffffff !important;
-  border-bottom-color: #e2e8f0 !important;
-  border-right-color: #e2e8f0 !important;
-}
-
-html.light header {
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05) !important;
-}
-
-html.light aside {
-  box-shadow: 1px 0 3px 0 rgba(0, 0, 0, 0.03) !important;
-}
-
-html.light header .border-t,
-html.light aside .border-t,
-html.light aside .border-b {
-  border-color: #e2e8f0 !important;
-  background-color: #ffffff !important;
-}
-
-/* Selected Active Menu Tab */
-html.light .bg-indigo-600\/20 {
-  background-color: #4f46e5 !important;
-  color: #ffffff !important;
-  border-color: #4338ca !important;
-  font-weight: 700 !important;
-  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.25) !important;
-}
-
-html.light .bg-indigo-600\/20 svg {
-  color: #ffffff !important;
-}
-
-/* Unselected Navigation Items */
-html.light header a.text-slate-400:hover {
-  background-color: #f1f5f9 !important;
-  color: #0f172a !important;
-}
-
-/* 3. Cards, Containers, Tiles, Modals & Panels (Solid White) */
-html.light .bg-slate-900,
-html.light .bg-slate-950,
-html.light [class*="bg-slate-900"],
-html.light [class*="bg-slate-950"],
-html.light [class*="bg-emerald-950"],
-html.light [class*="bg-sky-950"],
-html.light [class*="bg-amber-950"],
-html.light [class*="bg-violet-950"],
-html.light [class*="bg-indigo-950"],
-html.light [class*="bg-cyan-950"],
-html.light [class*="bg-red-950"] {
-  background-color: #ffffff !important;
-  border-color: #e2e8f0 !important;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04) !important;
-}
-
-html.light [class*="dark:hover:bg-slate-950"]:hover,
-html.light [class*="dark:hover:bg-slate-900"]:hover,
-html.light .hover\:bg-slate-950\/50:hover,
-html.light .hover\:bg-slate-900\/30:hover,
-html.light .hover\:bg-slate-900\/20:hover {
-  background-color: #f8fafc !important;
-  border-color: #cbd5e1 !important;
-}
-
-/* Selected Active Card / Tile Highlight in Light Mode */
-html.light .border-indigo-600,
-html.light .ring-indigo-600,
-html.light [class*="ring-indigo-600"] {
-  background-color: #e0e7ff !important; /* Vibrant Indigo-100 background */
-  border: 4px solid #4338ca !important; /* Super bold 4px Indigo-700 border */
-  outline: 2px solid #6366f1 !important; /* Glowing Indigo ring */
-  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.25), 0 8px 24px rgba(79, 70, 229, 0.35) !important;
-}
-
-/* Icon Containers inside Cards */
-html.light .bg-slate-900\/60,
-html.light .bg-slate-950\/50,
-html.light .bg-slate-950\/60 {
-  background-color: #f8fafc !important;
-  border-color: #e2e8f0 !important;
-}
-
-/* 4. High-Contrast Typography in Light Theme */
-html.light .text-slate-100,
-html.light .text-slate-200,
-html.light [class*="dark:text-slate-100"],
-html.light [class*="dark:text-slate-200"] {
-  color: #0f172a !important;
-  /* Dark Slate-900 for Primary Titles */
-}
-
-html.light .text-slate-300,
-html.light [class*="dark:text-slate-300"] {
-  color: #1e293b !important;
-  /* Slate-800 for Subheadings */
-}
-
-html.light .text-slate-400,
-html.light [class*="dark:text-slate-400"] {
-  color: #475569 !important;
-  /* Slate-600 for Labels & Descriptions */
-}
-
-html.light .text-slate-500,
-html.light .text-slate-600,
-html.light [class*="dark:text-slate-500"],
-html.light [class*="dark:text-slate-600"] {
-  color: #64748b !important;
-  /* Slate-500 for Secondary Metadata */
-}
-
-/* 5. Icon & Accent Colors (Dark & Rich for High Contrast on White) */
-html.light .text-emerald-400,
-html.light .text-emerald-500 {
-  color: #059669 !important;
-  /* Rich emerald-600 */
-}
-
-html.light .text-sky-400,
-html.light .text-sky-500 {
-  color: #0284c7 !important;
-  /* Rich sky-600 */
-}
-
-html.light .text-amber-400,
-html.light .text-amber-500 {
-  color: #d97706 !important;
-  /* Rich amber-600 */
-}
-
-html.light .text-violet-400,
-html.light .text-violet-500 {
-  color: #7c3aed !important;
-  /* Rich violet-600 */
-}
-
-html.light .text-indigo-400,
-html.light .text-indigo-500 {
-  color: #4f46e5 !important;
-  /* Rich indigo-600 */
-}
-
-html.light .text-cyan-400,
-html.light .text-cyan-500 {
-  color: #0891b2 !important;
-  /* Rich cyan-600 */
-}
-
-html.light .text-red-400,
-html.light .text-red-500 {
-  color: #dc2626 !important;
-  /* Rich red-600 */
-}
-
-/* 6. Status Badges & Pills (Solid White with Crisp Borders & Color-Coded Text) */
-html.light [class*="dark:bg-slate-800/30"],
-html.light .bg-slate-100.text-slate-600 {
-  background-color: #ffffff !important;
-  border: 1px solid #cbd5e1 !important;
-  color: #334155 !important;
-  font-weight: 600 !important;
-}
-
-html.light [class*="bg-emerald-950"],
-html.light .bg-emerald-950\/30,
-html.light .bg-emerald-950\/40,
-html.light .bg-emerald-900\/50,
-html.light .bg-emerald-50 {
-  background-color: #f0fdf4 !important;
-  border-color: #bbf7d0 !important;
-  color: #166534 !important;
-  font-weight: 600 !important;
-}
-
-html.light [class*="text-emerald-300"],
-html.light [class*="text-emerald-400"] {
-  color: #15803d !important;
-}
-
-html.light [class*="bg-red-950"],
-html.light [class*="bg-rose-950"],
-html.light .bg-red-950\/30,
-html.light .bg-red-950\/40,
-html.light .bg-red-900\/50,
-html.light .bg-red-50,
-html.light .bg-rose-50 {
-  background-color: #fff1f2 !important;
-  border-color: #fecdd3 !important;
-  color: #9f1239 !important;
-  font-weight: 600 !important;
-}
-
-html.light [class*="text-red-300"],
-html.light [class*="text-red-400"],
-html.light [class*="text-rose-300"],
-html.light [class*="text-rose-400"] {
-  color: #be123c !important;
-}
-
-html.light [class*="bg-amber-950"],
-html.light .bg-amber-950\/30,
-html.light .bg-amber-950\/40,
-html.light .bg-amber-900\/50,
-html.light .bg-amber-50 {
-  background-color: #fffbeb !important;
-  border-color: #fde68a !important;
-  color: #92400e !important;
-  font-weight: 600 !important;
-}
-
-html.light [class*="text-amber-300"],
-html.light [class*="text-amber-400"] {
-  color: #b45309 !important;
-}
-
-html.light [class*="bg-sky-950"],
-html.light .bg-sky-950\/30,
-html.light .bg-sky-950\/40,
-html.light .bg-sky-900\/50,
-html.light .bg-sky-50 {
-  background-color: #f0f9ff !important;
-  border-color: #bae6fd !important;
-  color: #0369a1 !important;
-  font-weight: 600 !important;
-}
-
-html.light [class*="text-sky-300"],
-html.light [class*="text-sky-400"] {
-  color: #0284c7 !important;
-}
-
-html.light .bg-violet-950\/30,
-html.light .bg-violet-900\/50,
-html.light .bg-violet-50 {
-  background-color: #f5f3ff !important;
-  border-color: #ddd6fe !important;
-  color: #6d28d9 !important;
-  font-weight: 600 !important;
-}
-
-html.light .bg-cyan-950\/30,
-html.light .bg-cyan-900\/50,
-html.light .bg-cyan-50 {
-  background-color: #ffffff !important;
-  border: 1px solid #a5f3fc !important;
-  color: #0e7490 !important;
-  font-weight: 600 !important;
-}
-
-html.light .bg-indigo-950\/30,
-html.light .bg-indigo-950\/40,
-html.light .bg-indigo-950\/60,
-html.light .bg-indigo-900\/50,
-html.light .bg-indigo-50 {
-  background-color: #ffffff !important;
-  border: 1px solid #c7d2fe !important;
-  color: #4338ca !important;
-  font-weight: 600 !important;
-}
-
-/* Primary Indigo Action Buttons (Vibrant Solid Indigo in Light Mode) */
-html.light .bg-indigo-600,
-html.light button.bg-indigo-600,
-html.light a.bg-indigo-600 {
-  background-color: #4f46e5 !important;
-  /* Rich Indigo-600 */
-  color: #ffffff !important;
-  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.25) !important;
-}
-
-html.light .bg-indigo-600:hover,
-html.light button.bg-indigo-600:hover,
-html.light a.bg-indigo-600:hover {
-  background-color: #4338ca !important;
-  /* Rich Indigo-700 hover */
-  color: #ffffff !important;
-}
-
-/* Toggle Switch Off-State Track in Light Mode */
-html.light .bg-slate-700,
-html.light .bg-slate-300 {
-  background-color: #cbd5e1 !important;
-  /* Soft light Slate-300 track */
-}
-
-/* Disabled Button States in Light Mode */
-html.light button:disabled,
-html.light button[disabled],
-html.light input:disabled,
-html.light select:disabled,
-html.light .disabled\:bg-slate-800:disabled {
-  background-color: #e2e8f0 !important;
-  /* Soft slate-200 for disabled background */
-  color: #94a3b8 !important;
-  /* Muted slate-400 for disabled text */
-  border-color: #cbd5e1 !important;
-  box-shadow: none !important;
-  cursor: not-allowed !important;
-}
-
-/* Secondary & Slate Action Buttons / Anchor Links in Light Mode */
-html.light button.bg-slate-100:not(:disabled),
-html.light button.bg-slate-800:not(:disabled),
-html.light button.bg-slate-900:not(:disabled),
-html.light button.dark\:bg-slate-800:not(:disabled),
-html.light button.dark\:bg-slate-900:not(:disabled),
-html.light a.bg-slate-100,
-html.light a.bg-slate-800,
-html.light a.bg-slate-900,
-html.light a.dark\:bg-slate-800,
-html.light a.dark\:bg-slate-900 {
-  background-color: #ffffff !important;
-  color: #0f172a !important;
-  border-color: #cbd5e1 !important;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
-}
-
-html.light button.bg-slate-800:hover:not(:disabled),
-html.light button.bg-slate-900:hover:not(:disabled),
-html.light button.dark\:bg-slate-800:hover:not(:disabled),
-html.light a.bg-slate-800:hover,
-html.light a.bg-slate-900:hover,
-html.light a.dark\:bg-slate-800:hover {
-  background-color: #f8fafc !important;
-  border-color: #94a3b8 !important;
-  color: #0f172a !important;
-}
-
-/* Modal Close Buttons & Icon Hover States in Light Mode */
-html.light .hover\:bg-slate-800:hover,
-html.light .hover\:bg-slate-700:hover,
-html.light .hover\:bg-slate-900:hover {
-  background-color: #f1f5f9 !important;
-  /* Soft slate-100 hover */
-  color: #0f172a !important;
-  /* Crisp dark icon color */
-}
-
-html.light .hover\:text-slate-300:hover,
-html.light .hover\:text-slate-200:hover,
-html.light .hover\:text-slate-100:hover {
-  color: #0f172a !important;
-}
-
-/* 10. Society Switcher & Dropdown Hover in Light Mode */
-html.light .society-switcher-btn {
-  background-color: #ffffff !important;
-  border-color: #cbd5e1 !important;
-  color: #0f172a !important;
-}
-
-html.light .society-switcher-btn:hover {
-  background-color: #f8fafc !important;
-  border-color: #94a3b8 !important;
-}
-
-html.light .society-switcher-dropdown {
-  background-color: #ffffff !important;
-  border-color: #cbd5e1 !important;
-  box-shadow: 0 20px 30px -10px rgba(15, 23, 42, 0.15) !important;
-}
-
-html.light .society-switcher-option {
-  color: #334155 !important;
-}
-
-html.light .society-switcher-option:hover {
-  background-color: #f1f5f9 !important;
-  color: #0f172a !important;
-  font-weight: 600 !important;
-}
-
-html.light .society-switcher-option-active {
-  background-color: #e0e7ff !important;
-  color: #3730a3 !important;
-  font-weight: 700 !important;
-}
-
-/* 11. Notification Popover & Item Tiles in Light Mode */
-html.light .notif-popover {
-  background-color: #ffffff !important;
-  border-color: #cbd5e1 !important;
-  box-shadow: 0 20px 30px -10px rgba(15, 23, 42, 0.18) !important;
-}
-
-html.light .notif-tile {
-  background-color: #ffffff !important;
-  border-color: #e2e8f0 !important;
-  color: #0f172a !important;
-}
-
-html.light .notif-unread {
-  background-color: #eef2ff !important;
-  border-left-color: #4f46e5 !important;
-  border-left-width: 4px !important;
-}
-
-html.light .notif-title {
-  color: #0f172a !important;
-  font-weight: 700 !important;
-}
-
-html.light .notif-body {
-  color: #334155 !important;
-}
-
-html.light .notif-time {
-  color: #64748b !important;
-}
-
-/* 12. Table Styling & Headers */
-html.light table th {
-  background-color: #f1f5f9 !important;
-  color: #1e293b !important;
-  border-bottom: 2px solid #cbd5e1 !important;
-  font-weight: 700 !important;
-}
-
-html.light table td {
-  border-bottom: 1px solid #e2e8f0 !important;
-  color: #0f172a !important;
-}
-
-html.light tr.bg-slate-950\/80,
-html.light tr.bg-slate-950\/50 {
-  background-color: #f8fafc !important;
-}
-
-/* 13. Borders & Greys Readability Overhaul */
-html.light .border-slate-800,
-html.light .border-slate-800\/30,
-html.light .border-slate-800\/40,
-html.light .border-slate-800\/50,
-html.light .border-slate-800\/60,
-html.light .border-slate-700,
-html.light .border-slate-700\/50 {
-  border-color: #cbd5e1 !important;
-  /* Sharp slate-300 border */
-}
-
-/* 14. Payment Modal Popup Overhaul (Dark & Light Theme) */
-
-html.light .modal-summary-box {
-  background-color: #f8fafc !important;
-  border-color: #cbd5e1 !important;
-  color: #0f172a !important;
-}
-
-html.light .modal-history-box {
-  background-color: #eef2ff !important;
-  border-color: #c7d2fe !important;
-  color: #1e1b4b !important;
-}
-
-/* Scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
-
-.custom-scrollbar::-webkit-scrollbar {
-  width: 5px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.3);
-  border-radius: 9999px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.6);
+:focus-visible { outline: 2px solid rgb(var(--brand-500) / 0.6); outline-offset: 1px; }
+::selection { background: rgb(var(--brand-100)); color: inherit; }
+.dark ::selection { background: rgb(var(--brand-800)); }
+
+/* Slim scrollbars */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgb(var(--slate-300) / 0.8); border-radius: 9999px; border: 2px solid transparent; background-clip: content-box; }
+::-webkit-scrollbar-thumb:hover { background-color: rgb(var(--slate-400)); }
+.custom-scrollbar::-webkit-scrollbar { width: 5px; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: rgb(var(--slate-400) / 0.3); border: 0; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgb(var(--slate-400) / 0.6); }
+
+/* Printed receipts, ID cards and statements stay on white paper whichever theme is on screen. */
+@media print {
+  :root, .dark {
+    color-scheme: light;
+    --slate-50: 247 248 249;
+    --slate-100: 241 243 245;
+    --slate-200: 224 226 227;
+    --slate-300: 201 205 208;
+    --slate-400: 150 150 150;
+    --slate-500: 117 117 117;
+    --slate-600: 106 106 106;
+    --slate-700: 83 83 83;
+    --slate-800: 51 55 59;
+    --slate-900: 33 33 33;
+    --slate-950: 20 20 20;
+    --background: 255 255 255;
+    --foreground: 33 33 33;
+    --card: 255 255 255;
+  }
 }
 
 /* 15. Print Media Isolation for Digital ID Card & Invoices */
@@ -640,7 +216,7 @@ html.light .modal-history-box {
     top: 50% !important;
     transform: translate(-50%, -50%) !important;
     box-shadow: none !important;
-    border: 2px solid #6366f1 !important;
+    border: 2px solid #5589ca !important;
     background: #ffffff !important;
     color: #0f172a !important;
     margin: 0 !important;
@@ -709,7 +285,7 @@ html.light .modal-history-box {
     left: 50% !important;
     transform: translateX(-50%) !important;
     padding: 16px !important;
-    border: 2px solid #312e81 !important;
+    border: 2px solid #245b8c !important;
     border-radius: 8px !important;
   }
 
@@ -820,7 +396,7 @@ html.light .modal-history-box {
     left: 50% !important;
     transform: translateX(-50%) !important;
     padding: 16px !important;
-    border: 2px solid #312e81 !important;
+    border: 2px solid #245b8c !important;
     border-radius: 8px !important;
   }
 
@@ -842,5 +418,39 @@ html.light .modal-history-box {
   body.print-voucher-only #voucher-printable-frame h3,
   body.print-voucher-only #voucher-printable-frame h4 {
     color: #0f172a !important;
+  }
+}
+/* Printable documents (meeting notice, minutes, fund demand and receipt): print only the sheet. */
+@media print {
+  body.print-sheet-only * {
+    visibility: hidden !important;
+  }
+  body.print-sheet-only .print-sheet,
+  body.print-sheet-only .print-sheet * {
+    visibility: visible !important;
+  }
+  body.print-sheet-only .print-sheet-overlay {
+    position: absolute !important;
+    inset: 0 !important;
+    background: #ffffff !important;
+    overflow: visible !important;
+    backdrop-filter: none !important;
+  }
+  body.print-sheet-only .print-sheet {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    color: #0f172a !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  @page {
+    size: A4;
+    margin: 14mm;
   }
 }

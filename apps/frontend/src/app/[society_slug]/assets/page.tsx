@@ -189,7 +189,7 @@ export default function AssetManagementPage() {
 
   const inp = (field: keyof typeof BLANK_FORM, label: string, type = 'text', placeholder = '') => (
     <div className="space-y-1">
-      <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">{label}</label>
+      <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">{label}</label>
       <input
         type={type}
         value={assetForm[field]}
@@ -202,7 +202,6 @@ export default function AssetManagementPage() {
 
   return (
     <main className="relative flex min-h-screen flex-col items-center justify-start overflow-x-hidden w-full py-4 sm:py-5 px-3 sm:px-5 lg:px-6">
-      <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
 
       <div className="w-full max-w-[1600px] mx-auto space-y-3.5 z-10">
 
@@ -213,7 +212,7 @@ export default function AssetManagementPage() {
               <Box className="h-6 w-6" />
             </div>
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Asset Management Center</h2>
+              <h2 className="text-xl font-normal text-slate-900 dark:text-slate-100">Asset Management Center</h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Track warranties, AMC contracts, schedule servicing & audit maintenance costs</p>
             </div>
           </div>
@@ -267,7 +266,7 @@ export default function AssetManagementPage() {
           ].map((kpi, i) => (
             <div key={i} className="border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-950/40 p-3 space-y-1 shadow-xs">
               <div className="flex justify-between items-center">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{kpi.label}</span>
+                <span className="text-[10px] font-bold text-slate-500">{kpi.label}</span>
                 <kpi.icon className={`h-3.5 w-3.5 ${kpi.color}`} />
               </div>
               <div className={`text-xl font-black ${kpi.color}`}>{kpi.value}</div>
@@ -298,10 +297,10 @@ export default function AssetManagementPage() {
             {activeTab === 'assets' && (
               <div className="space-y-4">
                 {assetsList.length === 0 && (
-                  <div className="flex flex-col items-center justify-center gap-3 py-20 border border-dashed border-slate-800 rounded-xl text-slate-500">
+                  <div className="flex flex-col items-center justify-center gap-3 py-20 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl text-slate-500">
                     <Box className="h-12 w-12 opacity-20" />
                     <p className="text-sm font-semibold">No assets added yet</p>
-                    <p className="text-xs text-center max-w-xs">Click <span className="text-emerald-400 font-bold">"Add Asset"</span> to register society equipment like lifts, pumps, generators, CCTV, etc.</p>
+                    <p className="text-xs text-center max-w-xs">Click <span className="text-emerald-600 dark:text-emerald-400 font-bold">"Add Asset"</span> to register society equipment like lifts, pumps, generators, CCTV, etc.</p>
                     {isManagement && (
                       <button onClick={openAddModal} className="mt-2 flex items-center gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white py-2 px-5 text-xs font-semibold">
                         <Plus className="h-3.5 w-3.5" /> Add First Asset
@@ -319,29 +318,29 @@ export default function AssetManagementPage() {
                     const isOverdue = serviceDays !== null && serviceDays < 0;
 
                     return (
-                      <div key={asset.id} className="border border-slate-800 bg-slate-950/20 rounded-xl p-5 space-y-4 text-xs hover:border-slate-700 transition-all group">
+                      <div key={asset.id} className="border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/20 rounded-xl p-5 space-y-4 text-xs hover:border-slate-300 dark:hover:border-slate-700 transition-all group">
 
                         {/* Title row */}
                         <div className="flex justify-between items-start gap-2">
                           <div>
-                            <h3 className="text-sm font-bold text-slate-100">{asset.name}</h3>
-                            <span className="inline-block mt-1 text-[10px] bg-indigo-950/40 border border-indigo-900/40 text-indigo-400 rounded px-1.5 py-0.5 font-semibold uppercase">
+                            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">{asset.name}</h3>
+                            <span className="inline-block mt-1 text-[10px] bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-900/40 text-indigo-600 dark:text-indigo-400 rounded px-1.5 py-0.5 font-semibold">
                               {asset.type}
                             </span>
                           </div>
-                          <span className={`text-[10px] font-semibold border rounded-full px-2.5 py-0.5 uppercase whitespace-nowrap flex-shrink-0 ${isWarrantyActive ? 'bg-emerald-950/30 border-emerald-900/50 text-emerald-400' : 'bg-slate-900/30 border-slate-800 text-slate-600'}`}>
+                          <span className={`text-[10px] font-semibold border rounded-sm px-2.5 py-0.5 whitespace-nowrap flex-shrink-0 ${isWarrantyActive ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-600 dark:text-emerald-400' : 'bg-slate-50 dark:bg-slate-900/30 border-slate-200 dark:border-slate-800 text-slate-600'}`}>
                             {isWarrantyActive ? '✓ Warranty' : 'Expired'}
                           </span>
                         </div>
 
                         {/* Detail grid */}
-                        <div className="grid grid-cols-2 gap-y-2 gap-x-4 border-t border-slate-800/60 pt-3 text-[11px]">
-                          <div><span className="text-slate-500 block">Purchase Value</span><span className="font-bold text-slate-200">{asset.cost ? `₹${Number(asset.cost).toLocaleString('en-IN')}` : '—'}</span></div>
-                          <div><span className="text-slate-500 block">Annual AMC Cost</span><span className="font-bold text-amber-400">{asset.amcCost ? `₹${Number(asset.amcCost).toLocaleString('en-IN')}` : '—'}</span></div>
-                          <div><span className="text-slate-500 block">AMC Provider</span><span className="font-semibold text-slate-300">{asset.amcProvider || '—'}</span></div>
+                        <div className="grid grid-cols-2 gap-y-2 gap-x-4 border-t border-slate-200 dark:border-slate-800/60 pt-3 text-[11px]">
+                          <div><span className="text-slate-500 block">Purchase Value</span><span className="font-bold text-slate-900 dark:text-slate-200">{asset.cost ? `₹${Number(asset.cost).toLocaleString('en-IN')}` : '—'}</span></div>
+                          <div><span className="text-slate-500 block">Annual AMC Cost</span><span className="font-bold text-amber-600 dark:text-amber-400">{asset.amcCost ? `₹${Number(asset.amcCost).toLocaleString('en-IN')}` : '—'}</span></div>
+                          <div><span className="text-slate-500 block">AMC Provider</span><span className="font-semibold text-slate-700 dark:text-slate-300">{asset.amcProvider || '—'}</span></div>
                           <div>
                             <span className="text-slate-500 block">Next Service</span>
-                            <span className={`font-semibold ${isOverdue ? 'text-rose-400' : isDueSoon ? 'text-amber-400' : 'text-slate-300'}`}>
+                            <span className={`font-semibold ${isOverdue ? 'text-rose-600 dark:text-rose-400' : isDueSoon ? 'text-amber-600 dark:text-amber-400' : 'text-slate-700 dark:text-slate-300'}`}>
                               {asset.nextServiceDate || '—'}
                               {isOverdue && <span className="ml-1 text-[9px] font-bold text-rose-500">(OVERDUE)</span>}
                               {isDueSoon && !isOverdue && <span className="ml-1 text-[9px] font-bold text-amber-500">({serviceDays}d)</span>}
@@ -353,7 +352,7 @@ export default function AssetManagementPage() {
 
                         {/* Actions */}
                         {isManagement && (
-                          <div className="flex items-center justify-between border-t border-slate-800/60 pt-3 gap-2">
+                          <div className="flex items-center justify-between border-t border-slate-200 dark:border-slate-800/60 pt-3 gap-2">
                             <button
                               onClick={() => { setLogAssetId(asset.id); setLogDesc(''); setLogCost(0); }}
                               className="flex-1 rounded-lg bg-indigo-600/80 hover:bg-indigo-600 text-white py-1.5 px-3 font-semibold flex items-center justify-center gap-1 transition-all text-[11px]"
@@ -362,13 +361,13 @@ export default function AssetManagementPage() {
                             </button>
                             <button
                               onClick={() => openEditModal(asset)}
-                              className="rounded-lg border border-slate-700 hover:border-slate-600 bg-slate-900/60 text-slate-300 hover:text-slate-100 py-1.5 px-3 font-semibold flex items-center gap-1 transition-all text-[11px]"
+                              className="rounded-lg border border-slate-300 dark:border-slate-700 hover:border-slate-600 bg-white dark:bg-slate-900/60 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 py-1.5 px-3 font-semibold flex items-center gap-1 transition-all text-[11px]"
                             >
                               <Pencil className="h-3 w-3" /> Edit
                             </button>
                             <button
                               onClick={() => setDeleteConfirmId(asset.id)}
-                              className="rounded-lg border border-red-900/40 hover:bg-red-950/40 text-red-400 hover:text-red-300 py-1.5 px-3 font-semibold flex items-center gap-1 transition-all text-[11px]"
+                              className="rounded-lg border border-red-200 dark:border-red-900/40 hover:bg-red-50 dark:hover:bg-red-950/40 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 py-1.5 px-3 font-semibold flex items-center gap-1 transition-all text-[11px]"
                             >
                               <Trash2 className="h-3 w-3" />
                             </button>
@@ -385,7 +384,7 @@ export default function AssetManagementPage() {
             {activeTab === 'cost' && (
               <div className="space-y-3.5">
                 <div className="bg-white dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 p-3 rounded-xl shadow-xs">
-                  <h3 className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider">Maintenance Cost Ledger Analysis</h3>
+                  <h3 className="text-xs font-bold text-slate-900 dark:text-slate-200">Maintenance Cost Ledger Analysis</h3>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Aggregated repair and servicing expenditures grouped by asset and work type. Log entries via the Maintenance button on each asset card.</p>
                 </div>
 
@@ -399,7 +398,7 @@ export default function AssetManagementPage() {
                   <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/20 shadow-xs">
                     <table className="w-full text-left text-xs border-collapse whitespace-nowrap">
                       <thead>
-                        <tr className="bg-slate-50 dark:bg-black/60 text-slate-700 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800 text-[10px] uppercase">
+                        <tr className="bg-slate-50 dark:bg-black/60 text-slate-700 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800 text-[10px]">
                           <th className="px-3.5 py-2.5">Asset Name</th>
                           <th className="px-3.5 py-2.5">Work Type</th>
                           <th className="px-3.5 py-2.5 text-right">Total Expenditure (₹)</th>
@@ -410,7 +409,7 @@ export default function AssetManagementPage() {
                           <tr key={idx} className="text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900/20 transition-colors">
                             <td className="px-3.5 py-2.5 font-bold text-slate-900 dark:text-slate-200">{row.assetName}</td>
                             <td className="px-3.5 py-2.5">
-                              <span className={`text-[10px] border rounded-full px-2 py-0.5 font-bold uppercase ${row.type === 'MAINTENANCE' ? 'border-indigo-200 dark:border-indigo-900/50 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-400' : 'border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400'}`}>
+                              <span className={`text-[10px] border rounded-sm px-2 py-0.5 font-bold ${row.type === 'MAINTENANCE' ? 'border-indigo-200 dark:border-indigo-900/50 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-400' : 'border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400'}`}>
                                 {row.type}
                               </span>
                             </td>
@@ -467,7 +466,7 @@ export default function AssetManagementPage() {
                 {/* Row 1 */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Asset Name *</label>
+                    <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Asset Name *</label>
                     <input
                       type="text"
                       value={assetForm.name}
@@ -479,7 +478,7 @@ export default function AssetManagementPage() {
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Asset Type *</label>
+                    <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Asset Type *</label>
                     <select
                       value={assetForm.type}
                       onChange={(e) => setAssetForm(prev => ({ ...prev, type: e.target.value }))}
@@ -500,7 +499,7 @@ export default function AssetManagementPage() {
 
                 {/* Row 3 - AMC */}
                 <div className="border border-amber-200 dark:border-amber-900/30 bg-amber-50/50 dark:bg-amber-950/10 rounded-xl p-3.5 sm:p-4 space-y-3">
-                  <h4 className="text-[11px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Annual Maintenance Contract (AMC) Details</h4>
+                  <h4 className="text-[11px] font-bold text-amber-700 dark:text-amber-400">Annual Maintenance Contract (AMC) Details</h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {inp('amcProvider', 'AMC Service Provider', 'text', 'e.g. Otis Elevators India, Kirloskar Brothers Ltd')}
                     {inp('amcCost', 'Annual AMC Cost (₹)', 'number', '0.00')}
@@ -564,7 +563,7 @@ export default function AssetManagementPage() {
               <form id="log-form" onSubmit={handlePostLog} className="space-y-3.5 text-xs">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Work Type</label>
+                    <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Work Type</label>
                     <select
                       value={logType}
                       onChange={(e) => setLogType(e.target.value as any)}
@@ -575,7 +574,7 @@ export default function AssetManagementPage() {
                     </select>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Activity Date</label>
+                    <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Activity Date</label>
                     <input
                       type="date"
                       value={logDate}
@@ -586,7 +585,7 @@ export default function AssetManagementPage() {
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Expense Cost (₹)</label>
+                  <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Expense Cost (₹)</label>
                   <input
                     type="number"
                     step="0.01"
@@ -596,7 +595,7 @@ export default function AssetManagementPage() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Activity Description *</label>
+                  <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Activity Description *</label>
                   <textarea
                     rows={3}
                     placeholder="e.g. Quarterly elevator rope inspection and brake adjustment..."
