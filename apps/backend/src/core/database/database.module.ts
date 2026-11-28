@@ -780,6 +780,19 @@ export const DRIZZLE_PROVIDER = 'DRIZZLE_PROVIDER';
             created_at timestamptz NOT NULL DEFAULT now()
           );`, 'fund_online_orders table');
         await runSafe(() => client`CREATE UNIQUE INDEX IF NOT EXISTS uq_fund_online_orders ON fund_online_orders (razorpay_order_id);`, 'fund online orders unique');
+        await runSafe(() => client`
+          CREATE TABLE IF NOT EXISTS user_invites (
+            id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            society_id uuid NOT NULL REFERENCES societies(id) ON DELETE CASCADE,
+            user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            code_hash varchar(64) NOT NULL,
+            expires_at timestamptz NOT NULL,
+            used_at timestamptz,
+            attempts integer NOT NULL DEFAULT 0,
+            created_by uuid REFERENCES users(id) ON DELETE SET NULL,
+            created_at timestamptz NOT NULL DEFAULT now()
+          );`, 'user_invites table');
+        await runSafe(() => client`CREATE UNIQUE INDEX IF NOT EXISTS uq_user_invites_code ON user_invites (code_hash);`, 'user invites code unique');
         await runSafe(() => client`CREATE UNIQUE INDEX IF NOT EXISTS uq_ledgers_system_key ON ledgers (society_id, system_key) WHERE system_key IS NOT NULL;`, 'ledgers system_key unique');
 
         return drizzle(client, { schema });

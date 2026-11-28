@@ -799,6 +799,21 @@ export const fundOnlineOrders = pgTable('fund_online_orders', {
   uqFundOnlineOrder: uniqueIndex('uq_fund_online_orders').on(table.razorpayOrderId),
 }));
 
+// One-time codes the office gives a member to set their own password in the app (also used to reset a password).
+export const userInvites = pgTable('user_invites', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  societyId: uuid('society_id').references(() => societies.id, { onDelete: 'cascade' }).notNull(),
+  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  codeHash: varchar('code_hash', { length: 64 }).notNull(), // sha256 of the code; the code itself is never stored
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  usedAt: timestamp('used_at', { withTimezone: true }),
+  attempts: integer('attempts').default(0).notNull(),
+  createdBy: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  uqUserInviteCode: uniqueIndex('uq_user_invites_code').on(table.codeHash),
+}));
+
 // Facility & service charges: the society's catalogue (hall booking, flat transfer fee, lift use for shifting, ...)
 export const serviceCharges = pgTable('service_charges', {
   id: uuid('id').primaryKey().defaultRandom(),

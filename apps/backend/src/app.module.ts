@@ -33,6 +33,7 @@ import { CommitteeModule } from './modules/committee/committee.module';
 import { MeetingModule } from './modules/meeting/meeting.module';
 import { VisitorModule } from './modules/visitor/visitor.module';
 import { FundModule } from './modules/fund/fund.module';
+import { DirectoryModule } from './modules/directory/directory.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { CustomReportModule } from './modules/custom-report/custom-report.module';
 import { SearchModule } from './modules/search/search.module';
@@ -89,6 +90,7 @@ import { StorageModule } from './core/storage/storage.module';
     MeetingModule,
     VisitorModule,
     FundModule,
+    DirectoryModule,
     ChatModule,
     AssetModule,
     ReportModule,

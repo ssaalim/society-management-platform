@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "Housive",
+    "slug": "housive",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.housive.resident"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#FFF4E5",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "com.housive.resident",
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-web-browser",
+      "expo-font"
+    ],
+    "scheme": "housive",
+    "experiments": {
+      "typedRoutes": true
+    },
+    "description": "Housive resident app: maintenance, complaints, visitors, committee and more."
+  }
+}
