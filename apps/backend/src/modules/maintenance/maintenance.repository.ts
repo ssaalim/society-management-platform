@@ -90,6 +90,7 @@ export class MaintenanceRepository extends TenantBaseRepository<typeof maintenan
         paymentMode: receipts.paymentMode,
         referenceNumber: receipts.referenceNumber,
         paymentDate: receipts.paymentDate,
+        status: receipts.status,
         billNumber: maintenanceBills.billNumber,
         billingPeriodStart: maintenanceBills.billingPeriodStart,
         billingPeriodEnd: maintenanceBills.billingPeriodEnd,
@@ -109,7 +110,8 @@ export class MaintenanceRepository extends TenantBaseRepository<typeof maintenan
     }));
 
     const billReceipts = formattedReceipts.filter((r) => r.billNumber === details.bill.billNumber);
-    const totalPaid = billReceipts.reduce((sum, r) => sum + Number(r.amountPaid || 0), 0);
+    // Only cleared money counts; a resident's own report (REVIEW) waits for the office to approve it.
+    const totalPaid = billReceipts.filter((r) => r.status === 'CLEARED').reduce((sum, r) => sum + Number(r.amountPaid || 0), 0);
     const invoiceTotal = Number(details.bill.totalAmount || 0);
     const remainingBalance = Math.max(0, invoiceTotal - totalPaid);
     const lastPayment = formattedReceipts.length > 0 ? formattedReceipts[0] : null;
@@ -276,6 +278,7 @@ export class MaintenanceRepository extends TenantBaseRepository<typeof maintenan
             paymentMode: receipts.paymentMode,
             referenceNumber: receipts.referenceNumber,
             paymentDate: receipts.paymentDate,
+            status: receipts.status,
             billNumber: maintenanceBills.billNumber,
             billingPeriodStart: maintenanceBills.billingPeriodStart,
             billingPeriodEnd: maintenanceBills.billingPeriodEnd,
@@ -295,7 +298,7 @@ export class MaintenanceRepository extends TenantBaseRepository<typeof maintenan
         }));
 
         const thisBillReceipts = formattedReceipts.filter((r) => r.billNumber === b.billNumber);
-        const totalPaid = thisBillReceipts.reduce((sum, r) => sum + Number(r.amountPaid || 0), 0);
+        const totalPaid = thisBillReceipts.filter((r) => r.status === 'CLEARED').reduce((sum, r) => sum + Number(r.amountPaid || 0), 0);
         const invoiceTotal = Number(b.amount || 0);
         const remainingBalance = Math.max(0, invoiceTotal - totalPaid);
 

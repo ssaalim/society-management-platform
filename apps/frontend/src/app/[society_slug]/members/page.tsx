@@ -29,8 +29,10 @@ import {
   Trash2,
   Building,
   Mail,
-  Phone
+  Phone,
+  Smartphone
 } from 'lucide-react';
+import { AppInviteDialog } from '../../../components/members/app-invite-dialog';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import BulkUploadModal from '../../../components/bulk-upload-modal';
@@ -116,6 +118,7 @@ export default function MembersListingPage() {
     password: '',
   });
   const [isGranting, setIsGranting] = useState<boolean>(false);
+  const [inviting, setInviting] = useState<SocietyUserItem | null>(null);
 
   // Fetch Members
   const fetchMembers = async () => {
@@ -777,6 +780,14 @@ export default function MembersListingPage() {
                             {isManagementRole && (
                               <>
                                 <button
+                                  onClick={() => setInviting(u)}
+                                  className="p-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-all"
+                                  title="Invite to the mobile app (or reset password)"
+                                  aria-label={`Invite ${u.name || u.email} to the app`}
+                                >
+                                  <Smartphone className="h-3.5 w-3.5" />
+                                </button>
+                                <button
                                   onClick={() => {
                                     setEditingUserRole(u);
                                     setNewRoleSelection(u.roleName);
@@ -1158,6 +1169,7 @@ export default function MembersListingPage() {
           </div>
         </div>
       )}
+      {inviting && <AppInviteDialog userId={inviting.userId} label={inviting.name || inviting.email} onClose={() => setInviting(null)} />}
     </main>
   );
 }

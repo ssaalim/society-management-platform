@@ -24,10 +24,13 @@ import {
   buildings,
   users,
 } from '../../../database/schema';
-import { eq, and, isNull, inArray, lte, gte } from 'drizzle-orm';
+import { eq, and, isNull, inArray, lte, gte, sql } from 'drizzle-orm';
 
 import { NotificationService } from '../notification/notification.service';
 import { BillingCategoryService } from './billing-category.service';
+
+/** People who live in flats; what they report as paid waits for the office to approve it. */
+const RESIDENT_ROLES = ['OWNER', 'CO_OWNER', 'TENANT', 'FAMILY_MEMBER', 'MEMBER'];
 
 @Injectable()
 export class MaintenanceService {
@@ -599,7 +602,7 @@ export class MaintenanceService {
           )
         );
       if (userRoleQuery.length > 0) {
-        isResident = ['OWNER', 'TENANT'].includes(userRoleQuery[0].roleName);
+        isResident = RESIDENT_ROLES.includes(userRoleQuery[0].roleName);
       }
     }
 
@@ -620,10 +623,11 @@ export class MaintenanceService {
     const discountReason = dto.discountReason || null;
 
     // Fetch existing receipts to compute total paid so far
+    // Only money the office has cleared counts; a resident's own report (REVIEW) or a rejected one does not.
     const existingReceipts = await this.db
       .select()
       .from(receipts)
-      .where(eq(receipts.billId, dto.billId));
+      .where(and(eq(receipts.billId, dto.billId), eq(receipts.status, 'CLEARED')));
 
     const totalPaidSoFar = existingReceipts.reduce((sum, r) => sum + Number(r.amountPaid || 0) - Number(r.lateFeeApplied || 0) + Number(r.discountAmount || 0), 0);
     
@@ -715,6 +719,16 @@ export class MaintenanceService {
       newValues: receiptRecord,
     });
 
+    // A resident's report is not money received yet: ask the office to check it, and say nothing about "recorded".
+    if (isResident) {
+      await this.notificationService.notifyRoles(
+        ['TREASURER', 'ACCOUNTANT', 'SECRETARY'],
+        'Payment to approve',
+        `₹${payAmount} reported paid by ${dto.paymentMode}${dto.transactionId ? ` (ref ${dto.transactionId})` : ''} for invoice ${bill.billNumber}. Check it against the bank statement, then approve or reject it.`,
+      );
+      return { ...receiptRecord, remainingBalance: Math.max(0, invoiceAmount - totalPaidSoFar).toFixed(2), status: 'REVIEW' };
+    }
+
     // Send automated partial payment reminder notification if balance remains
     if (nextStatus === 'PARTIAL') {
       const flatResident = await this.db.query.flatOwners.findFirst({
@@ -775,7 +789,7 @@ export class MaintenanceService {
           )
         );
       if (userRoleQuery.length > 0) {
-        isResident = ['OWNER', 'TENANT'].includes(userRoleQuery[0].roleName);
+        isResident = RESIDENT_ROLES.includes(userRoleQuery[0].roleName);
       }
     }
 
@@ -801,7 +815,7 @@ export class MaintenanceService {
       const existingReceipts = await this.db
         .select()
         .from(receipts)
-        .where(eq(receipts.billId, billId));
+        .where(and(eq(receipts.billId, billId), eq(receipts.status, 'CLEARED')));
 
       const totalPaidSoFar = existingReceipts.reduce((sum, r) => sum + Number(r.amountPaid || 0), 0);
       const invoiceAmount = Number(bill.totalAmount);
@@ -838,6 +852,8 @@ export class MaintenanceService {
         }).returning();
 
         receiptRecord = receiptsList[0];
+        // A resident's report is posted to the books only when the office approves it.
+        if (isResident) return;
 
         const voucherId = require('crypto').randomUUID();
         await tx.insert(vouchers).values({
@@ -872,8 +888,8 @@ export class MaintenanceService {
       updatedBills.push(bill.billNumber);
       remainingLumpSum -= payThisBill;
 
-      // Partial payment reminder trigger
-      if (nextStatus === 'PARTIAL') {
+      // Partial payment reminder trigger (not for a resident's own, unapproved report)
+      if (nextStatus === 'PARTIAL' && !isResident) {
         const flatResident = await this.db.query.flatOwners.findFirst({
           where: eq(flatOwners.flatId, bill.flatId),
         });
@@ -891,6 +907,21 @@ export class MaintenanceService {
           }
         }
       }
+    }
+
+    if (isResident) {
+      await this.notificationService.notifyRoles(
+        ['TREASURER', 'ACCOUNTANT', 'SECRETARY'],
+        'Payment to approve',
+        `₹${dto.amountPaid} reported paid by ${dto.paymentMode}${dto.transactionId ? ` (ref ${dto.transactionId})` : ''} across ${createdReceipts.length} invoices (${updatedBills.join(', ')}). Check it, then approve or reject each receipt.`,
+      );
+      return {
+        receiptsCreated: createdReceipts.length,
+        totalApplied: (dto.amountPaid - remainingLumpSum).toFixed(2),
+        unappliedBalance: remainingLumpSum.toFixed(2),
+        receipts: createdReceipts,
+        status: 'REVIEW',
+      };
     }
 
     // Notify Board & Accountant
@@ -1128,6 +1159,18 @@ export class MaintenanceService {
       newValues: { amount: receipt.amountPaid, status: 'CLEARED' },
     });
 
+    const remaining = Math.max(0, invoiceAmount - newTotalPaid);
+    await this.tellFlat(
+      bill.flatId,
+      'Payment confirmed',
+      `₹${Number(receipt.amountPaid)} for invoice ${bill.billNumber} is confirmed (receipt ${receipt.receiptNumber}).${remaining > 0.01 ? ` ₹${remaining.toFixed(2)} is still due.` : ' Thank you!'}`,
+    );
+    await this.notificationService.notifyRoles(
+      ['PRESIDENT', 'SECRETARY', 'TREASURER', 'ACCOUNTANT'],
+      `💰 ${nextStatus === 'PAID' ? 'Full' : 'Partial'} Payment Receipt Recorded`,
+      `Payment receipt ${receipt.receiptNumber} of ₹${Number(receipt.amountPaid)} (${receipt.paymentMode}) approved against invoice ${bill.billNumber}. Remaining due: ₹${remaining.toFixed(2)}.`,
+    );
+
     return { message: 'Payment approved successfully.' };
   }
 
@@ -1157,6 +1200,30 @@ export class MaintenanceService {
       newValues: { reason },
     });
 
+    const bill = await this.maintenanceRepository.findById(receipt.billId);
+    if (bill) {
+      await this.tellFlat(
+        bill.flatId,
+        'Payment not confirmed',
+        `The ₹${Number(receipt.amountPaid)} you reported for invoice ${bill.billNumber}${receipt.referenceNumber ? ` (ref ${receipt.referenceNumber})` : ''} was not confirmed: ${reason}. The amount is still due.`,
+      );
+    }
+
     return { message: 'Payment rejected.' };
+  }
+
+  /** Tells the people living in a flat (current owners and active tenants) through in-app notifications. */
+  private async tellFlat(flatId: string, title: string, body: string) {
+    const activeTenantId = this.maintenanceRepository['activeTenantId'];
+    const rows = (await this.db.execute(sql`
+      select o.user_id as "userId" from owners o join flat_owners fo on fo.owner_id = o.id and fo.is_current
+      where fo.flat_id = ${flatId} and o.user_id is not null
+      union
+      select t.user_id from tenants t join flat_tenants ft on ft.tenant_id = t.id and ft.is_active
+      where ft.flat_id = ${flatId} and t.user_id is not null
+    `)) as unknown as { userId: string }[];
+    for (const r of rows) {
+      await this.notificationService.createInAppNotification({ societyId: activeTenantId, recipientUserId: r.userId, title, body });
+    }
   }
 }

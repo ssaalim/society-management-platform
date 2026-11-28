@@ -64,6 +64,11 @@ export class AuthService {
    */
   async login(dto: { email: string; password?: string }) {
     const userRecord = await this.verifyCredentials(dto);
+    return this.sessionFor(userRecord);
+  }
+
+  /** A signed-in society session for this user: token plus memberships (used by login and invite activation). */
+  async sessionFor(userRecord: typeof users.$inferSelect) {
     const profile = await this.userService.getUserMemberships(userRecord.id);
 
     const token = this.generateToken({
@@ -102,56 +107,8 @@ export class AuthService {
     };
   }
 
-  /**
-   * Registers a new user account directly in Neon database.
-   */
-  async register(dto: { email: string; password?: string; name?: string; mobile?: string }) {
-    if (!dto.email || !dto.password) {
-      throw new BadRequestException('Email and password are required.');
-    }
+  // No open sign-up: accounts are created by the society office and activated with an invite code (InviteService).
 
-    const email = dto.email.trim().toLowerCase();
-    
-    // Check if user already exists
-    const existing = await this.db.query.users.findFirst({
-      where: eq(users.email, email),
-    });
-
-    if (existing) {
-      throw new ConflictException('An account with this email address already exists.');
-    }
-
-    const userId = require('crypto').randomUUID();
-    const hashedPassword = await bcrypt.hash(dto.password, 10);
-
-    const [newUser] = await this.db
-      .insert(users)
-      .values({
-        id: userId,
-        email,
-        password: hashedPassword,
-        name: dto.name?.trim() || email.split('@')[0],
-        mobile: dto.mobile?.trim() || null,
-        isActive: true,
-      })
-      .returning();
-
-    // A new account belongs to no society until a society admin adds it.
-    const profile = await this.userService.getUserMemberships(newUser.id);
-
-    const token = this.generateToken({
-      id: newUser.id,
-      email: newUser.email,
-      name: newUser.name || email.split('@')[0],
-      scope: 'society',
-    });
-
-    return {
-      token,
-      user: profile.user,
-      memberships: profile.memberships,
-    };
-  }
 
   /**
    * Signs a JWT payload using server's JWT_SECRET.
