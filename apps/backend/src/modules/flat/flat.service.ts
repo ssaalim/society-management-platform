@@ -29,7 +29,7 @@ export class FlatService {
       ...flatProps
     } = dto;
 
-    let payload = { ...flatProps };
+    const payload = { ...flatProps };
     if (payload.floorId) {
       await this.requireLayout(floors, payload.floorId, 'Floor');
     }

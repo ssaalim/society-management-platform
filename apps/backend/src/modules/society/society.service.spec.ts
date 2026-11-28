@@ -3,6 +3,7 @@ import { SocietyService } from './society.service';
 import { SocietyRepository } from './society.repository';
 import { DRIZZLE_PROVIDER } from '@core/database/database.module';
 import { ConfigService } from '@nestjs/config';
+import { R2StorageService } from '@core/storage/r2-storage.service';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 
 describe('SocietyService', () => {
@@ -59,6 +60,7 @@ describe('SocietyService', () => {
         { provide: SocietyRepository, useValue: mockRepo },
         { provide: DRIZZLE_PROVIDER, useValue: mockDb },
         { provide: ConfigService, useValue: mockConfig },
+        { provide: R2StorageService, useValue: { generatePresignedUploadUrl: jest.fn() } },
       ],
     }).compile();
 

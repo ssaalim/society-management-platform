@@ -114,7 +114,7 @@ export class CustomReportController {
     const report = await this.customReportService.findOne(id);
     const csv = await this.customReportService.exportCsv(id, dto, req.user?.id);
 
-    const safeFilename = report.name.replace(/[^a-z0-9_\-]/gi, '_').toLowerCase();
+    const safeFilename = report.name.replace(/[^a-z0-9_-]/gi, '_').toLowerCase();
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}_report.csv"`);
     return res.send(csv);

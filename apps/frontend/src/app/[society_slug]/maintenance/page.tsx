@@ -1590,8 +1590,8 @@ export default function MaintenanceDashboardPage() {
                 else if (calculationType === 'PER_FLAT_TYPE') sampleRate = perFlatTypeRates['2BHK'] || 2500;
                 else if (calculationType === 'FLAT_RATE_SAME_FOR_ALL') sampleRate = Number(flatRateSameForAll) || 2500;
 
-                let sampleArea = sqftAreaType === 'CARPET_AREA' ? 850 : 1000;
-                let sampleBase = calculationType === 'PER_SQ_FT' ? sampleArea * sampleRate : sampleRate;
+                const sampleArea = sqftAreaType === 'CARPET_AREA' ? 850 : 1000;
+                const sampleBase = calculationType === 'PER_SQ_FT' ? sampleArea * sampleRate : sampleRate;
                 let sampleCalculated = sampleBase + 500 + 250;
                 let hasEvalError = false;
 
