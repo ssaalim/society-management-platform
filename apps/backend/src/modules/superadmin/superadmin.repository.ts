@@ -91,7 +91,7 @@ export class SuperAdminRepository {
       }
 
       // 3. Map user as PRESIDENT
-      let role = await tx.select().from(roles).where(eq(roles.name, 'PRESIDENT')).limit(1);
+      const role = await tx.select().from(roles).where(eq(roles.name, 'PRESIDENT')).limit(1);
       let presidentRoleId = role[0]?.id;
 
       if (!presidentRoleId) {
@@ -124,7 +124,6 @@ export class SuperAdminRepository {
         { id: require('crypto').randomUUID(), societyId, name: 'General Expenses', group: 'EXPENSES', code: 'EXP-01', isActive: true },
       ];
       
-      // @ts-ignore
       await tx.insert(ledgers).values(defaultLedgers);
 
       return newSociety[0];

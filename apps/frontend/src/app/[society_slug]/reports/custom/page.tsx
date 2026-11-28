@@ -507,7 +507,7 @@ export default function CustomReportsPage() {
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      const safeName = selectedReport.name.replace(/[^a-z0-9_\-]/gi, '_').toLowerCase();
+      const safeName = selectedReport.name.replace(/[^a-z0-9_-]/gi, '_').toLowerCase();
       link.setAttribute('download', `${safeName}_report.csv`);
       document.body.appendChild(link);
       link.click();
