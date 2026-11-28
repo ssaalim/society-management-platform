@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import * as postgresModule from 'postgres';
 import * as schema from '../../../database/schema';
+import * as bcrypt from 'bcryptjs';
 
 // Handle ESM/CJS interop – postgres is ESM-only
 const postgres = (postgresModule as any).default || postgresModule;
@@ -793,6 +794,26 @@ export const DRIZZLE_PROVIDER = 'DRIZZLE_PROVIDER';
             created_at timestamptz NOT NULL DEFAULT now()
           );`, 'user_invites table');
         await runSafe(() => client`CREATE UNIQUE INDEX IF NOT EXISTS uq_user_invites_code ON user_invites (code_hash);`, 'user invites code unique');
+        // Sign-in is our own now (no Supabase), so a platform admin needs a password stored here. With
+        // PLATFORM_ADMIN_PASSWORD set, the platform admin (PLATFORM_ADMIN_EMAIL, default superadmin@society.dev) is
+        // created if missing and given that password while it has none; a password changed later is kept.
+        // PLATFORM_ADMIN_PASSWORD_RESET=true overwrites it (remove the setting again afterwards).
+        const adminPassword = process.env.PLATFORM_ADMIN_PASSWORD || '';
+        if (adminPassword.length >= 10) {
+          const adminEmail = (process.env.PLATFORM_ADMIN_EMAIL || 'superadmin@society.dev').trim().toLowerCase();
+          const force = process.env.PLATFORM_ADMIN_PASSWORD_RESET === 'true';
+          const hashed = bcrypt.hashSync(adminPassword, 10);
+          await runSafe(() => client`
+            INSERT INTO users (id, email, name, is_active, is_platform_admin, password)
+            VALUES (gen_random_uuid(), ${adminEmail}, 'Platform Admin', true, true, ${hashed})
+            ON CONFLICT (email) DO UPDATE SET
+              is_platform_admin = true,
+              is_active = true,
+              password = CASE WHEN ${force} OR users.password IS NULL OR users.password = '' THEN EXCLUDED.password ELSE users.password END;
+          `, 'platform admin password');
+        } else if (adminPassword) {
+          console.warn('PLATFORM_ADMIN_PASSWORD is shorter than 10 characters; ignored.');
+        }
         await runSafe(() => client`CREATE UNIQUE INDEX IF NOT EXISTS uq_ledgers_system_key ON ledgers (society_id, system_key) WHERE system_key IS NOT NULL;`, 'ledgers system_key unique');
 
         return drizzle(client, { schema });

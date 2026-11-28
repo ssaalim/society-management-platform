@@ -12,12 +12,12 @@
     "preview": {
       "distribution": "internal",
       "android": { "buildType": "apk" },
-      "env": { "EXPO_PUBLIC_API_URL": "https://REPLACE-WITH-YOUR-BACKEND/api/v1" }
+      "env": { "EXPO_PUBLIC_API_URL": "https://housive.onrender.com/api/v1" }
     },
     "production": {
       "autoIncrement": true,
       "android": { "buildType": "app-bundle" },
-      "env": { "EXPO_PUBLIC_API_URL": "https://REPLACE-WITH-YOUR-BACKEND/api/v1" }
+      "env": { "EXPO_PUBLIC_API_URL": "https://housive.onrender.com/api/v1" }
     }
   },
   "submit": {
