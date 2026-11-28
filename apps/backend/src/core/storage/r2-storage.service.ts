@@ -1,3 +1,5 @@
+import { jwtSecret } from '../auth/jwt-secret';
+import { signLocalUpload } from './local-upload-signature';
 import { Injectable, BadRequestException, HttpException, HttpStatus, Logger, Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
@@ -133,7 +135,7 @@ export class R2StorageService {
     }
 
     const contentType = (dto.contentType || 'application/octet-stream').toLowerCase();
-    const isImageScope = ['logo', 'avatar', 'bank_passbook'].includes(dto.fileType);
+    const isImageScope = ['logo', 'avatar', 'bank_passbook', 'chat_photo'].includes(dto.fileType);
     const maxSize = isImageScope ? MAX_IMAGE_SIZE_BYTES : MAX_DOCUMENT_SIZE_BYTES;
     const maxMb = isImageScope ? 2 : 5;
 
@@ -189,16 +191,37 @@ export class R2StorageService {
       };
     }
 
-    // 5. Local / Mock Fallback URL when R2 keys are not configured yet
-    const localUploadUrl = `/api/v1/storage/direct-upload?fileKey=${encodeURIComponent(fileKey)}`;
-    const localPublicUrl = `/uploads/${fileKey}`;
+    // 5. No R2 credentials: local development stores files on this server through a signed, short-lived URL.
+    //    Production must configure R2; silently accepting uploads that go nowhere is worse than failing.
+    if (this.configService.get<string>('NODE_ENV') === 'production') {
+      throw new BadRequestException('File storage is not configured. Set the R2_* environment variables.');
+    }
+    const base = this.localBaseUrl();
+    const expires = Date.now() + 15 * 60 * 1000;
+    const signature = signLocalUpload(this.localUploadSecret(), fileKey, expires, contentType, maxSize);
+    const query = new URLSearchParams({ key: fileKey, exp: String(expires), type: contentType, max: String(maxSize), sig: signature });
 
     return {
-      uploadUrl: localUploadUrl,
-      publicUrl: localPublicUrl,
+      uploadUrl: `${base}/api/v1/storage/local-upload?${query.toString()}`,
+      publicUrl: `${base}/uploads/${fileKey}`,
       fileKey,
       maxSizeBytes: maxSize,
     };
+  }
+
+  /** Where this API is reachable from the browser in local development. */
+  private localBaseUrl(): string {
+    const configured = this.configService.get<string>('BACKEND_PUBLIC_URL');
+    if (configured) return configured.replace(/\/+$/, '');
+    return `http://localhost:${this.configService.get<string>('PORT') || 4000}`;
+  }
+
+  localUploadSecret(): string {
+    return jwtSecret(this.configService);
+  }
+
+  get usesLocalStorage(): boolean {
+    return !this.isConfigured;
   }
 
   /**

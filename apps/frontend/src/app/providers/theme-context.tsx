@@ -13,16 +13,16 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [theme, setThemeState] = useState<Theme>('dark');
+  const [theme, setThemeState] = useState<Theme>('light');
 
   useEffect(() => {
-    // 1. Restore theme preference from localStorage or fallback to dark
+    // Restore the saved preference; the CRM look is light by default.
     const savedTheme = localStorage.getItem('theme') as Theme | null;
     if (savedTheme === 'light' || savedTheme === 'dark') {
       setThemeState(savedTheme);
       applyTheme(savedTheme);
     } else {
-      applyTheme('dark');
+      applyTheme('light');
     }
   }, []);
 

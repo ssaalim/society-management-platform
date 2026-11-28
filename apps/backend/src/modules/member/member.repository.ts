@@ -16,7 +16,7 @@ import {
 } from '../../../database/schema';
 import { DRIZZLE_PROVIDER, DrizzleDB } from '@core/database/database.module';
 import { ClsService } from 'nestjs-cls';
-import { eq, and, like, or } from 'drizzle-orm';
+import { eq, and, like, or, inArray } from 'drizzle-orm';
 
 @Injectable()
 export class MemberRepository extends TenantBaseRepository<typeof members> {
@@ -81,7 +81,8 @@ export class MemberRepository extends TenantBaseRepository<typeof members> {
       .from(flatOwners)
       .innerJoin(flats, eq(flatOwners.flatId, flats.id))
       .innerJoin(owners, eq(flatOwners.ownerId, owners.id))
-      .where(eq(owners.userId, userId));
+      // Only this society's flats: the same person may own flats in other societies, which must not show here.
+      .where(and(eq(owners.userId, userId), eq(flats.societyId, this.activeTenantId)));
 
     // tenants.userId → flatTenants.tenantId → flats
     const rentedFlats = await this.db
@@ -96,18 +97,17 @@ export class MemberRepository extends TenantBaseRepository<typeof members> {
       .from(flatTenants)
       .innerJoin(flats, eq(flatTenants.flatId, flats.id))
       .innerJoin(tenants, eq(flatTenants.tenantId, tenants.id))
-      .where(eq(tenants.userId, userId));
+      .where(and(eq(tenants.userId, userId), eq(flats.societyId, this.activeTenantId)));
 
     // Fetch vehicles
-    const vehicleList = await this.db
-      .select()
-      .from(vehicles)
-      .where(
-        or(
-          ownedFlats.length > 0 ? eq(vehicles.flatId, ownedFlats[0].flatId) : undefined,
-          rentedFlats.length > 0 ? eq(vehicles.flatId, rentedFlats[0].flatId) : undefined,
-        )
-      );
+    // Vehicles of this member's flats in this society. No flats means no vehicles (an empty filter would match all).
+    const memberFlatIds = [...ownedFlats.map((f) => f.flatId), ...rentedFlats.map((f) => f.flatId)];
+    const vehicleList = memberFlatIds.length === 0
+      ? []
+      : await this.db
+          .select()
+          .from(vehicles)
+          .where(and(eq(vehicles.societyId, this.activeTenantId), inArray(vehicles.flatId, memberFlatIds)));
 
     // Fetch assigned system role
     const userRoleQuery = await this.db

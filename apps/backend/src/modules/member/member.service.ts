@@ -12,7 +12,7 @@ import {
   userSocieties,
   roles
 } from '../../../database/schema';
-import { eq, and, or, like } from 'drizzle-orm';
+import { eq, and, or, like, ilike } from 'drizzle-orm';
 
 @Injectable()
 export class MemberService {
@@ -195,27 +195,31 @@ export class MemberService {
     return list;
   }
 
+  /**
+   * Finds people to link as members. Name/email search only covers people already in this society; an account
+   * from elsewhere is found only by its exact email, and only its id and email are returned. This keeps other
+   * societies' residents from being browsed.
+   */
   async searchUsers(query?: string) {
     if (!query || query.trim().length < 2) return [];
-    
-    return this.db
-      .select({
-        id: users.id,
-        name: users.name,
-        email: users.email,
-        mobile: users.mobile,
-      })
+    const q = query.trim();
+    const activeTenantId = this.memberRepository['activeTenantId'];
+
+    const inSociety = await this.db
+      .select({ id: users.id, name: users.name, email: users.email, mobile: users.mobile })
       .from(users)
-      .where(
-        and(
-          eq(users.isActive, true),
-          or(
-            like(users.name, `%${query}%`),
-            like(users.email, `%${query}%`)
-          )!
-        )
-      )
+      .innerJoin(userSocieties, and(eq(userSocieties.userId, users.id), eq(userSocieties.societyId, activeTenantId)))
+      .where(and(eq(users.isActive, true), or(ilike(users.name, `%${q}%`), ilike(users.email, `%${q}%`))!))
       .limit(20);
+
+    if (inSociety.length > 0 || !q.includes('@')) return inSociety;
+
+    const byEmail = await this.db
+      .select({ id: users.id, email: users.email })
+      .from(users)
+      .where(and(eq(users.isActive, true), eq(users.email, q.toLowerCase())))
+      .limit(1);
+    return byEmail.map((u) => ({ ...u, name: null, mobile: null }));
   }
 
   async findOne(id: string, executorId?: string) {

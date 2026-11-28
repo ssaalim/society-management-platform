@@ -9,6 +9,8 @@ import {
   Query 
 } from '@nestjs/common';
 import { AccountingService } from './accounting.service';
+import { RecurringExpenseService } from './recurring-expense.service';
+import { LedgerResolver } from '@core/accounting/ledger-resolver.service';
 import { CreateVoucherDto, createVoucherSchema } from './dto/create-voucher.dto';
 import { SupabaseAuthGuard } from '@core/auth/supabase.guard';
 import { TenantGuard } from '@core/tenant/tenant.guard';
@@ -21,7 +23,18 @@ import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 @UseGuards(SupabaseAuthGuard, TenantGuard, RolesGuard)
 @Controller('accounting')
 export class AccountingController {
-  constructor(private readonly accountingService: AccountingService) {}
+  constructor(
+    private readonly accountingService: AccountingService,
+    private readonly recurringExpenses: RecurringExpenseService,
+    private readonly ledgerResolver: LedgerResolver,
+  ) {}
+
+  @ApiOperation({ summary: 'Bank accounts money can be paid from or deposited into (default first)' })
+  @RequirePermissions('accounting:read')
+  @Get('bank-accounts')
+  async bankAccounts() {
+    return { success: true, data: await this.ledgerResolver.bankAccounts() };
+  }
 
   @ApiOperation({ summary: 'Post a balanced double-entry journal voucher' })
   @RequirePermissions('accounting:write')
@@ -39,6 +52,8 @@ export class AccountingController {
   @RequirePermissions('accounting:read')
   @Get('expenses')
   async getExpenses() {
+    // Opening Accounting catches up any recurring expense the timer missed (at most once per society per day).
+    await this.recurringExpenses.ensureUpToDate();
     const list = await this.accountingService.getExpenses();
     return {
       success: true,

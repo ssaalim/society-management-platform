@@ -38,6 +38,13 @@ export class ComplaintController {
   }
 
   @ApiOperation({ summary: 'List active society staff for assignment' })
+  @ApiOperation({ summary: 'Flats the caller can tag on a complaint (own flats for residents)' })
+  @RequirePermissions('resident:read')
+  @Get('flat-options')
+  async flatOptions(@Req() req: any) {
+    return { success: true, data: await this.complaintService.flatOptions(req.user.id) };
+  }
+
   @RequirePermissions('resident:read')
   @Get('staff-list')
   async getStaffList() {

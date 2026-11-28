@@ -8,6 +8,7 @@ import { DRIZZLE_PROVIDER, DrizzleDB } from '@core/database/database.module';
 import { ClsService } from 'nestjs-cls';
 import { eq, and, isNull, desc, sql } from 'drizzle-orm';
 import { customReports, customReportFavorites } from '../../../database/schema';
+import { runInSocietySandbox } from './society-sandbox';
 import { CreateCustomReportDto, UpdateCustomReportDto, ExecuteCustomReportDto } from './dto/custom-report.dto';
 
 // Allowed SQL keywords that start a valid SELECT statement
@@ -15,7 +16,9 @@ const ALLOWED_SELECT_START = /^\s*select\s+/i;
 // Detect dangerous keywords and commands that are not allowed
 const DANGEROUS_KEYWORDS = /\b(insert|update|delete|drop|truncate|alter|create|grant|revoke|exec|execute|call|do|copy|vacuum|reindex|analyze|lock|set|reset|listen|notify|unlisten|load)\b/i;
 // Detect dangerous postgres system functions and catalog tables
-const DANGEROUS_FUNCTIONS_AND_CATALOGS = /\b(pg_sleep|pg_read_file|pg_write_file|pg_ls_dir|dblink|pg_terminate_backend|pg_cancel_backend|set_config|current_setting|pg_shadow|pg_authid|pg_user|pg_database|pg_tablespace|pg_settings|information_schema|pg_catalog)\b/i;
+const DANGEROUS_FUNCTIONS_AND_CATALOGS = /\b(pg_\w*|dblink\w*|set_config|current_setting|information_schema|lo_\w+)\b/i;
+// Schema-qualified table names would skip the per-society views (see society-sandbox.ts), so they are refused.
+const SCHEMA_QUALIFIED = /(\b(public|drizzle|pg_temp\w*|pg_toast)|"(public|drizzle|pg_temp\w*)")\s*\.\s*/i;
 
 @Injectable()
 export class CustomReportService {
@@ -25,7 +28,9 @@ export class CustomReportService {
   ) {}
 
   private get activeTenantId(): string {
-    return this.cls.get<string>('tenantId');
+    const tenantId = this.cls.get<string>('tenantId');
+    if (!tenantId) throw new BadRequestException('Society context is missing.');
+    return tenantId;
   }
 
   private get activeUserId(): string {
@@ -53,6 +58,10 @@ export class CustomReportService {
       throw new BadRequestException(
         'The SQL query contains disallowed keywords (INSERT, UPDATE, DELETE, DROP, ALTER, COPY, etc.).',
       );
+    }
+
+    if (SCHEMA_QUALIFIED.test(cleaned)) {
+      throw new BadRequestException('Refer to tables by name only (for example "members", not "public.members").');
     }
 
     if (DANGEROUS_FUNCTIONS_AND_CATALOGS.test(cleaned)) {
@@ -86,16 +95,18 @@ export class CustomReportService {
     const resolvedUserId = userId || this.activeUserId;
 
     // Inject tenantId as :society_id and active user id as :user_id / :current_user_id automatically
+    // Caller-supplied values go first so they can never override the society or the signed-in user.
     const allParams: Record<string, string> = {
+      ...params,
       society_id: this.activeTenantId,
       user_id: resolvedUserId,
       current_user_id: resolvedUserId,
-      ...params,
     };
     const paramConfigMap = new Map(paramConfigs.map((p: any) => [p.key, p]));
 
     // Find all :named_params in order of appearance
-    const namedParamRegex = /:([a-zA-Z_][a-zA-Z0-9_]*)/g;
+    // "::type" casts are not parameters.
+    const namedParamRegex = /(?<!:):([a-zA-Z_][a-zA-Z0-9_]*)/g;
     const paramOrder: string[] = [];
     let match: RegExpExecArray | null;
 
@@ -120,7 +131,7 @@ export class CustomReportService {
         if (listValues.length === 0) {
           // Replace with empty list — query will return no rows
           query = query.replace(
-            new RegExp(`:${paramKey}\\b`, 'g'),
+            new RegExp(`(?<!:):${paramKey}\\b`, 'g'),
             'NULL',
           );
         } else {
@@ -143,7 +154,7 @@ export class CustomReportService {
           ).join(', ');
 
           query = query.replace(
-            new RegExp(`:${paramKey}\\b`, 'g'),
+            new RegExp(`(?<!:):${paramKey}\\b`, 'g'),
             paramPlaceholders,
           );
         }
@@ -151,14 +162,14 @@ export class CustomReportService {
         // date_range param key is used as-is; expect from_date/to_date pattern
         values.push(rawValue);
         query = query.replace(
-          new RegExp(`:${paramKey}\\b`, 'g'),
+          new RegExp(`(?<!:):${paramKey}\\b`, 'g'),
           `$${values.length}`,
         );
       } else {
         // text or date
         values.push(rawValue);
         query = query.replace(
-          new RegExp(`:${paramKey}\\b`, 'g'),
+          new RegExp(`(?<!:):${paramKey}\\b`, 'g'),
           `$${values.length}`,
         );
       }
@@ -270,7 +281,7 @@ export class CustomReportService {
         updatedBy: userId,
         updatedAt: new Date(),
       })
-      .where(eq(customReports.id, id))
+      .where(and(eq(customReports.id, id), eq(customReports.societyId, this.activeTenantId)))
       .returning();
 
     return updated;
@@ -282,7 +293,7 @@ export class CustomReportService {
     await this.db
       .update(customReports)
       .set({ deletedAt: new Date(), updatedBy: userId })
-      .where(eq(customReports.id, id));
+      .where(and(eq(customReports.id, id), eq(customReports.societyId, this.activeTenantId)));
   }
 
   // ─────────────────────────────────────────────────────────────────
@@ -294,6 +305,7 @@ export class CustomReportService {
     userId: string,
   ): Promise<{ isFavorite: boolean }> {
     const tenantId = this.activeTenantId;
+    await this.findOne(reportId); // the report must belong to this society
 
     // Check if already a favorite
     const [existing] = await this.db
@@ -357,8 +369,8 @@ export class CustomReportService {
       // We build the SQL string with values already substituted for safety
       // (values are passed as positional params to the underlying postgres.js client)
       const sqlWithValues = this.buildRawSqlWithValues(limitedQuery, values);
-      const result = await this.db.execute(sql.raw(sqlWithValues));
-      rawResult = Array.isArray(result) ? result : (result as any)?.rows ?? [];
+      // Runs against per-society views only, read-only, always rolled back.
+      rawResult = await runInSocietySandbox(this.db, this.activeTenantId, sqlWithValues);
     } catch (err: any) {
       throw new BadRequestException(`Query execution failed: ${err?.message || err}`);
     }

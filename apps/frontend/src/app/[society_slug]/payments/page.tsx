@@ -112,8 +112,6 @@ export default function PaymentsCheckoutPage() {
 
   return (
     <main className="relative flex min-h-screen flex-col items-center justify-start overflow-x-hidden w-full py-4 sm:py-5 px-3 sm:px-5 lg:px-6">
-      {/* Background Grids */}
-      <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
 
       <div className="w-full max-w-[1600px] mx-auto space-y-3.5 z-10">
         
@@ -122,7 +120,7 @@ export default function PaymentsCheckoutPage() {
           <div className="flex items-center gap-2.5">
             <Receipt className="h-6 w-6 text-indigo-500 dark:text-indigo-400" />
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Payments Ledger</h2>
+              <h2 className="text-xl font-normal text-slate-900 dark:text-slate-100">Payments Ledger</h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Track checkouts, clear online captured webhooks, and issue cancellations or refunds</p>
             </div>
           </div>
@@ -130,7 +128,7 @@ export default function PaymentsCheckoutPage() {
             <label className="flex items-center cursor-pointer">
               <div className="relative">
                 <input type="checkbox" className="sr-only" checked={showMyPayments} onChange={(e) => setShowMyPayments(e.target.checked)} />
-                <div className={`block w-8 h-4.5 rounded-full transition-colors ${showMyPayments ? 'bg-indigo-600' : 'bg-slate-700'}`}></div>
+                <div className={`block w-8 h-4.5 rounded-full transition-colors ${showMyPayments ? 'bg-indigo-600' : 'bg-slate-200 dark:bg-slate-700'}`}></div>
                 <div className={`dot absolute left-0.5 top-0.5 bg-white w-3.5 h-3.5 rounded-full transition-transform ${showMyPayments ? 'translate-x-3.5' : ''}`}></div>
               </div>
               <div className="ml-2 text-xs font-semibold text-slate-700 dark:text-slate-300">Show My Payments</div>
@@ -166,7 +164,7 @@ export default function PaymentsCheckoutPage() {
           <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/20 shadow-xs">
             <table className="w-full text-left text-xs border-collapse whitespace-nowrap">
               <thead>
-                <tr className="bg-slate-50 dark:bg-black/60 text-slate-700 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800 text-[10px] uppercase">
+                <tr className="bg-slate-50 dark:bg-black/60 text-slate-700 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800 text-[10px]">
                   <th className="px-3.5 py-2.5">Receipt Number</th>
                   <th className="px-3.5 py-2.5">Flat Number</th>
                   <th className="px-3.5 py-2.5">Invoice Ref</th>
@@ -186,7 +184,7 @@ export default function PaymentsCheckoutPage() {
                     <td className="px-3.5 py-2.5 font-mono text-slate-500">{rec.billNumber}</td>
                     <td className="px-3.5 py-2.5 text-slate-500">{rec.paymentDate.substring(0, 10)}</td>
                     <td className="px-3.5 py-2.5">
-                      <span className="text-[10px] font-bold border border-indigo-200 dark:border-indigo-900 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 rounded-full px-2 py-0.5">
+                      <span className="text-[10px] font-bold border border-indigo-200 dark:border-indigo-900 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 rounded-sm px-2 py-0.5">
                         {rec.paymentMode}
                       </span>
                     </td>
@@ -194,16 +192,16 @@ export default function PaymentsCheckoutPage() {
                     <td className="px-3.5 py-2.5 font-bold text-slate-900 dark:text-slate-200">₹ {Number(rec.amountPaid).toLocaleString('en-IN')}</td>
                     <td className="px-3.5 py-2.5">
                       <div className="flex flex-col gap-1">
-                        <span className={`text-[10px] font-semibold border rounded-full px-2.5 py-0.5 uppercase tracking-wider w-max ${
+                        <span className={`text-[10px] font-semibold border rounded-full px-2.5 py-0.5 w-max ${
                           rec.status === 'CLEARED'
                             ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400'
                             : rec.status === 'REFUNDED'
-                            ? 'bg-amber-950/30 border-amber-900/50 text-amber-400'
+                            ? 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/50 text-amber-600 dark:text-amber-400'
                             : rec.status === 'REVIEW'
-                            ? 'bg-blue-950/30 border-blue-900/50 text-blue-400'
+                            ? 'bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-900/50 text-blue-600 dark:text-blue-400'
                             : rec.status === 'REJECTED'
-                            ? 'bg-red-950/30 border-red-900/50 text-red-500'
-                            : 'bg-red-950/30 border-red-900/50 text-red-400'
+                            ? 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/50 text-red-500'
+                            : 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400'
                         }`}>
                           {rec.status}
                         </span>
@@ -213,7 +211,7 @@ export default function PaymentsCheckoutPage() {
                           </div>
                         )}
                         {rec.rejectionReason && (
-                          <div className="text-[10px] text-red-400 max-w-[150px] truncate" title={rec.rejectionReason}>
+                          <div className="text-[10px] text-red-600 dark:text-red-400 max-w-[150px] truncate" title={rec.rejectionReason}>
                             <span className="font-bold">Reject:</span> {rec.rejectionReason}
                           </div>
                         )}

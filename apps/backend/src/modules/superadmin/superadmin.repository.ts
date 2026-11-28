@@ -111,18 +111,7 @@ export class SuperAdminRepository {
           roleId: presidentRoleId,
         });
         
-        // If an executorId is provided and is different from the president's ID, also map them so they can view the society
-        if (executorId && executorId !== finalUserId) {
-          const executorUser = await tx.select().from(users).where(eq(users.id, executorId)).limit(1);
-          if (executorUser[0]) {
-            await tx.insert(userSocieties).values({
-              id: require('crypto').randomUUID(),
-              userId: executorId,
-              societyId: societyId,
-              roleId: presidentRoleId,
-            });
-          }
-        }
+        // The platform admin who created the society is not added to it: platform staff stay out of society data.
       }
 
       // 4. Create Default Ledgers

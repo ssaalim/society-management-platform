@@ -13,6 +13,9 @@ export interface Response<T> {
 @Injectable()
 export class ResponseInterceptor<T> implements NestInterceptor<T, Response<T>> {
   intercept(context: ExecutionContext, next: CallHandler): Observable<Response<T>> {
+    // Live event streams (chat) send their own events; wrapping each one would break them.
+    const accept = String(context.switchToHttp().getRequest()?.headers?.accept || '');
+    if (accept.includes('text/event-stream')) return next.handle();
     return next.handle().pipe(
       map((res) => {
         // If it's a paginated response (has data and meta in a specific format), extract them

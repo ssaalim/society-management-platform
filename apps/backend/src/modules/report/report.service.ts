@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, UnauthorizedException } from '@nestjs/common';
 import { DRIZZLE_PROVIDER, DrizzleDB } from '@core/database/database.module';
 import { 
   receipts, 
@@ -17,8 +17,10 @@ export class ReportService {
     private readonly cls: ClsService,
   ) {}
 
-  private get activeTenantId() {
-    return this.cls.get<string>('tenantId');
+  private get activeTenantId(): string {
+    const tenantId = this.cls.get<string>('tenantId');
+    if (!tenantId) throw new UnauthorizedException('Society context is missing.');
+    return tenantId;
   }
 
   /**

@@ -7,6 +7,8 @@ import { updateFlatSchema, UpdateFlatDto } from '../../../../../../backend/src/m
 import { useAuth } from '../../../providers/auth-context';
 import { apiClient } from '../../../../lib/api/client';
 import { uploadFileToR2 } from '../../../../lib/utils/upload';
+import { compressionNote } from '@/lib/utils/compress';
+import { FlatBillingCategory } from '@/components/maintenance/flat-billing-category';
 import { Building, UploadCloud, CheckCircle, FileText, Loader2, AlertCircle, ArrowLeft, Users, ShieldAlert, History , X } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -136,14 +138,14 @@ export default function FlatDetailPage() {
     setMessage(null);
 
     try {
-      const { publicUrl } = await uploadFileToR2({
+      const { publicUrl, prepared } = await uploadFileToR2({
         file,
         fileType: 'document',
         societyId: activeSociety?.societyId,
       });
 
       setValue(fileType as any, publicUrl, { shouldDirty: true });
-      setMessage({ type: 'success', text: `Document '${file.name}' uploaded successfully to Cloudflare R2. Save changes to update.` });
+      setMessage({ type: 'success', text: `Document '${file.name}' uploaded. Save changes to update.${prepared ? compressionNote(prepared) : ''}` });
     } catch (err: any) {
       setMessage({ type: 'error', text: err.message || 'Document upload failed.' });
     } finally {
@@ -193,7 +195,7 @@ export default function FlatDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#030712]">
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 text-indigo-500 animate-spin" />
       </div>
     );
@@ -201,27 +203,25 @@ export default function FlatDetailPage() {
 
   return (
     <main className="relative flex min-h-screen flex-col items-center justify-start overflow-x-hidden w-full py-4 sm:py-5 px-3 sm:px-5 lg:px-6">
-      {/* Background Grids */}
-      <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
 
       <div className="w-full max-w-[1600px] mx-auto space-y-6 z-10">
         
         {/* Back navigation */}
         <Link
           href={`/${society_slug}/flats`}
-          className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-300 transition-all"
+          className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-all"
         >
           <ArrowLeft className="h-3 w-3" /> Back to housing units roster
         </Link>
 
         {/* Header summary */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-800 pb-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 dark:border-slate-800 pb-6">
           <div className="flex items-center gap-4">
-            <div className="h-12 w-12 rounded-xl bg-indigo-950/60 border border-indigo-900/50 flex items-center justify-center text-indigo-400 font-bold">
+            <div className="h-12 w-12 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold">
               {flatData?.number}
             </div>
             <div>
-              <h2 className="text-2xl font-bold tracking-tight text-slate-100">
+              <h2 className="text-xl font-normal text-slate-900 dark:text-slate-100">
                 Flat {flatData?.number} — {flatData?.flatType}
               </h2>
               <p className="text-xs text-slate-500 mt-1">
@@ -229,7 +229,7 @@ export default function FlatDetailPage() {
               </p>
             </div>
           </div>
-          <span className="text-xs font-semibold px-3 py-1 bg-indigo-950/40 border border-indigo-900/50 text-indigo-400 rounded-full w-fit">
+          <span className="text-xs font-semibold px-3 py-1 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-900/50 text-indigo-600 dark:text-indigo-400 rounded-sm w-fit">
             {flatData?.occupancyStatus.replace('_', ' ')}
           </span>
         </div>
@@ -299,7 +299,7 @@ export default function FlatDetailPage() {
                       {...register('sqftArea', { valueAsNumber: true })}
                       type="number"
                       step="0.01"
-                      className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-slate-700 focus:outline-none mt-1 font-semibold"
+                      className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-900 dark:text-slate-200 focus:border-slate-300 dark:focus:border-slate-700 focus:outline-none mt-1 font-semibold"
                     />
                     {errors.sqftArea && <p className="text-xs text-red-500 mt-1">{errors.sqftArea.message}</p>}
                   </div>
@@ -310,7 +310,7 @@ export default function FlatDetailPage() {
                       {...register('carpetArea', { valueAsNumber: true })}
                       type="number"
                       step="0.01"
-                      className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-slate-700 focus:outline-none mt-1"
+                      className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-900 dark:text-slate-200 focus:border-slate-300 dark:focus:border-slate-700 focus:outline-none mt-1"
                     />
                   </div>
 
@@ -320,7 +320,7 @@ export default function FlatDetailPage() {
                       {...register('terraceArea', { valueAsNumber: true })}
                       type="number"
                       step="0.01"
-                      className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-slate-700 focus:outline-none mt-1"
+                      className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-900 dark:text-slate-200 focus:border-slate-300 dark:focus:border-slate-700 focus:outline-none mt-1"
                     />
                   </div>
                 </div>
@@ -330,7 +330,7 @@ export default function FlatDetailPage() {
                     <label className="text-xs text-slate-500 dark:text-slate-400 font-medium">Flat Unit Type</label>
                     <select
                       {...register('flatType')}
-                      className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-slate-700 focus:outline-none mt-1 font-semibold"
+                      className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-900 dark:text-slate-200 focus:border-slate-300 dark:focus:border-slate-700 focus:outline-none mt-1 font-semibold"
                     >
                       {flatTypesList.map((t) => (
                         <option key={t} value={t}>{t}</option>
@@ -339,11 +339,23 @@ export default function FlatDetailPage() {
                   </div>
                 </div>
 
+                {isManagementRole && flatIdString && (
+                  <FlatBillingCategory
+                    flatId={flatIdString}
+                    flatType={flatData?.flatType || ''}
+                    floorNumber={Number(flatData?.floorNumber ?? 0)}
+                    billingCategoryId={flatData?.billingCategoryId ?? null}
+                    societySlug={String(society_slug)}
+                    canEdit={isManagementRole}
+                    onSaved={(id) => setFlatData((prev: any) => ({ ...prev, billingCategoryId: id }))}
+                  />
+                )}
+
                 {/* Owner details overview with Change Owner trigger */}
-                <div className="space-y-4 pt-4 border-t border-slate-800/40">
+                <div className="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-800/40">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
-                      <Users className="h-4 w-4 text-emerald-400" /> Current Flat Owner
+                    <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                      <Users className="h-4 w-4 text-emerald-600 dark:text-emerald-400" /> Current Flat Owner
                     </h3>
                     {isManagementRole && (
                       <button
@@ -361,11 +373,11 @@ export default function FlatDetailPage() {
                   ) : (
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       {flatData?.owners.map((ow: any) => (
-                        <div key={ow.ownerId} className="rounded-xl border border-slate-800 bg-slate-950/60 p-4 space-y-1">
-                          <p className="text-sm font-bold text-slate-200">{ow.name || 'Owner Profile'}</p>
+                        <div key={ow.ownerId} className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 p-4 space-y-1">
+                          <p className="text-sm font-bold text-slate-900 dark:text-slate-200">{ow.name || 'Owner Profile'}</p>
                           <p className="text-xs text-slate-500 dark:text-slate-400">{ow.email} • {ow.mobile}</p>
                           <div className="flex items-center gap-2 pt-2">
-                            <span className="text-[10px] bg-emerald-950/50 border border-emerald-800 text-emerald-400 font-extrabold rounded-full px-2.5 py-0.5 uppercase tracking-wider">
+                            <span className="text-[10px] bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 font-extrabold rounded-sm px-2.5 py-0.5">
                               ACTIVE OWNER ({ow.ownershipShare || '100'}%)
                             </span>
                             {ow.startDate && (
@@ -386,11 +398,11 @@ export default function FlatDetailPage() {
               <div className="space-y-6">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="text-xs text-slate-500 dark:text-slate-400 font-medium">Select Tenant (Existing Member) <span className="text-red-400">*</span></label>
+                    <label className="text-xs text-slate-500 dark:text-slate-400 font-medium">Select Tenant (Existing Member) <span className="text-red-600 dark:text-red-400">*</span></label>
                     <select
                       {...register('tenantId')}
-                      className={`w-full rounded-lg border bg-slate-900/50 py-2.5 px-3.5 text-sm focus:outline-none focus:ring-1 transition-all mt-1 ${
-                        errors.tenantId ? 'border-red-500/50 focus:border-red-500 focus:ring-red-500/20 text-red-200' : 'border-slate-800 text-slate-200 focus:border-indigo-600/50 focus:ring-indigo-600/30'
+                      className={`w-full rounded-lg border bg-white dark:bg-slate-900/50 py-2.5 px-3.5 text-sm focus:outline-none focus:ring-1 transition-all mt-1 ${
+                        errors.tenantId ? 'border-red-500/50 focus:border-red-500 focus:ring-red-500/20 text-red-700 dark:text-red-200' : 'border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-200 focus:border-indigo-600/50 focus:ring-indigo-600/30'
                       }`}
                     >
                       <option value="">-- Select Member as Tenant --</option>
@@ -410,7 +422,7 @@ export default function FlatDetailPage() {
                       {...register('emergencyContactName')}
                       type="text"
                       placeholder="e.g. Relation, relative name"
-                      className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-slate-700 focus:outline-none mt-1"
+                      className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-900 dark:text-slate-200 focus:border-slate-300 dark:focus:border-slate-700 focus:outline-none mt-1"
                     />
                   </div>
                 </div>
@@ -422,17 +434,17 @@ export default function FlatDetailPage() {
                     { label: 'Police Verification', key: 'policeVerificationUrl' },
                     { label: 'Tenant NOC Upload', key: 'tenantNocUrl' }
                   ].map((doc) => (
-                    <div key={doc.key} className="rounded-xl border border-slate-800 bg-slate-950/30 p-4 space-y-3">
-                      <div className="flex items-center justify-between text-xs font-semibold text-slate-300">
+                    <div key={doc.key} className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/30 p-4 space-y-3">
+                      <div className="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300">
                         <span>{doc.label}</span>
                         {uploadsInProgress[doc.key] ? (
-                          <Loader2 className="h-3 w-3 text-indigo-400 animate-spin" />
+                          <Loader2 className="h-3 w-3 text-indigo-600 dark:text-indigo-400 animate-spin" />
                         ) : (
                           <FileText className="h-3 w-3 text-slate-500" />
                         )}
                       </div>
                       {isManagementRole && (
-                        <div className="relative flex items-center justify-center border border-dashed border-slate-800 rounded-lg p-4 bg-black/60 hover:bg-slate-900/60 transition-all cursor-pointer">
+                        <div className="relative flex items-center justify-center border border-dashed border-slate-200 dark:border-slate-800 rounded-lg p-4 bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-900/60 transition-all cursor-pointer">
                           <input
                             type="file"
                             onChange={(e) => handleFileUpload(doc.key, e)}
@@ -447,16 +459,16 @@ export default function FlatDetailPage() {
 
                 {/* Move out action */}
                 {isManagementRole && flatData?.activeTenant && (
-                  <div className="rounded-lg bg-red-950/20 border border-red-900/40 p-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mt-8">
+                  <div className="rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/40 p-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mt-8">
                     <div>
-                      <h4 className="text-sm font-semibold text-red-400">Lease Move-Out Checkout</h4>
+                      <h4 className="text-sm font-semibold text-red-600 dark:text-red-400">Lease Move-Out Checkout</h4>
                       <p className="text-xs text-slate-500">Deactivate active lease coordinates and log previous tenant details to histories archive.</p>
                     </div>
                     <button
                       type="button"
                       onClick={handleMoveOut}
                       disabled={isSaving}
-                      className="rounded-lg bg-red-950/50 hover:bg-red-900/50 border border-red-900/60 text-red-300 py-2 px-4 text-xs font-semibold transition-all disabled:opacity-55"
+                      className="rounded-lg bg-red-50 dark:bg-red-950/50 hover:bg-red-50 dark:hover:bg-red-900/50 border border-red-200 dark:border-red-900/60 text-red-700 dark:text-red-300 py-2 px-4 text-xs font-semibold transition-all disabled:opacity-55"
                     >
                       Confirm Move Out
                     </button>
@@ -471,8 +483,8 @@ export default function FlatDetailPage() {
               {/* Section 1: Previous Owners History & Time Period */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-                    <Users className="h-4 w-4 text-emerald-400" /> Previous Owners Timeline & Transfer History
+                  <h3 className="text-sm font-bold uppercase text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                    <Users className="h-4 w-4 text-emerald-600 dark:text-emerald-400" /> Previous Owners Timeline & Transfer History
                   </h3>
                   <span className="text-xs text-slate-500 font-semibold">
                     {flatData?.ownerHistory?.length || 0} Records Logged
@@ -480,14 +492,14 @@ export default function FlatDetailPage() {
                 </div>
 
                 {!flatData?.ownerHistory || flatData.ownerHistory.length === 0 ? (
-                  <div className="text-center py-6 border border-slate-800 rounded-xl bg-slate-950/30">
+                  <div className="text-center py-6 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950/30">
                     <p className="text-xs text-slate-500 italic">No ownership transfers logged for this unit.</p>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/40">
+                  <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/40">
                     <table className="w-full text-left text-xs border-collapse whitespace-nowrap">
                       <thead>
-                        <tr className="bg-slate-950/90 text-slate-500 dark:text-slate-400 font-semibold border-b border-slate-800">
+                        <tr className="bg-white dark:bg-slate-950/90 text-slate-500 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800">
                           <th className="p-3">Owner Name</th>
                           <th className="p-3">Contact Email & Phone</th>
                           <th className="p-3">Ownership Status</th>
@@ -495,24 +507,24 @@ export default function FlatDetailPage() {
                           <th className="p-3">Notes & Reason</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-800/40">
+                      <tbody className="divide-y divide-slate-200 dark:divide-slate-800/40">
                         {flatData.ownerHistory.map((oh: any) => (
-                          <tr key={oh.id} className="text-slate-300 hover:bg-slate-900/20">
-                            <td className="p-3 font-bold text-slate-200">{oh.name || 'Owner Profile'}</td>
+                          <tr key={oh.id} className="text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900/20">
+                            <td className="p-3 font-bold text-slate-900 dark:text-slate-200">{oh.name || 'Owner Profile'}</td>
                             <td className="p-3 text-slate-500 dark:text-slate-400">{oh.email} <span className="text-slate-500">({oh.mobile || 'No Phone'})</span></td>
                             <td className="p-3">
                               {oh.isCurrent ? (
-                                <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-950/60 border border-emerald-800 text-emerald-400 uppercase">
+                                <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-sm bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400">
                                   Current Owner
                                 </span>
                               ) : (
-                                <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-900 border border-slate-700 text-slate-500 dark:text-slate-400 uppercase">
+                                <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400">
                                   Former Owner
                                 </span>
                               )}
                             </td>
-                            <td className="p-3 font-mono text-slate-300">
-                              {oh.startDate ? String(oh.startDate).substring(0, 10) : 'N/A'} → {oh.isCurrent ? <span className="text-emerald-400 font-semibold">Present</span> : (oh.endDate ? String(oh.endDate).substring(0, 10) : 'Archived')}
+                            <td className="p-3 font-mono text-slate-700 dark:text-slate-300">
+                              {oh.startDate ? String(oh.startDate).substring(0, 10) : 'N/A'} → {oh.isCurrent ? <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Present</span> : (oh.endDate ? String(oh.endDate).substring(0, 10) : 'Archived')}
                             </td>
                             <td className="p-3 text-slate-500 dark:text-slate-400 italic">{oh.notes || 'Ownership transfer'}</td>
                           </tr>
@@ -524,19 +536,19 @@ export default function FlatDetailPage() {
               </div>
 
               {/* Section 2: Previous Lease Histories */}
-              <div className="space-y-4 pt-4 border-t border-slate-800/40">
-                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-                  <History className="h-4 w-4 text-indigo-400" /> Previous Tenant Lease Histories
+              <div className="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-800/40">
+                <h3 className="text-sm font-bold uppercase text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                  <History className="h-4 w-4 text-indigo-600 dark:text-indigo-400" /> Previous Tenant Lease Histories
                 </h3>
                 {flatData?.history.length === 0 ? (
-                  <div className="text-center py-6 border border-slate-800 rounded-xl bg-slate-950/30">
+                  <div className="text-center py-6 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950/30">
                     <p className="text-xs text-slate-500 italic">No historical tenancy listings logged for this unit.</p>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/40">
+                  <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/40">
                     <table className="w-full text-left text-xs border-collapse whitespace-nowrap">
                       <thead>
-                        <tr className="bg-slate-950/90 text-slate-500 dark:text-slate-400 font-semibold border-b border-slate-800">
+                        <tr className="bg-white dark:bg-slate-950/90 text-slate-500 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800">
                           <th className="p-3">Tenant Name</th>
                           <th className="p-3">Lease Start</th>
                           <th className="p-3">Lease End</th>
@@ -544,14 +556,14 @@ export default function FlatDetailPage() {
                           <th className="p-3">Move-Out Date</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-800/40">
+                      <tbody className="divide-y divide-slate-200 dark:divide-slate-800/40">
                         {flatData?.history.map((h: any) => (
-                          <tr key={h.leaseId} className="text-slate-300 hover:bg-slate-900/10">
-                            <td className="p-3 font-medium text-slate-200">{h.name || 'Tenant profile'}</td>
+                          <tr key={h.leaseId} className="text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900/10">
+                            <td className="p-3 font-medium text-slate-900 dark:text-slate-200">{h.name || 'Tenant profile'}</td>
                             <td className="p-3 font-mono">{h.leaseStart ? String(h.leaseStart).substring(0, 10) : '-'}</td>
                             <td className="p-3 font-mono">{h.leaseEnd ? String(h.leaseEnd).substring(0, 10) : '-'}</td>
                             <td className="p-3 font-mono">{h.moveInDate ? String(h.moveInDate).substring(0, 10) : '-'}</td>
-                            <td className="p-3 font-mono text-red-400">{h.moveOutDate ? String(h.moveOutDate).substring(0, 10) : '-'}</td>
+                            <td className="p-3 font-mono text-red-600 dark:text-red-400">{h.moveOutDate ? String(h.moveOutDate).substring(0, 10) : '-'}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -564,11 +576,11 @@ export default function FlatDetailPage() {
 
           {/* Submit Save Button */}
           {isManagementRole && activeTab !== 'history' && (
-            <div className="flex justify-end pt-4 border-t border-slate-800/40">
+            <div className="flex justify-end pt-4 border-t border-slate-200 dark:border-slate-800/40">
               <button
                 type="submit"
                 disabled={isSaving}
-                className="rounded-lg bg-indigo-600 hover:bg-indigo-700 text-slate-100 py-2 px-5 text-sm font-semibold transition-all disabled:opacity-55 flex items-center gap-2 shadow-md"
+                className="rounded-lg bg-indigo-600 hover:bg-indigo-700 text-slate-900 dark:text-slate-100 py-2 px-5 text-sm font-semibold transition-all disabled:opacity-55 flex items-center gap-2 shadow-md"
               >
                 {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
                 Save Changes

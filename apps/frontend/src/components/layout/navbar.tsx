@@ -1,63 +1,85 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
+import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useParams } from 'next/navigation';
+import {
+  AlertCircle,
+  BarChart2,
+  Bell,
+  BookOpen,
+  Bot,
+  Box,
+  Building,
+  Building2,
+  Check,
+  CheckCheck,
+  CheckCircle,
+  ChevronDown,
+  CreditCard,
+  Eye,
+  EyeOff,
+  Home,
+  Key,
+  LayoutDashboard,
+  LogOut,
+  Mail,
+  Menu,
+  MessageSquare,
+  Moon,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Receipt,
+  RefreshCw,
+  Search,
+  Settings,
+  Sun,
+  User as UserIcon,
+  Users,
+  CalendarDays,
+  Landmark,
+  Presentation,
+  DoorOpen,
+  PiggyBank,
+  MessagesSquare,
+  X,
+} from 'lucide-react';
 import { useAuth } from '../../app/providers/auth-context';
+import { useTheme } from '../../app/providers/theme-context';
+import { useSidebar } from '../../app/providers/sidebar-context';
+import { apiClient } from '../../lib/api/client';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { SocietySwitcher } from './society-switcher';
 import { DefaultSocietyModal } from './default-society-modal';
 import { SpotlightSearch } from './spotlight-search';
-import { apiClient } from '../../lib/api/client';
-import { 
-  Building, 
-  Users, 
-  CreditCard, 
-  Receipt, 
-  BookOpen, 
-  Home, 
-  MessageSquare, 
-  Box, 
-  BarChart2, 
-  Bot,
-  Menu, 
-  Search,
-  Settings, 
-  ShieldCheck, 
-  LogOut,
-  User as UserIcon,
-  Sun,
-  Moon,
-  LayoutDashboard,
-  Bell,
-  Check,
-  CheckCheck,
-  RefreshCw,
-  X,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  Key,
-  Lock,
-  Eye,
-  EyeOff,
-  AlertCircle,
-  CheckCircle,
-  Mail,
-  Phone,
-  PanelLeftClose,
-  PanelLeftOpen,
-  Sparkles
-} from 'lucide-react';
-import { useTheme } from '../../app/providers/theme-context';
-import { useSidebar } from '../../app/providers/sidebar-context';
+
+type Icon = React.ComponentType<{ className?: string }>;
 
 interface NavItem {
   label: string;
   href: (slug: string) => string;
-  icon: React.ReactNode;
+  icon: Icon;
   permission?: string;
   superAdminOnly?: boolean;
+}
+
+interface NavSection {
+  id: string;
+  title: string;
+  items: NavItem[];
 }
 
 interface NotificationItem {
@@ -69,63 +91,132 @@ interface NotificationItem {
   createdAt: string;
 }
 
+// Menu grouped the CRM way: a handful of sections, each collapsible.
+const NAV_SECTIONS: NavSection[] = [
+  {
+    id: 'overview',
+    title: 'Overview',
+    items: [{ label: 'Dashboard', href: (s) => `/${s}/dashboard`, icon: LayoutDashboard }],
+  },
+  {
+    id: 'property',
+    title: 'Property',
+    items: [
+      { label: 'Flats', href: (s) => `/${s}/flats`, icon: Building, permission: 'flat:read' },
+      { label: 'Members', href: (s) => `/${s}/members`, icon: Users, permission: 'member:read' },
+      { label: 'Committee', href: (s) => `/${s}/committee`, icon: Landmark },
+      { label: 'Resident Portal', href: (s) => `/${s}/resident`, icon: Home, permission: 'resident:read' },
+    ],
+  },
+  {
+    id: 'finance',
+    title: 'Finance',
+    items: [
+      { label: 'Maintenance', href: (s) => `/${s}/maintenance`, icon: CreditCard, permission: 'billing:read' },
+      { label: 'Payments', href: (s) => `/${s}/payments`, icon: Receipt, permission: 'billing:read' },
+      { label: 'Fund collection', href: (s) => `/${s}/funds`, icon: PiggyBank },
+      { label: 'Accounting', href: (s) => `/${s}/accounting`, icon: BookOpen, permission: 'accounting:read' },
+      { label: 'Reports', href: (s) => `/${s}/reports`, icon: BarChart2, permission: 'accounting:read' },
+    ],
+  },
+  {
+    id: 'operations',
+    title: 'Operations',
+    items: [
+      { label: 'Chat', href: (s) => `/${s}/chat`, icon: MessagesSquare },
+      { label: 'Complaints', href: (s) => `/${s}/complaints`, icon: MessageSquare },
+      { label: 'Facilities', href: (s) => `/${s}/facilities`, icon: CalendarDays },
+      { label: 'Meetings', href: (s) => `/${s}/meetings`, icon: Presentation },
+      { label: 'Visitors', href: (s) => `/${s}/visitors`, icon: DoorOpen },
+      { label: 'Assets', href: (s) => `/${s}/assets`, icon: Box, permission: 'society:read' },
+      { label: 'AI Assistant', href: (s) => `/${s}/ai-assistant`, icon: Bot },
+    ],
+  },
+  {
+    id: 'admin',
+    title: 'Administration',
+    items: [
+      { label: 'Society Settings', href: (s) => `/${s}/profile`, icon: Settings, permission: 'society:write' },
+    ],
+  },
+];
+
+const COLLAPSED_SECTIONS_KEY = 'housive_nav_sections';
+
+/** Which menu entries a role sees (unchanged from the previous navbar). */
+function canSee(item: NavItem, role: string, permissions: string[]) {
+  if (item.superAdminOnly) return role === 'SUPER_ADMIN';
+  if (['SUPER_ADMIN', 'PRESIDENT', 'SECRETARY', 'SOCIETY_ADMIN'].includes(role)) return true;
+  const allow = (labels: string[]) => labels.includes(item.label);
+  if (role === 'ACCOUNTANT' || role === 'TREASURER') {
+    return allow(['Dashboard', 'Maintenance', 'Payments', 'Accounting', 'Reports', 'Flats', 'Members', 'Complaints', 'Facilities', 'AI Assistant', 'Committee', 'Meetings', 'Visitors', 'Fund collection', 'Chat']);
+  }
+  if (role === 'AUDITOR') return allow(['Dashboard', 'Accounting', 'Reports', 'Flats', 'Members', 'Complaints', 'Committee', 'Meetings', 'Visitors', 'Fund collection', 'Chat']);
+  if (['ESTATE_MANAGER', 'MAINTENANCE_INCHARGE'].includes(role)) {
+    return allow(['Dashboard', 'Assets', 'Complaints', 'Facilities', 'Flats', 'Maintenance', 'Reports', 'AI Assistant', 'Committee', 'Meetings', 'Visitors', 'Fund collection', 'Chat']);
+  }
+  if (role === 'SECURITY_SUPERVISOR') return allow(['Dashboard', 'Flats', 'Resident Portal', 'Complaints', 'Committee', 'Meetings', 'Visitors', 'Chat']);
+  if (['COMMITTEE_MEMBER', 'VICE_PRESIDENT', 'JOINT_SECRETARY', 'CULTURAL_SECRETARY', 'LEGAL_ADVISOR'].includes(role)) {
+    return allow(['Dashboard', 'Members', 'Flats', 'Maintenance', 'Payments', 'Assets', 'Complaints', 'Facilities', 'Reports', 'AI Assistant', 'Committee', 'Meetings', 'Visitors', 'Fund collection', 'Chat']);
+  }
+  if (['OWNER', 'CO_OWNER', 'TENANT', 'FAMILY_MEMBER', 'MEMBER'].includes(role) || !role) {
+    return allow(['Dashboard', 'Resident Portal', 'Maintenance', 'Payments', 'Complaints', 'Facilities', 'AI Assistant', 'Committee', 'Meetings', 'Visitors', 'Fund collection', 'Chat']);
+  }
+  if (!item.permission) return true;
+  return permissions.includes(item.permission);
+}
+
+const formatRole = (role: string) => (role ? role.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase()) : 'Resident');
+
 interface AppLayoutProps {
   children?: React.ReactNode;
 }
 
 export const Navbar: React.FC<AppLayoutProps> = ({ children }) => {
-  const { user, activeSociety, memberships, signOut } = useAuth();
+  const { user, activeSociety, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { isCollapsed, toggleSidebar } = useSidebar();
   const params = useParams();
   const pathname = usePathname();
   const societySlug = (params?.society_slug as string) || activeSociety?.societySlug || '';
 
   const userPermissions = activeSociety?.permissions || [];
   const userRole = activeSociety?.role || '';
-  const isSuperAdmin = userRole === 'SUPER_ADMIN';
   const isManagementRole = ['SUPER_ADMIN', 'PRESIDENT', 'SECRETARY', 'TREASURER', 'ACCOUNTANT'].includes(userRole);
 
-  const { isCollapsed, toggleSidebar } = useSidebar();
-  const [mounted, setMounted] = useState<boolean>(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
+  const [mounted, setMounted] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSpotlightOpen, setIsSpotlightOpen] = useState(false);
+  const [collapsedSections, setCollapsedSections] = useState<string[]>([]);
 
-  // Tooltip hover states for collapsed sidebar
-  const [hoveredNavItem, setHoveredNavItem] = useState<{ label: string; top: number; left: number } | null>(null);
-  const [hoveredSociety, setHoveredSociety] = useState<{ name: string; role: string; top: number; left: number } | null>(null);
-
-  // Notification state
+  // Notifications
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  const [unreadCount, setUnreadCount] = useState<number>(0);
-  const [isNotifOpen, setIsNotifOpen] = useState<boolean>(false);
-  const [isSweeping, setIsSweeping] = useState<boolean>(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [isSweeping, setIsSweeping] = useState(false);
 
-  // User Profile Menu & Dialog States
-  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState<boolean>(false);
-  const [isProfileModalOpen, setIsProfileModalOpen] = useState<boolean>(false);
-  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState<boolean>(false);
-  const [isSpotlightOpen, setIsSpotlightOpen] = useState<boolean>(false);
-  
-  const userMenuRef = useRef<HTMLDivElement>(null);
-  const notifMenuRef = useRef<HTMLDivElement>(null);
-
-  // Profile Form State
+  // Profile & password dialogs
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [profileName, setProfileName] = useState<string>((user as any)?.name || '');
   const [profileMobile, setProfileMobile] = useState<string>((user as any)?.mobile || '');
-  const [isUpdatingProfile, setIsUpdatingProfile] = useState<boolean>(false);
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [profileMessage, setProfileMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-
-  // Password Form State
-  const [newPassword, setNewPassword] = useState<string>('');
-  const [confirmPassword, setConfirmPassword] = useState<string>('');
-  const [showNewPassword, setShowNewPassword] = useState<boolean>(false);
-  const [isUpdatingPassword, setIsUpdatingPassword] = useState<boolean>(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   const [passwordMessage, setPasswordMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
     setMounted(true);
+    try {
+      const saved = JSON.parse(localStorage.getItem(COLLAPSED_SECTIONS_KEY) || '[]');
+      if (Array.isArray(saved)) setCollapsedSections(saved);
+    } catch {
+      /* private mode */
+    }
   }, []);
 
-  // Update profile form state on user change
   useEffect(() => {
     if (user) {
       setProfileName((user as any)?.name || '');
@@ -133,19 +224,17 @@ export const Navbar: React.FC<AppLayoutProps> = ({ children }) => {
     }
   }, [user]);
 
-  // Close menus when clicking outside
+  // ⌘B / Ctrl+B toggles the sidebar, as in DealCust.
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
-        setIsProfileMenuOpen(false);
-      }
-      if (notifMenuRef.current && !notifMenuRef.current.contains(event.target as Node)) {
-        setIsNotifOpen(false);
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'b') {
+        e.preventDefault();
+        toggleSidebar();
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [toggleSidebar]);
 
   const fetchNotifications = async () => {
     if (!user || !activeSociety) return;
@@ -164,6 +253,7 @@ export const Navbar: React.FC<AppLayoutProps> = ({ children }) => {
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 20000);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, activeSociety]);
 
   const handleMarkAsRead = async (id: string) => {
@@ -192,25 +282,19 @@ export const Navbar: React.FC<AppLayoutProps> = ({ children }) => {
         alert(`Dues reminder sweep dispatched to ${res.data.data?.count || res.data.count || 0} resident accounts!`);
         fetchNotifications();
       }
-    } catch (err) {
+    } catch {
       alert('Failed to dispatch dues reminder sweep.');
     } finally {
       setIsSweeping(false);
     }
   };
 
-  // Handle Profile Update
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsUpdatingProfile(true);
     setProfileMessage(null);
-
     try {
-      const res = await apiClient.patch('/users/me/profile', {
-        name: profileName,
-        mobile: profileMobile,
-      });
-
+      const res = await apiClient.patch('/users/me/profile', { name: profileName, mobile: profileMobile });
       if (res.data?.success) {
         setProfileMessage({ type: 'success', text: 'Profile details updated successfully.' });
         setTimeout(() => {
@@ -219,16 +303,19 @@ export const Navbar: React.FC<AppLayoutProps> = ({ children }) => {
         }, 1200);
       }
     } catch (err: any) {
-      setProfileMessage({ 
-        type: 'error', 
-        text: err.response?.data?.message || 'Failed to update profile.' 
-      });
+      setProfileMessage({ type: 'error', text: err.response?.data?.message || 'Failed to update profile.' });
     } finally {
       setIsUpdatingProfile(false);
     }
   };
 
-  // Handle Change Password
+  const closePasswordModal = () => {
+    setIsPasswordModalOpen(false);
+    setPasswordMessage(null);
+    setNewPassword('');
+    setConfirmPassword('');
+  };
+
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newPassword.length < 6) {
@@ -239,965 +326,509 @@ export const Navbar: React.FC<AppLayoutProps> = ({ children }) => {
       setPasswordMessage({ type: 'error', text: 'New password and confirm password do not match.' });
       return;
     }
-
     setIsUpdatingPassword(true);
     setPasswordMessage(null);
-
     try {
-      const res = await apiClient.post('/users/me/change-password', {
-        newPassword,
-      });
-
+      const res = await apiClient.post('/users/me/change-password', { newPassword });
       if (res.data?.success) {
         setPasswordMessage({ type: 'success', text: 'Password changed successfully.' });
         setNewPassword('');
         setConfirmPassword('');
-        setTimeout(() => {
-          setIsPasswordModalOpen(false);
-          setPasswordMessage(null);
-        }, 1500);
+        setTimeout(closePasswordModal, 1500);
       }
     } catch (err: any) {
-      setPasswordMessage({ 
-        type: 'error', 
-        text: err.response?.data?.message || 'Failed to change password.' 
-      });
+      setPasswordMessage({ type: 'error', text: err.response?.data?.message || 'Failed to change password.' });
     } finally {
       setIsUpdatingPassword(false);
     }
   };
 
-  // Navigation Items defined with required permission check
-  const navItems: NavItem[] = [
-    {
-      label: 'Dashboard',
-      href: (slug) => `/${slug}/dashboard`,
-      icon: <LayoutDashboard className="h-4 w-4 shrink-0" />,
-    },
-    {
-      label: 'Flats',
-      href: (slug) => `/${slug}/flats`,
-      icon: <Building className="h-4 w-4 shrink-0" />,
-      permission: 'flat:read',
-    },
-    {
-      label: 'Members',
-      href: (slug) => `/${slug}/members`,
-      icon: <Users className="h-4 w-4 shrink-0" />,
-      permission: 'member:read',
-    },
-    {
-      label: 'Maintenance',
-      href: (slug) => `/${slug}/maintenance`,
-      icon: <CreditCard className="h-4 w-4 shrink-0" />,
-      permission: 'billing:read',
-    },
-    {
-      label: 'Payments',
-      href: (slug) => `/${slug}/payments`,
-      icon: <Receipt className="h-4 w-4 shrink-0" />,
-      permission: 'billing:read',
-    },
-    {
-      label: 'Accounting',
-      href: (slug) => `/${slug}/accounting`,
-      icon: <BookOpen className="h-4 w-4 shrink-0" />,
-      permission: 'accounting:read',
-    },
-    {
-      label: 'Resident Portal',
-      href: (slug) => `/${slug}/resident`,
-      icon: <Home className="h-4 w-4 shrink-0" />,
-      permission: 'resident:read',
-    },
-    {
-      label: 'Complaints',
-      href: (slug) => `/${slug}/complaints`,
-      icon: <MessageSquare className="h-4 w-4 shrink-0" />,
-    },
-    {
-      label: 'Assets',
-      href: (slug) => `/${slug}/assets`,
-      icon: <Box className="h-4 w-4 shrink-0" />,
-      permission: 'society:read',
-    },
-    {
-      label: 'Reports',
-      href: (slug) => `/${slug}/reports`,
-      icon: <BarChart2 className="h-4 w-4 shrink-0" />,
-      permission: 'accounting:read',
-    },
-    {
-      label: 'AI Assistant',
-      href: (slug) => `/${slug}/ai-assistant`,
-      icon: <Bot className="h-4 w-4 shrink-0" />,
-    },
-    {
-      label: 'Society Settings',
-      href: (slug) => `/${slug}/profile`,
-      icon: <Settings className="h-4 w-4 shrink-0" />,
-      permission: 'society:write',
-    },
-    {
-      label: 'Platform Admin',
-      href: () => '/admin',
-      icon: <ShieldCheck className="h-4 w-4 shrink-0" />,
-      superAdminOnly: true,
-    },
-  ];
-
-  // Filter navigation items based on active society user role & permissions
-  const visibleNavItems = navItems.filter((item) => {
-    if (item.superAdminOnly) {
-      return isSuperAdmin;
-    }
-    // Super Admin, President, Secretary have complete visibility
-    if (['SUPER_ADMIN', 'PRESIDENT', 'SECRETARY', 'SOCIETY_ADMIN'].includes(userRole)) {
-      return true;
-    }
-    // Accountant: financial and operational bookkeeping scope
-    if (userRole === 'ACCOUNTANT') {
-      return ['Dashboard', 'Maintenance', 'Payments', 'Accounting', 'Reports', 'Flats', 'Members', 'Complaints', 'AI Assistant'].includes(item.label);
-    }
-    // Treasurer: finance and budget management
-    if (userRole === 'TREASURER') {
-      return ['Dashboard', 'Maintenance', 'Payments', 'Accounting', 'Reports', 'Flats', 'Members', 'Complaints', 'AI Assistant'].includes(item.label);
-    }
-    // Auditor: audit books, reports, registers
-    if (userRole === 'AUDITOR') {
-      return ['Dashboard', 'Accounting', 'Reports', 'Flats', 'Members', 'Complaints'].includes(item.label);
-    }
-    // Facility & Maintenance Leads
-    if (['ESTATE_MANAGER', 'MAINTENANCE_INCHARGE'].includes(userRole)) {
-      return ['Dashboard', 'Assets', 'Complaints', 'Flats', 'Maintenance', 'Reports', 'AI Assistant'].includes(item.label);
-    }
-    // Security Head
-    if (userRole === 'SECURITY_SUPERVISOR') {
-      return ['Dashboard', 'Flats', 'Resident Portal', 'Complaints'].includes(item.label);
-    }
-    // Committee Members
-    if (['COMMITTEE_MEMBER', 'VICE_PRESIDENT', 'JOINT_SECRETARY', 'CULTURAL_SECRETARY', 'LEGAL_ADVISOR'].includes(userRole)) {
-      return ['Dashboard', 'Members', 'Flats', 'Maintenance', 'Payments', 'Assets', 'Complaints', 'Reports', 'AI Assistant'].includes(item.label);
-    }
-    // Non-Committee General Residents (Owner, Tenant, Family)
-    if (['OWNER', 'CO_OWNER', 'TENANT', 'FAMILY_MEMBER', 'MEMBER'].includes(userRole) || !userRole) {
-      return ['Dashboard', 'Resident Portal', 'Maintenance', 'Payments', 'Complaints', 'AI Assistant'].includes(item.label);
-    }
-    if (!item.permission) {
-      return true;
-    }
-    return userPermissions.includes(item.permission);
-  });
-
-  const displayName = (user as any)?.name || user?.email?.split('@')[0] || 'User';
-  const displayInitial = (displayName[0] || 'U').toUpperCase();
-
-  // Find active nav item title for top bar display
-  const activeNavItem = visibleNavItems.find((item) => {
-    const targetHref = item.href(societySlug);
-    return pathname === targetHref || (targetHref !== `/${societySlug}` && pathname?.startsWith(targetHref + '/'));
-  });
-
-  const sidebarContent = (
-    <div className="flex flex-col h-full select-none">
-      {/* Sidebar Header: Brand & Collapse Toggle */}
-      <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} h-16 px-4 border-b border-slate-200 dark:border-slate-800/80 shrink-0 transition-all`}>
-        <Link 
-          href={societySlug ? `/${societySlug}/dashboard` : '/'} 
-          className="flex items-center gap-3 overflow-hidden group focus:outline-none"
-          title="Housive Home"
-        >
-          <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-700 text-white font-black text-base flex items-center justify-center shrink-0 shadow-md group-hover:scale-105 transition-transform">
-            H
-          </div>
-          {!isCollapsed && (
-            <div className="flex flex-col min-w-0">
-              <span className="text-base font-extrabold tracking-tight text-slate-900 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate">
-                Housive
-              </span>
-              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium truncate -mt-0.5">
-                Society Platform
-              </span>
-            </div>
-          )}
-        </Link>
-
-        {!isCollapsed && (
-          <button
-            onClick={toggleSidebar}
-            title="Collapse sidebar to icons"
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors focus:outline-none"
-          >
-            <PanelLeftClose className="h-4 w-4" />
-          </button>
-        )}
-      </div>
-
-      {/* Society Mini Info (When expanded) */}
-      {!isCollapsed && activeSociety && (
-        <div className="px-3 pt-3 pb-1 shrink-0">
-          <div className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800/80 bg-slate-50/70 dark:bg-slate-900/40">
-            <div className="flex items-center gap-2">
-              <div className="h-6 w-6 rounded-lg bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
-                <Building className="h-3.5 w-3.5" />
-              </div>
-              <div className="overflow-hidden min-w-0">
-                <p className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">
-                  {activeSociety.societyName}
-                </p>
-                <p className="text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold uppercase tracking-wider truncate">
-                  {userRole.replace('_', ' ') || 'Resident'}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Collapsed Society Icon */}
-      {isCollapsed && activeSociety && (
-        <div className="py-2.5 px-2 flex justify-center shrink-0">
-          <div 
-            onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => {
-              const rect = e.currentTarget.getBoundingClientRect();
-              setHoveredSociety({ 
-                name: activeSociety.societyName, 
-                role: userRole.replace('_', ' ') || 'Resident', 
-                top: rect.top + rect.height / 2,
-                left: rect.right + 8
-              });
-            }}
-            onMouseLeave={() => setHoveredSociety(null)}
-            className="h-9 w-9 rounded-xl border border-slate-200 dark:border-slate-800/80 bg-slate-50/70 dark:bg-slate-900/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-          >
-            <Building className="h-4 w-4" />
-          </div>
-        </div>
-      )}
-
-      {/* Navigation Items - Scrollable List */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden py-3 px-2 space-y-1.5 custom-scrollbar">
-        {visibleNavItems.map((item) => {
-          const targetHref = item.href(societySlug);
-          const isActive = pathname === targetHref || pathname?.startsWith(targetHref + '/');
-
-          return (
-            <div key={item.label} className="relative">
-              <Link
-                href={targetHref}
-                onClick={() => {
-                  setIsMobileMenuOpen(false);
-                  setHoveredNavItem(null);
-                }}
-                onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => {
-                  if (isCollapsed) {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    setHoveredNavItem({ 
-                      label: item.label, 
-                      top: rect.top + rect.height / 2,
-                      left: rect.right + 8
-                    });
-                  }
-                }}
-                onMouseLeave={() => setHoveredNavItem(null)}
-                className={`flex items-center ${isCollapsed ? 'justify-center h-10 w-10 mx-auto' : 'px-3 py-2.5 gap-3 w-full'} rounded-xl text-xs font-semibold transition-all ${
-                  isActive
-                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20 dark:bg-indigo-600 dark:text-white'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-900/70 border border-transparent'
-                }`}
-              >
-                <div className={`${isActive ? 'text-white' : 'text-slate-500 dark:text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400'} transition-colors`}>
-                  {item.icon}
-                </div>
-
-                {!isCollapsed && (
-                  <span className="truncate flex-1 tracking-tight text-left">
-                    {item.label}
-                  </span>
-                )}
-              </Link>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Sidebar Footer: Expand button (when collapsed) or collapse toggle footer */}
-      <div className="p-3 border-t border-slate-200 dark:border-slate-800/80 shrink-0">
-        {isCollapsed ? (
-          <button
-            onClick={toggleSidebar}
-            title="Expand sidebar"
-            className="h-10 w-10 mx-auto flex items-center justify-center rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/80 border border-slate-200 dark:border-slate-800 transition-colors focus:outline-none"
-          >
-            <PanelLeftOpen className="h-4 w-4" />
-          </button>
-        ) : (
-          <button
-            onClick={toggleSidebar}
-            className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-900/60 border border-transparent transition-colors focus:outline-none"
-          >
-            <span className="flex items-center gap-2">
-              <PanelLeftClose className="h-4 w-4 text-slate-400" />
-              <span>Collapse Menu</span>
-            </span>
-            <span className="text-[10px] bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-1.5 py-0.5 rounded font-mono">
-              Icons
-            </span>
-          </button>
-        )}
-      </div>
-    </div>
+  const visibleSections = useMemo(
+    () =>
+      NAV_SECTIONS.map((sec) => ({ ...sec, items: sec.items.filter((i) => canSee(i, userRole, userPermissions)) })).filter(
+        (sec) => sec.items.length > 0,
+      ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [userRole, userPermissions.join(',')],
   );
 
-  return (
-    <div className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-neutral-100 flex flex-row">
-      {/* ========================================================================= */}
-      {/* 1. DESKTOP LEFT SIDEBAR (STICKY, COLLAPSIBLE TO ICONS ONLY)              */}
-      {/* ========================================================================= */}
-      <aside 
-        className={`hidden lg:flex flex-col sticky top-0 h-screen z-30 shrink-0 border-r border-slate-200 dark:border-neutral-800 bg-white dark:bg-black backdrop-blur-xl ${
-          mounted ? 'transition-all duration-300 ease-in-out' : ''
-        } ${
-          isCollapsed ? 'w-[72px]' : 'w-64'
-        }`}
-      >
-        {sidebarContent}
-      </aside>
+  const isItemActive = (item: NavItem) => {
+    const href = item.href(societySlug);
+    return pathname === href || !!pathname?.startsWith(href + '/');
+  };
 
-      {/* ========================================================================= */}
-      {/* 2. MOBILE DRAWER OVERLAY (SLIDE-OUT FROM LEFT)                           */}
-      {/* ========================================================================= */}
-      {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden flex">
-          {/* Backdrop */}
-          <div 
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm transition-opacity animate-in fade-in"
-            onClick={() => setIsMobileMenuOpen(false)}
-          />
+  const activeItem = visibleSections.flatMap((s) => s.items).find(isItemActive);
 
-          {/* Drawer Content */}
-          <div className="relative w-72 max-w-[80vw] h-full bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 z-10 flex flex-col shadow-2xl animate-in slide-in-from-left duration-200">
-            {/* Header with Close button */}
-            <div className="flex items-center justify-between h-16 px-4 border-b border-slate-200 dark:border-slate-800">
-              <Link 
-                href={societySlug ? `/${societySlug}/dashboard` : '/'} 
-                className="flex items-center gap-3 overflow-hidden"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <div className="h-9 w-9 rounded-xl bg-indigo-600 text-white font-black text-base flex items-center justify-center shrink-0">
-                  H
-                </div>
-                <span className="text-base font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
-                  Housive
-                </span>
-              </Link>
-              <button
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
+  const toggleSection = (id: string) => {
+    setCollapsedSections((prev) => {
+      const next = prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id];
+      try {
+        localStorage.setItem(COLLAPSED_SECTIONS_KEY, JSON.stringify(next));
+      } catch {
+        /* private mode */
+      }
+      return next;
+    });
+  };
 
-            {/* Mobile Nav Links */}
-            <div className="flex-1 overflow-y-auto py-3 px-3 space-y-1">
-              {visibleNavItems.map((item) => {
-                const targetHref = item.href(societySlug);
-                const isActive = pathname === targetHref || pathname?.startsWith(targetHref + '/');
+  const displayName = (user as any)?.name || user?.email?.split('@')[0] || 'User';
+  const initials =
+    displayName
+      .split(/\s+/)
+      .filter((w: string) => /^[a-z]/i.test(w))
+      .slice(0, 2)
+      .map((w: string) => w[0].toUpperCase())
+      .join('') || 'U';
+  const isMac = mounted && /Mac|iPhone|iPad/i.test(navigator.platform);
+  const homeHref = societySlug ? `/${societySlug}/dashboard` : '/';
 
+  const brand = (compact: boolean) => (
+    <Link href={homeHref} className="flex min-w-0 items-center gap-2.5" title="Housive home" onClick={() => setIsMobileMenuOpen(false)}>
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-500 text-white">
+        <Building2 className="h-[17px] w-[17px]" />
+      </span>
+      {!compact && (
+        <span className="min-w-0">
+          <span className="block truncate text-[15px] font-semibold leading-tight tracking-tight text-slate-900 dark:text-slate-100" title={activeSociety?.societyName}>
+            {activeSociety?.societyName || 'Housive'}
+          </span>
+          <span className="mt-0.5 flex items-center gap-1.5 truncate text-[11px] text-slate-500">
+            <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
+            Housive · {formatRole(userRole)}
+          </span>
+        </span>
+      )}
+    </Link>
+  );
+
+  const nav = (compact: boolean) => (
+    <nav className={cn('flex select-none flex-col py-2', compact ? 'gap-2 px-2' : 'px-2')}>
+      {visibleSections.map((sec, idx) => {
+        const hasActive = sec.items.some(isItemActive);
+        const sectionCollapsed = !hasActive && collapsedSections.includes(sec.id);
+
+        if (compact) {
+          return (
+            <div key={sec.id} className="flex flex-col gap-0.5">
+              {idx > 0 && <div className="mx-2 my-1.5 border-t border-sidebar-border" />}
+              {sec.items.map((item) => {
+                const active = isItemActive(item);
+                const Icon = item.icon;
                 return (
-                  <Link
-                    key={item.label}
-                    href={targetHref}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
-                      isActive
-                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
-                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-900'
-                    }`}
-                  >
-                    <div className={isActive ? 'text-white' : 'text-slate-400'}>
-                      {item.icon}
-                    </div>
-                    <span>{item.label}</span>
-                  </Link>
+                  <Tooltip key={item.label}>
+                    <TooltipTrigger asChild>
+                      <Link
+                        href={item.href(societySlug)}
+                        aria-label={item.label}
+                        className={cn(
+                          'flex items-center justify-center rounded-md py-2 transition-colors',
+                          active
+                            ? 'bg-sidebar-active text-slate-900 dark:text-slate-100'
+                            : 'text-slate-500 hover:bg-sidebar-hover hover:text-slate-900 dark:hover:text-slate-100',
+                        )}
+                      >
+                        <Icon className={cn('h-[17px] w-[17px]', active && 'text-brand-500')} />
+                      </Link>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">{item.label}</TooltipContent>
+                  </Tooltip>
                 );
               })}
             </div>
+          );
+        }
 
-            {/* Mobile Footer */}
-            <div className="p-3 border-t border-slate-200 dark:border-slate-800">
-              <div className="flex items-center gap-3 p-2 rounded-xl bg-slate-50 dark:bg-slate-900">
-                <div className="h-8 w-8 rounded-lg bg-indigo-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
-                  {displayInitial}
-                </div>
-                <div className="overflow-hidden min-w-0 flex-1">
-                  <p className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">{displayName}</p>
-                  <p className="text-[10px] text-indigo-500 uppercase font-semibold">{userRole.replace('_', ' ') || 'Resident'}</p>
-                </div>
-                <button
-                  onClick={() => {
-                    setIsMobileMenuOpen(false);
-                    signOut();
-                  }}
-                  title="Sign out"
-                  className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg"
-                >
-                  <LogOut className="h-4 w-4" />
-                </button>
+        return (
+          <div key={sec.id} className="flex flex-col">
+            <button
+              type="button"
+              onClick={() => toggleSection(sec.id)}
+              aria-expanded={!sectionCollapsed}
+              className="group flex items-center justify-between rounded-md px-3 pb-1 pt-2.5 text-left text-slate-400 transition-colors hover:text-slate-700 dark:hover:text-slate-300"
+            >
+              <span className="flex min-w-0 items-center gap-2">
+                <span className="truncate text-[13px]">{sec.title}</span>
+                {hasActive && sectionCollapsed && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-brand-500" />}
+              </span>
+              <ChevronDown
+                className={cn(
+                  'h-3.5 w-3.5 shrink-0 transition-all duration-200',
+                  sectionCollapsed ? '-rotate-90 opacity-100' : 'opacity-0 group-hover:opacity-100',
+                )}
+              />
+            </button>
+            {!sectionCollapsed && (
+              <div className="mb-1 flex flex-col">
+                {sec.items.map((item) => {
+                  const active = isItemActive(item);
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.label}
+                      href={item.href(societySlug)}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={cn(
+                        'group flex items-center gap-3 rounded-md px-3 py-[7px] text-[14px] font-medium transition-colors',
+                        active
+                          ? 'bg-sidebar-active text-slate-900 dark:text-slate-100'
+                          : 'text-slate-800 hover:bg-sidebar-hover dark:text-slate-300 dark:hover:text-slate-100',
+                      )}
+                    >
+                      <Icon
+                        className={cn(
+                          'h-[17px] w-[17px] shrink-0 transition-colors',
+                          active ? 'text-brand-500' : 'text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-200',
+                        )}
+                      />
+                      <span className="truncate">{item.label}</span>
+                    </Link>
+                  );
+                })}
               </div>
-            </div>
+            )}
           </div>
-        </div>
-      )}
+        );
+      })}
+    </nav>
+  );
 
-      {/* ========================================================================= */}
-      {/* 3. MAIN AREA: STICKY TOP HEADER BAR + PAGE CONTENT                       */}
-      {/* ========================================================================= */}
-      <div className="flex-1 flex flex-col min-w-0 min-h-screen">
-        {/* Top Header Bar */}
-        <header className="sticky top-0 z-20 w-full border-b border-slate-200 dark:border-neutral-800 bg-white/90 dark:bg-black/90 backdrop-blur-xl transition-colors">
-          <div className="w-full px-3 sm:px-5 lg:px-6 flex h-16 items-center justify-between gap-4">
-            
-            {/* Left: Mobile Toggle & Society Switcher & Active Section */}
-            <div className="flex items-center gap-3">
-              {/* Mobile Drawer Trigger (visible < lg) */}
-              <button
-                onClick={() => setIsMobileMenuOpen(true)}
-                className="lg:hidden p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-all focus:outline-none"
-                title="Open navigation menu"
-              >
-                <Menu className="h-5 w-5" />
-              </button>
+  const sidebarFooter = (compact: boolean) => (
+    <div className={cn('border-t border-sidebar-border p-2', compact && 'px-2')}>
+      <button
+        type="button"
+        onClick={toggleSidebar}
+        aria-label={compact ? 'Expand sidebar' : 'Collapse sidebar'}
+        title={`${compact ? 'Expand' : 'Collapse'} sidebar (${isMac ? '⌘B' : 'Ctrl+B'})`}
+        className={cn(
+          'flex w-full items-center rounded-md py-1.5 text-xs font-medium text-slate-500 transition-colors hover:bg-sidebar-hover hover:text-slate-900 dark:hover:text-slate-100',
+          compact ? 'justify-center' : 'gap-2 px-3',
+        )}
+      >
+        {compact ? (
+          <PanelLeftOpen className="h-[15px] w-[15px]" />
+        ) : (
+          <>
+            <PanelLeftClose className="h-[15px] w-[15px]" />
+            <span className="truncate">Collapse sidebar</span>
+            <kbd className="ml-auto rounded border border-sidebar-border bg-background px-1 text-[10px] text-slate-500">{isMac ? '⌘B' : 'Ctrl+B'}</kbd>
+          </>
+        )}
+      </button>
+    </div>
+  );
 
-              {/* Society Switcher Dropdown */}
-              <SocietySwitcher />
-
-              {/* Breadcrumb / Active Page Title */}
-              {activeNavItem && (
-                <div className="hidden sm:flex items-center gap-2 pl-2 border-l border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-500 dark:text-slate-400">
-                  <span>/</span>
-                  <span className="text-slate-800 dark:text-slate-200 font-bold">{activeNavItem.label}</span>
-                </div>
-              )}
-            </div>
-
-            {/* Center: macOS Spotlight Global Search Button */}
-            <div className="flex-1 max-w-md mx-2 hidden md:block">
-              <button
-                type="button"
-                onClick={() => setIsSpotlightOpen(true)}
-                className="w-full flex items-center justify-between px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-800/80 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-all text-xs focus:outline-none shadow-sm group"
-                title="Global Search across all modules (⌘K / Ctrl+K)"
-              >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <Search className="h-3.5 w-3.5 text-slate-400 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors shrink-0" />
-                  <span className="truncate text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300">
-                    Search members, flats, invoices, complaints...
-                  </span>
-                </div>
-                <kbd className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-mono text-[10px] font-bold text-slate-500 dark:text-slate-400 group-hover:border-indigo-500/40 transition-colors shrink-0 shadow-xs">
-                  <span className="text-[11px]">⌘</span>K
-                </kbd>
-              </button>
-            </div>
-
-            {/* Right: Theme Toggle, Notifications, User Profile Menu */}
-            <div className="flex items-center gap-2 sm:gap-2.5">
-              {/* Mobile Search Icon button (visible < md) */}
-              <button
-                type="button"
-                onClick={() => setIsSpotlightOpen(true)}
-                className="md:hidden flex items-center justify-center p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-all focus:outline-none"
-                title="Search (⌘K)"
-              >
-                <Search className="h-4 w-4 text-slate-500 dark:text-slate-400" />
-              </button>
-              {/* Day / Night Theme Toggle Button */}
-              <button
-                onClick={toggleTheme}
-                title={theme === 'dark' ? 'Switch to Day Mode' : 'Switch to Night Mode'}
-                className="flex items-center justify-center p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-amber-500 dark:text-amber-400 transition-all focus:outline-none"
-              >
-                {theme === 'dark' ? (
-                  <Sun className="h-4 w-4 text-amber-400" />
-                ) : (
-                  <Moon className="h-4 w-4 text-indigo-600" />
-                )}
-              </button>
-
-              {/* Real-time Notification Bell */}
-              {user && (
-                <div className="relative" ref={notifMenuRef}>
-                  <button
-                    onClick={() => setIsNotifOpen(!isNotifOpen)}
-                    className="relative flex items-center justify-center p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-all focus:outline-none"
-                    title="Notifications"
-                  >
-                    <Bell className="h-4 w-4" />
-                    {unreadCount > 0 && (
-                      <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[9px] font-black text-white shadow-sm">
-                        {unreadCount}
-                      </span>
-                    )}
-                  </button>
-
-                  {/* Notification Popover Drawer */}
-                  {isNotifOpen && (
-                    <>
-                      <div className="fixed inset-0 z-40 bg-black/10 dark:bg-black/40 sm:bg-transparent" onClick={() => setIsNotifOpen(false)} />
-                      <div className="notif-popover fixed sm:absolute top-16 sm:top-auto sm:mt-2 right-2 sm:right-0 w-[calc(100vw-1rem)] sm:w-96 max-w-sm rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-2xl p-4 z-50 space-y-3 animate-in fade-in slide-in-from-top-2 duration-150">
-                        <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
-                          <div className="flex items-center gap-2">
-                            <Bell className="h-4 w-4 text-indigo-400" />
-                            <span className="font-bold text-sm text-slate-900 dark:text-slate-100">Notifications</span>
-                            {unreadCount > 0 && (
-                              <span className="bg-red-500/20 border border-red-500/30 text-red-400 text-[10px] font-bold px-1.5 py-0.2 rounded-full">
-                                {unreadCount} new
-                              </span>
-                            )}
-                          </div>
-
-                          <div className="flex items-center gap-1">
-                            {isManagementRole && (
-                              <button
-                                onClick={handleRunSweep}
-                                disabled={isSweeping}
-                                title="Run Dues Reminder Sweep"
-                                className="p-1 rounded text-slate-400 hover:text-indigo-400 transition-colors"
-                              >
-                                <RefreshCw className={`h-3.5 w-3.5 ${isSweeping ? 'animate-spin' : ''}`} />
-                              </button>
-                            )}
-                            <button
-                              onClick={handleMarkAllRead}
-                              title="Mark all as read"
-                              className="p-1 rounded text-slate-400 hover:text-emerald-400 transition-colors"
-                            >
-                              <CheckCheck className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
-                        </div>
-
-                        <div className="max-h-72 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
-                          {notifications.length === 0 ? (
-                            <p className="text-xs text-slate-500 dark:text-slate-400 text-center py-6">No notifications</p>
-                          ) : (
-                            notifications.map((n) => (
-                              <div
-                                key={n.id}
-                                className={`p-3 rounded-xl border text-xs space-y-1 transition-all flex items-start justify-between gap-2 ${
-                                  n.status === 'READ'
-                                    ? 'border-slate-200 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-900/30 text-slate-400'
-                                    : 'border-indigo-500/30 bg-indigo-50/40 dark:bg-indigo-950/20 text-slate-800 dark:text-slate-200'
-                                }`}
-                              >
-                                <div>
-                                  <p className="font-semibold text-slate-900 dark:text-slate-100">{n.title}</p>
-                                  <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">{n.body}</p>
-                                  <span className="notif-time text-[9px] text-slate-400 mt-1 block">
-                                    {n.createdAt ? new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
-                                  </span>
-                                </div>
-                                {n.status !== 'READ' && (
-                                  <button
-                                    onClick={() => handleMarkAsRead(n.id)}
-                                    title="Mark read"
-                                    className="text-slate-400 hover:text-emerald-500 p-1 shrink-0"
-                                  >
-                                    <Check className="h-3.5 w-3.5" />
-                                  </button>
-                                )}
-                              </div>
-                            ))
-                          )}
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
-
-              {/* User Profile Dropdown Menu Trigger */}
-              {user && (
-                <div className="relative" ref={userMenuRef}>
-                  <button
-                    onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-                    className="flex items-center gap-2 p-1.5 sm:px-3 sm:py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-left group focus:outline-none cursor-pointer"
-                  >
-                    {/* Avatar Badge */}
-                    <div className="h-7 w-7 rounded-lg bg-indigo-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-sm">
-                      {displayInitial}
-                    </div>
-
-                    {/* Name & Role Text */}
-                    <div className="hidden md:flex flex-col pr-1">
-                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate max-w-[130px]">
-                        {displayName}
-                      </span>
-                      <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold uppercase tracking-wider">
-                        {userRole.replace('_', ' ') || 'Resident'}
-                      </span>
-                    </div>
-
-                    <ChevronDown className={`h-3.5 w-3.5 text-slate-400 transition-transform ${isProfileMenuOpen ? 'rotate-180' : ''}`} />
-                  </button>
-
-                  {/* Profile Submenu Dropdown */}
-                  {isProfileMenuOpen && (
-                    <>
-                      <div className="fixed inset-0 z-40 bg-black/10 dark:bg-black/40 sm:bg-transparent" onClick={() => setIsProfileMenuOpen(false)} />
-                      <div className="fixed sm:absolute top-16 sm:top-auto sm:mt-2 right-2 sm:right-0 w-[calc(100vw-1rem)] sm:w-64 max-w-[270px] rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-2xl p-2 z-50 space-y-1 animate-in fade-in slide-in-from-top-2 duration-150">
-                        
-                        {/* User Profile Header Card */}
-                        <div className="px-3 py-2.5 bg-slate-50 dark:bg-slate-900/70 border border-slate-100 dark:border-slate-800/80 rounded-xl mb-1 space-y-1">
-                          <div className="flex items-center gap-2.5">
-                            <div className="h-8 w-8 rounded-lg bg-indigo-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
-                              {displayInitial}
-                            </div>
-                            <div className="overflow-hidden">
-                              <p className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">{displayName}</p>
-                              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{user.email}</p>
-                            </div>
-                          </div>
-                          <div className="pt-1 flex items-center gap-1.5">
-                            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 uppercase">
-                              {userRole.replace('_', ' ') || 'Resident'}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Option 1: Profile Option */}
-                        <button
-                          onClick={() => {
-                            setIsProfileMenuOpen(false);
-                            setIsProfileModalOpen(true);
-                          }}
-                          className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-300 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg transition-colors text-left cursor-pointer"
-                        >
-                          <UserIcon className="h-4 w-4 text-indigo-400" />
-                          <span>My Profile</span>
-                        </button>
-
-                        {/* Option 2: Change Password Option */}
-                        <button
-                          onClick={() => {
-                            setIsProfileMenuOpen(false);
-                            setIsPasswordModalOpen(true);
-                          }}
-                          className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-300 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg transition-colors text-left cursor-pointer"
-                        >
-                          <Key className="h-4 w-4 text-amber-400" />
-                          <span>Change Password</span>
-                        </button>
-
-                        <div className="border-t border-slate-100 dark:border-slate-800 my-1" />
-
-                        {/* Option 3: Logout Button */}
-                        <button
-                          onClick={() => {
-                            setIsProfileMenuOpen(false);
-                            signOut();
-                          }}
-                          className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors text-left cursor-pointer"
-                        >
-                          <LogOut className="h-4 w-4 text-red-500" />
-                          <span>Sign Out / Log Out</span>
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Default Society Selection Prompt Modal for multi-society users */}
-          <DefaultSocietyModal />
-        </header>
-
-        {/* Children (Page Content Area) */}
-        <div className="flex-1 w-full">
-          {children}
-        </div>
+  const message = (m: { type: 'success' | 'error'; text: string } | null) =>
+    m && (
+      <div
+        className={cn(
+          'flex items-center gap-2.5 rounded-md border p-3 text-sm',
+          m.type === 'success'
+            ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300'
+            : 'border-red-200 bg-red-50 text-red-800 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300',
+        )}
+      >
+        {m.type === 'success' ? <CheckCircle className="h-4 w-4 shrink-0" /> : <AlertCircle className="h-4 w-4 shrink-0" />}
+        <span>{m.text}</span>
       </div>
+    );
 
-      {/* ========================================================================= */}
-      {/* PORTALED MODAL 1: MY PROFILE DIALOG (MOUNTED DIRECTLY TO DOCUMENT.BODY)  */}
-      {/* ========================================================================= */}
-      {mounted && isProfileModalOpen && createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-          {/* Backdrop */}
-          <div 
-            className="fixed inset-0 bg-black/75 backdrop-blur-sm transition-opacity" 
-            onClick={() => {
-              setIsProfileModalOpen(false);
-              setProfileMessage(null);
-            }}
-          />
+  return (
+    <TooltipProvider>
+      <div className="flex min-h-screen bg-background text-foreground">
+        {/* Desktop sidebar */}
+        <aside
+          className={cn(
+            'sticky top-0 z-30 hidden h-screen shrink-0 flex-col border-r border-sidebar-border bg-sidebar lg:flex',
+            mounted && 'transition-[width] duration-200 ease-in-out',
+            isCollapsed ? 'w-16' : 'w-60',
+          )}
+        >
+          <div className={cn('flex h-12 shrink-0 items-center border-b border-sidebar-border', isCollapsed ? 'justify-center px-2' : 'px-4')}>
+            {brand(isCollapsed)}
+          </div>
+          <div className="custom-scrollbar flex-1 overflow-y-auto overflow-x-hidden">{nav(isCollapsed)}</div>
+          {sidebarFooter(isCollapsed)}
+        </aside>
 
-          {/* Dialog Container */}
-          <div className="relative w-full max-w-md bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto z-10 animate-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                <UserIcon className="h-5 w-5 text-indigo-500" /> User Profile & Details
-              </h3>
-              <button
-                onClick={() => {
-                  setIsProfileModalOpen(false);
-                  setProfileMessage(null);
-                }}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1"
-              >
-                <X className="h-5 w-5" />
-              </button>
+        {/* Mobile drawer */}
+        {isMobileMenuOpen && <div className="fixed inset-0 z-40 bg-black/40 lg:hidden" onClick={() => setIsMobileMenuOpen(false)} />}
+        <aside
+          className={cn(
+            'fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col border-r border-sidebar-border bg-sidebar shadow-2xl transition-transform duration-200 lg:hidden',
+            isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full',
+          )}
+        >
+          <div className="flex h-12 shrink-0 items-center justify-between border-b border-sidebar-border px-4">
+            {brand(false)}
+            <Button variant="ghost" size="icon-sm" aria-label="Close menu" onClick={() => setIsMobileMenuOpen(false)} className="text-slate-500">
+              <X />
+            </Button>
+          </div>
+          <div className="flex-1 overflow-y-auto">{nav(false)}</div>
+        </aside>
+
+        {/* Main column */}
+        <div className="flex min-h-screen min-w-0 flex-1 flex-col">
+          <header className="sticky top-0 z-20 flex h-12 shrink-0 items-center gap-1.5 border-b border-sidebar-border bg-sidebar px-3 sm:px-4">
+            <Button variant="ghost" size="icon-sm" aria-label="Open menu" onClick={() => setIsMobileMenuOpen(true)} className="text-muted-foreground lg:hidden">
+              <Menu />
+            </Button>
+
+            <div className="min-w-0 shrink">
+              <SocietySwitcher />
             </div>
 
-            {profileMessage && (
-              <div
-                className={`rounded-xl border p-3 text-xs font-semibold flex items-center gap-2.5 shadow-xs ${
-                  profileMessage.type === 'success'
-                    ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/60 text-emerald-800 dark:text-emerald-300'
-                    : 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900/60 text-rose-800 dark:text-rose-300'
-                }`}
-              >
-                {profileMessage.type === 'success' ? (
-                  <CheckCircle className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                ) : (
-                  <AlertCircle className="h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400" />
-                )}
-                <span>{profileMessage.text}</span>
+            {activeItem && (
+              <div className="hidden min-w-0 items-center gap-1.5 pl-1 text-sm text-slate-500 sm:flex">
+                <span className="text-slate-300 dark:text-slate-600">/</span>
+                <span className="truncate text-slate-800 dark:text-slate-200">{activeItem.label}</span>
               </div>
             )}
 
-            <form onSubmit={handleProfileSubmit} className="space-y-4 text-xs">
-              {/* User Avatar Circle Card */}
-              <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 p-3 rounded-xl">
-                <div className="h-12 w-12 rounded-xl bg-indigo-600 text-white font-black text-lg flex items-center justify-center shadow">
-                  {displayInitial}
-                </div>
-                <div>
-                  <p className="font-bold text-slate-900 dark:text-slate-100 text-sm">{displayName}</p>
-                  <p className="text-slate-500 dark:text-slate-400 text-xs flex items-center gap-1">
+            {/* Search opens the spotlight palette */}
+            <button
+              type="button"
+              onClick={() => setIsSpotlightOpen(true)}
+              aria-label="Search"
+              title="Search members, flats, invoices, complaints"
+              className="ml-auto hidden h-8 w-full min-w-0 max-w-sm cursor-text items-center gap-2 rounded-md border border-transparent bg-background px-3 text-left text-sm text-muted-foreground transition-colors hover:border-input md:flex"
+            >
+              <Search className="h-4 w-4 shrink-0" />
+              <span className="min-w-0 flex-1 truncate">Search</span>
+              <kbd className="shrink-0 rounded border bg-muted px-1.5 text-[10px] text-muted-foreground">{isMac ? '⌘K' : 'Ctrl K'}</kbd>
+            </button>
+            <Button variant="ghost" size="icon-sm" aria-label="Search" onClick={() => setIsSpotlightOpen(true)} className="ml-auto shrink-0 text-muted-foreground md:ml-0 md:hidden">
+              <Search />
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={toggleTheme}
+              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+              className="hidden text-muted-foreground sm:inline-flex"
+            >
+              {theme === 'dark' ? <Sun /> : <Moon />}
+            </Button>
+
+            {/* Notifications */}
+            {user && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon-sm" aria-label="Notifications" title="Notifications" className="relative text-muted-foreground">
+                    <Bell />
+                    {unreadCount > 0 && (
+                      <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[9px] font-semibold text-white">
+                        {unreadCount}
+                      </span>
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-[22rem] max-w-[calc(100vw-1rem)] p-0">
+                  <div className="flex items-center justify-between border-b px-3 py-2">
+                    <span className="flex items-center gap-2 text-sm font-medium">
+                      Notifications
+                      {unreadCount > 0 && <span className="rounded-sm bg-red-50 px-1.5 text-[11px] text-red-700 dark:bg-red-950/50 dark:text-red-300">{unreadCount} new</span>}
+                    </span>
+                    <span className="flex items-center gap-0.5">
+                      {isManagementRole && (
+                        <Button variant="ghost" size="icon-xs" onClick={handleRunSweep} disabled={isSweeping} title="Run dues reminder sweep" className="text-muted-foreground">
+                          <RefreshCw className={cn(isSweeping && 'animate-spin')} />
+                        </Button>
+                      )}
+                      <Button variant="ghost" size="icon-xs" onClick={handleMarkAllRead} title="Mark all as read" className="text-muted-foreground">
+                        <CheckCheck />
+                      </Button>
+                    </span>
+                  </div>
+                  <div className="custom-scrollbar max-h-80 overflow-y-auto">
+                    {notifications.length === 0 ? (
+                      <p className="py-8 text-center text-sm text-muted-foreground">No notifications</p>
+                    ) : (
+                      notifications.map((n) => (
+                        <div key={n.id} className={cn('flex items-start gap-2 border-b px-3 py-2.5 last:border-b-0', n.status !== 'READ' && 'bg-brand-50/60 dark:bg-brand-950/30')}>
+                          <span className={cn('mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full', n.status === 'READ' ? 'bg-transparent' : 'bg-brand-500')} />
+                          <div className="min-w-0 flex-1">
+                            <p className={cn('text-sm', n.status === 'READ' ? 'text-slate-500' : 'font-medium text-slate-900 dark:text-slate-100')}>{n.title}</p>
+                            <p className="text-xs leading-relaxed text-slate-500">{n.body}</p>
+                            <span className="mt-0.5 block text-[11px] text-slate-400">
+                              {n.createdAt ? new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                            </span>
+                          </div>
+                          {n.status !== 'READ' && (
+                            <Button variant="ghost" size="icon-xs" onClick={() => handleMarkAsRead(n.id)} title="Mark read" className="text-muted-foreground hover:text-emerald-600">
+                              <Check />
+                            </Button>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+
+            {/* Signed-in user */}
+            {user && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label={`Account menu for ${displayName}`}
+                    title={displayName}
+                    className="ml-1 rounded-full outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                  >
+                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-500 text-xs font-semibold text-white">{initials}</span>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-64">
+                  <DropdownMenuLabel className="flex items-center gap-2.5 font-normal">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-500 text-xs font-semibold text-white">{initials}</span>
+                    <span className="min-w-0">
+                      <span className="block truncate font-medium text-slate-900 dark:text-slate-100">{displayName}</span>
+                      <span className="block truncate text-xs text-slate-500">{formatRole(userRole)}</span>
+                      {user.email && <span className="block truncate text-xs text-slate-400">{user.email}</span>}
+                    </span>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onSelect={() => setIsProfileModalOpen(true)}>
+                    <UserIcon />
+                    My profile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setIsPasswordModalOpen(true)}>
+                    <Key />
+                    Change password
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={toggleTheme}>
+                    {theme === 'dark' ? <Sun /> : <Moon />}
+                    {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem variant="destructive" onSelect={() => signOut()}>
+                    <LogOut />
+                    Log out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+
+            <DefaultSocietyModal />
+          </header>
+
+          <div className="w-full flex-1">{children}</div>
+        </div>
+
+        {/* My profile */}
+        <Dialog
+          open={isProfileModalOpen}
+          onOpenChange={(open: boolean) => {
+            setIsProfileModalOpen(open);
+            if (!open) setProfileMessage(null);
+          }}
+        >
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>My profile</DialogTitle>
+              <DialogDescription>Your name and phone number as shown to the society.</DialogDescription>
+            </DialogHeader>
+            {message(profileMessage)}
+            <form onSubmit={handleProfileSubmit} className="space-y-4">
+              <div className="flex items-center gap-3 rounded-md border bg-muted/40 p-3">
+                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-500 text-sm font-semibold text-white">{initials}</span>
+                <div className="min-w-0">
+                  <p className="truncate font-medium">{displayName}</p>
+                  <p className="flex items-center gap-1 truncate text-xs text-muted-foreground">
                     <Mail className="h-3 w-3" /> {user?.email}
                   </p>
                 </div>
               </div>
-
-              <div>
-                <label className="text-slate-700 dark:text-slate-300 font-semibold">Full Name *</label>
-                <input
-                  type="text"
-                  required
-                  value={profileName}
-                  onChange={(e) => setProfileName(e.target.value)}
-                  className="w-full mt-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-2.5 px-3.5 text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:outline-none"
-                />
+              <div className="space-y-1.5">
+                <Label htmlFor="profile-name">Full name *</Label>
+                <Input id="profile-name" required value={profileName} onChange={(e) => setProfileName(e.target.value)} />
               </div>
-
-              <div>
-                <label className="text-slate-700 dark:text-slate-300 font-semibold">Mobile Phone Number</label>
-                <input
-                  type="text"
-                  placeholder="e.g. 9876543210"
-                  value={profileMobile}
-                  onChange={(e) => setProfileMobile(e.target.value)}
-                  className="w-full mt-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-2.5 px-3.5 text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:outline-none"
-                />
+              <div className="space-y-1.5">
+                <Label htmlFor="profile-mobile">Mobile phone</Label>
+                <Input id="profile-mobile" placeholder="e.g. 9876543210" value={profileMobile} onChange={(e) => setProfileMobile(e.target.value)} />
               </div>
-
-              <div>
-                <label className="text-slate-700 dark:text-slate-300 font-semibold">Active Society & Role</label>
-                <div className="mt-1 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/40 text-slate-600 dark:text-slate-400 flex items-center justify-between text-xs font-mono">
-                  <span>{activeSociety?.societyName || 'Active Society'}</span>
-                  <span className="font-bold text-indigo-600 dark:text-indigo-400 uppercase">
-                    {userRole.replace('_', ' ') || 'Resident'}
-                  </span>
+              <div className="space-y-1.5">
+                <Label>Active society and role</Label>
+                <div className="flex items-center justify-between rounded-md border bg-muted/40 px-3 py-2 text-sm">
+                  <span>{activeSociety?.societyName || 'Active society'}</span>
+                  <span className="text-muted-foreground">{formatRole(userRole)}</span>
                 </div>
               </div>
-
-              <div className="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsProfileModalOpen(false);
-                    setProfileMessage(null);
-                  }}
-                  className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 font-medium"
-                >
+              <DialogFooter className="pt-2">
+                <Button type="button" variant="outline" onClick={() => setIsProfileModalOpen(false)}>
                   Close
-                </button>
-                <button
-                  type="submit"
-                  disabled={isUpdatingProfile}
-                  className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold disabled:opacity-50 transition-all shadow"
-                >
-                  {isUpdatingProfile ? 'Saving...' : 'Save Profile'}
-                </button>
-              </div>
+                </Button>
+                <Button type="submit" disabled={isUpdatingProfile}>
+                  {isUpdatingProfile ? 'Saving…' : 'Save profile'}
+                </Button>
+              </DialogFooter>
             </form>
-          </div>
-        </div>,
-        document.body
-      )}
+          </DialogContent>
+        </Dialog>
 
-      {/* ========================================================================= */}
-      {/* PORTALED MODAL 2: CHANGE PASSWORD (MOUNTED DIRECTLY TO DOCUMENT.BODY)    */}
-      {/* ========================================================================= */}
-      {mounted && isPasswordModalOpen && createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-          {/* Backdrop */}
-          <div 
-            className="fixed inset-0 bg-black/75 backdrop-blur-sm transition-opacity" 
-            onClick={() => {
-              setIsPasswordModalOpen(false);
-              setPasswordMessage(null);
-              setNewPassword('');
-              setConfirmPassword('');
-            }}
-          />
-
-          {/* Dialog Container */}
-          <div className="relative w-full max-w-md bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto z-10 animate-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                <Key className="h-5 w-5 text-amber-500" /> Change Login Password
-              </h3>
-              <button
-                onClick={() => {
-                  setIsPasswordModalOpen(false);
-                  setPasswordMessage(null);
-                  setNewPassword('');
-                  setConfirmPassword('');
-                }}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            {passwordMessage && (
-              <div
-                className={`rounded-xl border p-3 text-xs font-semibold flex items-center gap-2.5 shadow-xs ${
-                  passwordMessage.type === 'success'
-                    ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/60 text-emerald-800 dark:text-emerald-300'
-                    : 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900/60 text-rose-800 dark:text-rose-300'
-                }`}
-              >
-                {passwordMessage.type === 'success' ? (
-                  <CheckCircle className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                ) : (
-                  <AlertCircle className="h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400" />
-                )}
-                <span>{passwordMessage.text}</span>
-              </div>
-            )}
-
-            <form onSubmit={handlePasswordSubmit} className="space-y-4 text-xs">
-              <p className="text-slate-500 dark:text-slate-400 text-[11px] leading-relaxed">
-                Set a secure password of at least 6 characters for your account (<strong>{user?.email}</strong>).
-              </p>
-
-              <div>
-                <label className="text-slate-700 dark:text-slate-300 font-semibold">New Password *</label>
-                <div className="relative mt-1">
-                  <input
+        {/* Change password */}
+        <Dialog open={isPasswordModalOpen} onOpenChange={(open: boolean) => (open ? setIsPasswordModalOpen(true) : closePasswordModal())}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Change password</DialogTitle>
+              <DialogDescription>
+                At least 6 characters, for <span className="text-foreground">{user?.email}</span>.
+              </DialogDescription>
+            </DialogHeader>
+            {message(passwordMessage)}
+            <form onSubmit={handlePasswordSubmit} className="space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="new-password">New password *</Label>
+                <div className="relative">
+                  <Input
+                    id="new-password"
                     type={showNewPassword ? 'text' : 'password'}
                     required
                     minLength={6}
-                    placeholder="Enter new password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-2.5 pl-3.5 pr-10 text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:outline-none"
+                    className="pr-10"
                   />
                   <button
                     type="button"
                     onClick={() => setShowNewPassword(!showNewPassword)}
-                    className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                    aria-label={showNewPassword ? 'Hide password' : 'Show password'}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                   >
                     {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
               </div>
-
-              <div>
-                <label className="text-slate-700 dark:text-slate-300 font-semibold">Confirm New Password *</label>
-                <input
+              <div className="space-y-1.5">
+                <Label htmlFor="confirm-password">Confirm new password *</Label>
+                <Input
+                  id="confirm-password"
                   type={showNewPassword ? 'text' : 'password'}
                   required
                   minLength={6}
-                  placeholder="Re-enter new password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full mt-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-2.5 px-3.5 text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-600 focus:outline-none"
                 />
               </div>
-
-              <div className="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsPasswordModalOpen(false);
-                    setPasswordMessage(null);
-                    setNewPassword('');
-                    setConfirmPassword('');
-                  }}
-                  className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 font-medium"
-                >
+              <DialogFooter className="pt-2">
+                <Button type="button" variant="outline" onClick={closePasswordModal}>
                   Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isUpdatingPassword}
-                  className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold disabled:opacity-50 transition-all shadow"
-                >
-                  {isUpdatingPassword ? 'Updating...' : 'Update Password'}
-                </button>
-              </div>
+                </Button>
+                <Button type="submit" disabled={isUpdatingPassword}>
+                  {isUpdatingPassword ? 'Updating…' : 'Update password'}
+                </Button>
+              </DialogFooter>
             </form>
-          </div>
-        </div>,
-        document.body
-      )}
-      {/* ========================================================================= */}
-      {/* PORTALED TOOLTIPS FOR COLLAPSED SIDEBAR (NEVER CLIPPED BY SCROLLBARS)   */}
-      {/* ========================================================================= */}
-      {mounted && isCollapsed && hoveredNavItem && createPortal(
-        <div 
-          className="fixed z-[99999] pointer-events-none px-2.5 py-1.5 rounded-lg bg-slate-900 dark:bg-slate-800 text-slate-50 dark:text-slate-100 text-xs font-semibold shadow-2xl border border-slate-700/80 dark:border-slate-600/80 whitespace-nowrap flex items-center gap-1.5 animate-in fade-in zoom-in-95 duration-75"
-          style={{
-            left: `${hoveredNavItem.left}px`,
-            top: `${hoveredNavItem.top}px`,
-            transform: 'translateY(-50%)'
-          }}
-        >
-          <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-slate-900 dark:bg-slate-800 border-l border-b border-slate-700/80 dark:border-slate-600/80 rotate-45" />
-          <span>{hoveredNavItem.label}</span>
-        </div>,
-        document.body
-      )}
+          </DialogContent>
+        </Dialog>
 
-      {mounted && isCollapsed && hoveredSociety && createPortal(
-        <div 
-          className="fixed z-[99999] pointer-events-none px-3 py-1.5 rounded-xl bg-slate-900 dark:bg-slate-800 text-slate-50 dark:text-slate-100 text-xs shadow-2xl border border-slate-700/80 dark:border-slate-600/80 whitespace-nowrap space-y-0.5 animate-in fade-in zoom-in-95 duration-75"
-          style={{
-            left: `${hoveredSociety.left}px`,
-            top: `${hoveredSociety.top}px`,
-            transform: 'translateY(-50%)'
-          }}
-        >
-          <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-slate-900 dark:bg-slate-800 border-l border-b border-slate-700/80 dark:border-slate-600/80 rotate-45" />
-          <p className="font-bold text-slate-100">{hoveredSociety.name}</p>
-          <p className="text-[10px] text-indigo-400 font-semibold uppercase">{hoveredSociety.role}</p>
-        </div>,
-        document.body
-      )}
-      {/* Global Spotlight Search Dialog (macOS Style) */}
-      <SpotlightSearch
-        isOpen={isSpotlightOpen}
-        onClose={() => setIsSpotlightOpen(false)}
-      />
-    </div>
+        <SpotlightSearch isOpen={isSpotlightOpen} onClose={() => setIsSpotlightOpen(false)} />
+      </div>
+    </TooltipProvider>
   );
 };
 

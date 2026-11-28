@@ -6,6 +6,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { updateSocietySchema, UpdateSocietyDto } from '../../../../../backend/src/modules/society/dto/update-society.dto';
 import { useAuth } from '../../providers/auth-context';
 import { apiClient } from '../../../lib/api/client';
+import { prepareFileForUpload, compressionNote } from '@/lib/utils/compress';
+import { putToSignedUrl } from '@/lib/utils/upload';
 import { 
   Building, 
   UploadCloud, 
@@ -140,33 +142,30 @@ export default function SocietyProfilePage() {
 
   const handleFileUpload = async (fileType: string, e: React.ChangeEvent<HTMLInputElement>) => {
     if (!isManagementRole) return;
-    const file = e.target.files?.[0];
-    if (!file || !societyId) return;
+    const picked = e.target.files?.[0];
+    if (!picked || !societyId) return;
 
     setUploadsInProgress((prev) => ({ ...prev, [fileType]: true }));
     setMessage(null);
 
     try {
+      // Images are compressed and PDFs size-checked before upload.
+      const prepared = await prepareFileForUpload(picked);
+      const file = prepared.file;
       const resUrl = await apiClient.post(
-        `/societies/${societyId}/documents/upload-url?fileType=${fileType}&fileName=${encodeURIComponent(file.name)}`
+        `/societies/${societyId}/documents/upload-url?fileType=${fileType}&fileName=${encodeURIComponent(file.name)}&contentType=${encodeURIComponent(file.type || 'application/octet-stream')}&fileSize=${file.size}`
       );
 
       if (resUrl.data?.success) {
         const { uploadUrl, publicUrl } = resUrl.data.data;
 
-        await fetch(uploadUrl, {
-          method: 'PUT',
-          body: file,
-          headers: {
-            'Content-Type': file.type,
-          },
-        });
+        await putToSignedUrl(uploadUrl, file);
 
         setValue(fileType as any, publicUrl, { shouldDirty: true });
-        setMessage({ type: 'success', text: `Document '${fileType}' uploaded successfully. Save changes to update profile.` });
+        setMessage({ type: 'success', text: `Document '${fileType}' uploaded successfully. Save changes to update profile.${compressionNote(prepared)}` });
       }
     } catch (err: any) {
-      setMessage({ type: 'error', text: 'Document upload failed.' });
+      setMessage({ type: 'error', text: err?.message || 'Document upload failed.' });
     } finally {
       setUploadsInProgress((prev) => ({ ...prev, [fileType]: false }));
     }
@@ -193,7 +192,7 @@ export default function SocietyProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#030712]">
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 text-indigo-500 animate-spin" />
       </div>
     );
@@ -202,7 +201,6 @@ export default function SocietyProfilePage() {
   return (
     <main className="relative flex min-h-screen flex-col items-center justify-start overflow-x-hidden w-full py-4 sm:py-5 px-3 sm:px-5 lg:px-6">
       {/* Visual background grids */}
-      <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
 
       <div className="w-full max-w-[1600px] mx-auto space-y-3.5 z-10">
         
@@ -211,7 +209,7 @@ export default function SocietyProfilePage() {
           <div className="flex items-center gap-2.5">
             <Settings className="h-6 w-6 text-indigo-500 dark:text-indigo-400" />
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Society Profile & Settings</h2>
+              <h2 className="text-xl font-normal text-slate-900 dark:text-slate-100">Society Profile & Settings</h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Official statutory registration, renewal tracking, tax identifiers, and change audit log</p>
             </div>
           </div>
@@ -250,13 +248,13 @@ export default function SocietyProfilePage() {
         {/* STATUTORY REGISTRATION RENEWAL / EXPIRY ALERT BANNER */}
         {/* ========================================== */}
         {expiryStatus?.status === 'EXPIRED' && (
-          <div className="rounded-xl border border-red-800/80 bg-red-950/40 p-4 text-red-200 flex items-start gap-3 shadow-lg animate-pulse">
-            <ShieldAlert className="h-6 w-6 text-red-400 shrink-0 mt-0.5" />
+          <div className="rounded-xl border border-red-200 dark:border-red-800/80 bg-red-50 dark:bg-red-950/40 p-4 text-red-700 dark:text-red-200 flex items-start gap-3 shadow-lg animate-pulse">
+            <ShieldAlert className="h-6 w-6 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
             <div className="space-y-1 text-xs">
               <p className="font-bold text-sm text-red-100 flex items-center gap-2">
                 CRITICAL ALERT: Society Statutory Registration Has Expired!
               </p>
-              <p className="text-red-300">
+              <p className="text-red-700 dark:text-red-300">
                 The official registration renewal date of <strong>{expiryStatus.renewalDate}</strong> passed{' '}
                 <strong>{Math.abs(expiryStatus.daysLeft || 0)} day(s) ago</strong>. 
                 Please initiate immediate renewal filings with the Registrar of Co-operative Societies to remain legally compliant.
@@ -266,13 +264,13 @@ export default function SocietyProfilePage() {
         )}
 
         {expiryStatus?.status === 'NEAR_EXPIRY' && (
-          <div className="rounded-xl border border-amber-800/80 bg-amber-950/40 p-4 text-amber-200 flex items-start gap-3 shadow-lg">
-            <AlertTriangle className="h-6 w-6 text-amber-400 shrink-0 mt-0.5" />
+          <div className="rounded-xl border border-amber-200 dark:border-amber-800/80 bg-amber-50 dark:bg-amber-950/40 p-4 text-amber-700 dark:text-amber-200 flex items-start gap-3 shadow-lg">
+            <AlertTriangle className="h-6 w-6 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
             <div className="space-y-1 text-xs">
               <p className="font-bold text-sm text-amber-100 flex items-center gap-2">
                 ACTION REQUIRED: Society Registration Renewal Due Soon ({expiryStatus.daysLeft} Days Left)
               </p>
-              <p className="text-amber-300">
+              <p className="text-amber-700 dark:text-amber-300">
                 Society registration renewal is due on <strong>{expiryStatus.renewalDate}</strong>. 
                 Please prepare mandatory statutory audit forms and AGM resolutions for Registrar renewal submission.
               </p>
@@ -281,14 +279,14 @@ export default function SocietyProfilePage() {
         )}
 
         {expiryStatus?.status === 'ACTIVE' && (
-          <div className="rounded-xl border border-emerald-900/50 bg-emerald-950/20 p-3.5 text-emerald-300 flex items-center justify-between text-xs">
+          <div className="rounded-xl border border-emerald-200 dark:border-emerald-900/50 bg-emerald-50 dark:bg-emerald-950/20 p-3.5 text-emerald-700 dark:text-emerald-300 flex items-center justify-between text-xs">
             <div className="flex items-center gap-2.5">
-              <ShieldCheck className="h-5 w-5 text-emerald-400" />
+              <ShieldCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
               <span>
                 Statutory Registration in Good Standing • Next Renewal Due: <strong>{expiryStatus.renewalDate}</strong> ({expiryStatus.daysLeft} days remaining)
               </span>
             </div>
-            <span className="text-[10px] uppercase font-bold bg-emerald-900/50 text-emerald-300 px-2.5 py-0.5 rounded-full border border-emerald-800">
+            <span className="text-[10px] font-bold bg-emerald-50 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 px-2.5 py-0.5 rounded-sm border border-emerald-200 dark:border-emerald-800">
               Active Compliant
             </span>
           </div>
@@ -319,7 +317,7 @@ export default function SocietyProfilePage() {
             <fieldset disabled={!isManagementRole} className="space-y-3.5">
               {/* Section 1: Basic Identifiers */}
               <div className="space-y-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/30 p-4 sm:p-5 shadow-xs">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Official Identifiers & Registration</h3>
+                <h3 className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">Official Identifiers & Registration</h3>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div>
                     <label className="text-xs text-slate-600 dark:text-slate-400 font-medium">Society Name *</label>
@@ -351,7 +349,7 @@ export default function SocietyProfilePage() {
                       {...register('registrationNumber')}
                       type="text"
                       placeholder="e.g. BOM/HSG/12345/2010"
-                      className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 py-2 px-3 text-xs text-slate-900 dark:text-slate-200 focus:border-indigo-600 focus:outline-none uppercase font-mono"
+                      className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 py-2 px-3 text-xs text-slate-900 dark:text-slate-200 focus:border-indigo-600 focus:outline-none font-mono"
                     />
                   </div>
 
@@ -370,7 +368,7 @@ export default function SocietyProfilePage() {
                     <div className="flex items-center justify-between h-4 mb-1">
                       <label className="text-xs text-slate-600 dark:text-slate-400 font-medium">Statutory Renewal Date</label>
                       {expiryStatus?.daysLeft !== null && expiryStatus?.daysLeft !== undefined && (
-                        <span className={`text-[10px] font-bold ${expiryStatus.daysLeft < 0 ? 'text-red-400' : 'text-emerald-400'}`}>
+                        <span className={`text-[10px] font-bold ${expiryStatus.daysLeft < 0 ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
                           {expiryStatus.daysLeft < 0 ? `${Math.abs(expiryStatus.daysLeft)}d overdue` : `${expiryStatus.daysLeft}d left`}
                         </span>
                       )}
@@ -386,7 +384,7 @@ export default function SocietyProfilePage() {
 
               {/* Section 2: Taxation and Coordinates */}
               <div className="space-y-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/30 p-4 sm:p-5 shadow-xs">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Tax & Address Coordinates</h3>
+                <h3 className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">Tax & Address Coordinates</h3>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                   <div>
                     <label className="text-xs text-slate-600 dark:text-slate-400 font-medium">GSTIN (GST Number)</label>
@@ -395,7 +393,7 @@ export default function SocietyProfilePage() {
                       type="text"
                       maxLength={15}
                       placeholder="27AAAAA1111A1Z1"
-                      className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 py-2 px-3 text-xs text-slate-900 dark:text-slate-200 focus:border-indigo-600 focus:outline-none mt-1 uppercase font-mono"
+                      className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 py-2 px-3 text-xs text-slate-900 dark:text-slate-200 focus:border-indigo-600 focus:outline-none mt-1 font-mono"
                     />
                   </div>
 
@@ -406,7 +404,7 @@ export default function SocietyProfilePage() {
                       type="text"
                       maxLength={10}
                       placeholder="AAAAA1111A"
-                      className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 py-2 px-3 text-xs text-slate-900 dark:text-slate-200 focus:border-indigo-600 focus:outline-none mt-1 uppercase font-mono"
+                      className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 py-2 px-3 text-xs text-slate-900 dark:text-slate-200 focus:border-indigo-600 focus:outline-none mt-1 font-mono"
                     />
                   </div>
 
@@ -417,7 +415,7 @@ export default function SocietyProfilePage() {
                       type="text"
                       maxLength={10}
                       placeholder="AAAA11111A"
-                      className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 py-2 px-3 text-xs text-slate-900 dark:text-slate-200 focus:border-indigo-600 focus:outline-none mt-1 uppercase font-mono"
+                      className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 py-2 px-3 text-xs text-slate-900 dark:text-slate-200 focus:border-indigo-600 focus:outline-none mt-1 font-mono"
                     />
                   </div>
                 </div>
@@ -434,7 +432,7 @@ export default function SocietyProfilePage() {
 
               {/* Section 3: Official Upload Documents */}
               <div className="space-y-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/30 p-4 sm:p-5 shadow-xs">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Official Document Uploads</h3>
+                <h3 className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">Official Document Uploads</h3>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   {[
                     { label: 'Registration Certificate', key: 'registrationCertificateUrl' },
@@ -492,17 +490,17 @@ export default function SocietyProfilePage() {
         {/* TAB 2: Change History & Audit Trail        */}
         {/* ========================================== */}
         {activeTab === 'history' && (
-          <div className="space-y-4 rounded-xl border border-slate-800 bg-slate-950/30 p-6">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div className="space-y-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/30 p-6">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
               <div>
-                <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
-                  <History className="h-4 w-4 text-indigo-400" /> Settings & Profile Mutation History
+                <h3 className="text-sm font-bold text-slate-900 dark:text-slate-200 flex items-center gap-2">
+                  <History className="h-4 w-4 text-indigo-600 dark:text-indigo-400" /> Settings & Profile Mutation History
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">Chronological audit log of all changes made to society profile, legal dates, and configurations</p>
               </div>
               <button
                 onClick={() => societyId && fetchHistory(societyId)}
-                className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold"
+                className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-semibold"
               >
                 Refresh Log
               </button>
@@ -510,14 +508,14 @@ export default function SocietyProfilePage() {
 
             {isLoadingHistory ? (
               <div className="py-12 text-center text-slate-500 text-xs flex items-center justify-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin text-indigo-400" /> Loading change history...
+                <Loader2 className="h-4 w-4 animate-spin text-indigo-600 dark:text-indigo-400" /> Loading change history...
               </div>
             ) : historyLogs.length === 0 ? (
               <div className="py-12 text-center text-slate-500 text-xs">
                 No mutation change history recorded for this society yet.
               </div>
             ) : (
-              <div className="divide-y divide-slate-800/60">
+              <div className="divide-y divide-slate-200 dark:divide-slate-800/60">
                 {historyLogs.map((log) => {
                   const dateStr = new Date(log.createdAt).toLocaleString('en-IN', {
                     day: 'numeric',
@@ -531,10 +529,10 @@ export default function SocietyProfilePage() {
                     <div key={log.id} className="py-4 space-y-2 text-xs">
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-indigo-400 font-mono uppercase bg-indigo-950/50 border border-indigo-900/60 px-2 py-0.5 rounded text-[10px]">
+                          <span className="font-bold text-indigo-600 dark:text-indigo-400 font-mono bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-900/60 px-2 py-0.5 rounded text-[10px]">
                             {log.action}
                           </span>
-                          <span className="text-slate-300 font-semibold">
+                          <span className="text-slate-700 dark:text-slate-300 font-semibold">
                             {log.entityName}
                           </span>
                         </div>
@@ -552,16 +550,16 @@ export default function SocietyProfilePage() {
                       {/* Snapshots comparison */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
                         {log.oldValues && (
-                          <div className="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800/80 space-y-1">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Previous Values</p>
+                          <div className="p-2.5 rounded-lg bg-white dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 space-y-1">
+                            <p className="text-[10px] font-bold text-slate-500">Previous Values</p>
                             <pre className="text-[11px] font-mono text-red-300/80 overflow-x-auto max-h-32 p-1">
                               {JSON.stringify(log.oldValues, null, 2)}
                             </pre>
                           </div>
                         )}
                         {log.newValues && (
-                          <div className="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800/80 space-y-1">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-500">Updated Values</p>
+                          <div className="p-2.5 rounded-lg bg-white dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 space-y-1">
+                            <p className="text-[10px] font-bold text-emerald-500">Updated Values</p>
                             <pre className="text-[11px] font-mono text-emerald-300/80 overflow-x-auto max-h-32 p-1">
                               {JSON.stringify(log.newValues, null, 2)}
                             </pre>

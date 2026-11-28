@@ -28,6 +28,7 @@ async function main() {
     console.log('Ensuring schema updates (can_login, password)...');
     await migrationClient`ALTER TABLE members ADD COLUMN IF NOT EXISTS can_login BOOLEAN DEFAULT true NOT NULL;`;
     await migrationClient`ALTER TABLE users ADD COLUMN IF NOT EXISTS password TEXT;`;
+    await migrationClient`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_platform_admin BOOLEAN DEFAULT false NOT NULL;`;
 
     console.log('Ensuring default roles, dummy society, superadmin, and plans...');
 
@@ -80,17 +81,8 @@ async function main() {
       ON CONFLICT (id) DO UPDATE SET is_active = true;
     `;
 
-    // 4. Map Super Admin to Society
-    await migrationClient`
-      INSERT INTO user_societies (id, user_id, society_id, role_id)
-      VALUES (
-        '40000000-0000-0000-0000-000000000001',
-        ${superAdminUserId},
-        ${defaultSocietyId},
-        '10000000-0000-0000-0000-000000000001'
-      )
-      ON CONFLICT (id) DO NOTHING;
-    `;
+    // 4. The super admin manages societies from the platform console; it is not a member of any society.
+    await migrationClient`UPDATE users SET is_platform_admin = true WHERE id = ${superAdminUserId};`;
 
     // 5. Default Subscription Plan
     const defaultPlanId = '60000000-0000-0000-0000-000000000001';

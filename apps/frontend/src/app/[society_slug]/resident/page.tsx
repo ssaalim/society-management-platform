@@ -100,43 +100,43 @@ export default function ResidentDashboardPage() {
     switch (type) {
       case 'EV_CAR':
         return (
-          <span className="text-[10px] font-bold border border-emerald-800/80 bg-emerald-950/60 text-emerald-300 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+          <span className="text-[10px] font-bold border border-emerald-200 dark:border-emerald-800/80 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 px-2.5 py-0.5 rounded-sm flex items-center gap-1">
             ⚡ EV Car
           </span>
         );
       case 'EV_TWO_WHEELER':
         return (
-          <span className="text-[10px] font-bold border border-teal-800/80 bg-teal-950/60 text-teal-300 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+          <span className="text-[10px] font-bold border border-teal-200 dark:border-teal-800/80 bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 px-2.5 py-0.5 rounded-sm flex items-center gap-1">
             ⚡ EV 2-Wheeler
           </span>
         );
       case 'FOUR_WHEELER':
         return (
-          <span className="text-[10px] font-semibold border border-indigo-900/60 bg-indigo-950/40 text-indigo-300 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+          <span className="text-[10px] font-semibold border border-indigo-200 dark:border-indigo-900/60 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 px-2.5 py-0.5 rounded-sm flex items-center gap-1">
             🚗 4-Wheeler
           </span>
         );
       case 'TWO_WHEELER':
         return (
-          <span className="text-[10px] font-semibold border border-blue-900/60 bg-blue-950/40 text-blue-300 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+          <span className="text-[10px] font-semibold border border-blue-200 dark:border-blue-900/60 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 px-2.5 py-0.5 rounded-sm flex items-center gap-1">
             🛵 2-Wheeler
           </span>
         );
       case 'COMMERCIAL':
         return (
-          <span className="text-[10px] font-semibold border border-amber-900/60 bg-amber-950/40 text-amber-300 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+          <span className="text-[10px] font-semibold border border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 px-2.5 py-0.5 rounded-sm flex items-center gap-1">
             🚐 Commercial
           </span>
         );
       case 'BICYCLE':
         return (
-          <span className="text-[10px] font-semibold border border-purple-900/60 bg-purple-950/40 text-purple-300 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+          <span className="text-[10px] font-semibold border border-purple-200 dark:border-purple-900/60 bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 px-2.5 py-0.5 rounded-sm flex items-center gap-1">
             🚲 Bicycle
           </span>
         );
       default:
         return (
-          <span className="text-[10px] font-semibold border border-slate-800 bg-slate-900 text-slate-300 px-2.5 py-0.5 rounded-full">
+          <span className="text-[10px] font-semibold border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 px-2.5 py-0.5 rounded-sm">
             {type?.replace('_', ' ') || 'Vehicle'}
           </span>
         );
@@ -384,7 +384,7 @@ export default function ResidentDashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-950">
+      <div className="flex min-h-screen items-center justify-center bg-white dark:bg-slate-950">
         <Loader2 className="h-8 w-8 text-indigo-500 animate-spin" />
       </div>
     );
@@ -392,8 +392,6 @@ export default function ResidentDashboardPage() {
 
   return (
     <main className="relative flex min-h-screen flex-col items-center justify-start overflow-x-hidden w-full py-4 sm:py-5 px-3 sm:px-5 lg:px-6">
-      {/* Background Grids */}
-      <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
       <div className="w-full max-w-[1600px] mx-auto space-y-3.5 z-10">
         
         {/* Header */}
@@ -401,7 +399,7 @@ export default function ResidentDashboardPage() {
           <div className="flex items-center gap-2.5">
             <User className="h-6 w-6 text-indigo-500 dark:text-indigo-400" />
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Resident Self-Service Portal</h2>
+              <h2 className="text-xl font-normal text-slate-900 dark:text-slate-100">Resident Self-Service Portal</h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Manage gate clearances, register vehicles, access shared circulars, and cast ballot votes</p>
             </div>
           </div>
@@ -452,9 +450,9 @@ export default function ResidentDashboardPage() {
           <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-950/20 p-3.5 sm:p-4 space-y-3 flex flex-col justify-between shadow-xs">
             <div>
               <div className="flex items-center justify-between">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">My Maintenance Balance</h3>
+                <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400">My Maintenance Balance</h3>
                 {dashboardData?.flatNumber && (
-                  <span className="text-[10px] bg-indigo-50 dark:bg-slate-900 border border-indigo-200 dark:border-slate-800 text-indigo-700 dark:text-indigo-400 px-2 py-0.5 rounded-full font-bold">
+                  <span className="text-[10px] bg-indigo-50 dark:bg-slate-900 border border-indigo-200 dark:border-slate-800 text-indigo-700 dark:text-indigo-400 px-2 py-0.5 rounded-sm font-bold">
                     Flat {dashboardData.flatNumber}
                   </span>
                 )}
@@ -476,44 +474,44 @@ export default function ResidentDashboardPage() {
             
             <Link
               href={`/${society_slug}/maintenance?mine=true`}
-              className="inline-flex items-center justify-center gap-1.5 w-full py-2 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/30 text-indigo-300 text-xs font-bold transition-all mt-4"
+              className="inline-flex items-center justify-center gap-1.5 w-full py-2 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/30 text-indigo-700 dark:text-indigo-300 text-xs font-bold transition-all mt-4"
             >
               View Invoices & Pay Online <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
 
           {/* Pre-Registered Vehicles Card */}
-          <div className="border border-slate-800 rounded-xl bg-slate-950/20 p-6 space-y-4">
+          <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950/20 p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                <Car className="h-4 w-4 text-indigo-400" /> Registered Vehicles
+              <h3 className="text-xs font-bold text-slate-400 flex items-center gap-1.5">
+                <Car className="h-4 w-4 text-indigo-600 dark:text-indigo-400" /> Registered Vehicles
               </h3>
               <button
                 onClick={() => setIsAddVehicleOpen(true)}
-                className="text-[11px] text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1"
+                className="text-[11px] text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-semibold flex items-center gap-1"
               >
                 <Plus className="h-3 w-3" /> Add
               </button>
             </div>
 
             {(!dashboardData?.vehicles || dashboardData.vehicles.length === 0) ? (
-              <div className="text-center py-6 border border-dashed border-slate-800/80 rounded-lg space-y-1">
+              <div className="text-center py-6 border border-dashed border-slate-200 dark:border-slate-800/80 rounded-lg space-y-1">
                 <p className="text-xs text-slate-400">No vehicles registered</p>
                 <p className="text-[10px] text-slate-500">Register your car/bike for security gate clearance.</p>
               </div>
             ) : (
               <ul className="space-y-2.5 max-h-48 overflow-y-auto pr-1">
                 {dashboardData.vehicles.map((v: Vehicle) => (
-                  <li key={v.id} className="text-xs text-slate-300 flex justify-between items-center bg-slate-950/60 p-2.5 rounded-lg border border-slate-800/60">
+                  <li key={v.id} className="text-xs text-slate-700 dark:text-slate-300 flex justify-between items-center bg-white dark:bg-slate-950/60 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800/60">
                     <div>
-                      <p className="font-bold text-slate-200 font-mono">{v.number}</p>
+                      <p className="font-bold text-slate-900 dark:text-slate-200 font-mono">{v.number}</p>
                       <p className="text-[10px] text-slate-400">{v.make || ''} {v.model || ''}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       {getVehicleTypeBadge(v.type)}
                       <button
                         onClick={() => handleDeleteVehicle(v.id, v.number)}
-                        className="text-slate-500 hover:text-red-400 p-1"
+                        className="text-slate-500 hover:text-red-600 dark:hover:text-red-400 p-1"
                         title="Remove vehicle"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -526,15 +524,15 @@ export default function ResidentDashboardPage() {
           </div>
 
           {/* Shared Society Files & Circulars */}
-          <div className="border border-slate-800 rounded-xl bg-slate-950/20 p-6 space-y-4">
+          <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950/20 p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                <FileText className="h-4 w-4 text-emerald-400" /> Circulars & Documents
+              <h3 className="text-xs font-bold text-slate-400 flex items-center gap-1.5">
+                <FileText className="h-4 w-4 text-emerald-600 dark:text-emerald-400" /> Circulars & Documents
               </h3>
               {isManagementRole && (
                 <button
                   onClick={() => setIsAddDocOpen(true)}
-                  className="text-[11px] text-emerald-400 hover:text-emerald-300 font-semibold flex items-center gap-1"
+                  className="text-[11px] text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 font-semibold flex items-center gap-1"
                 >
                   <Plus className="h-3 w-3" /> Upload
                 </button>
@@ -542,24 +540,24 @@ export default function ResidentDashboardPage() {
             </div>
 
             {(!dashboardData?.documents || dashboardData.documents.length === 0) ? (
-              <div className="text-center py-6 border border-dashed border-slate-800/80 rounded-lg space-y-1">
+              <div className="text-center py-6 border border-dashed border-slate-200 dark:border-slate-800/80 rounded-lg space-y-1">
                 <p className="text-xs text-slate-400">No circulars published yet</p>
                 <p className="text-[10px] text-slate-500">Official bye-laws and audited reports will appear here.</p>
               </div>
             ) : (
               <ul className="space-y-2 text-xs max-h-48 overflow-y-auto pr-1">
                 {dashboardData.documents.map((doc: DocumentItem) => (
-                  <li key={doc.id} className="flex justify-between items-center p-2 rounded-lg bg-slate-950/40 border border-slate-800/60 hover:border-slate-700 transition-all">
+                  <li key={doc.id} className="flex justify-between items-center p-2 rounded-lg bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800/60 hover:border-slate-300 dark:hover:border-slate-700 transition-all">
                     <div className="truncate pr-2">
-                      <p className="text-slate-200 font-medium truncate">{doc.name}</p>
-                      <span className="text-[9px] text-emerald-400/80 uppercase font-mono">{doc.category.replace('_', ' ')}</span>
+                      <p className="text-slate-900 dark:text-slate-200 font-medium truncate">{doc.name}</p>
+                      <span className="text-[9px] text-emerald-400/80 font-mono">{doc.category.replace('_', ' ')}</span>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
                       <a
                         href={doc.fileUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="p-1 rounded bg-slate-900 border border-slate-800 text-indigo-400 hover:text-indigo-300"
+                        className="p-1 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300"
                         title="Download / Open file"
                       >
                         <ExternalLink className="h-3.5 w-3.5" />
@@ -567,7 +565,7 @@ export default function ResidentDashboardPage() {
                       {isManagementRole && (
                         <button
                           onClick={() => handleDeleteDoc(doc.id, doc.name)}
-                          className="p-1 rounded text-slate-500 hover:text-red-400"
+                          className="p-1 rounded text-slate-500 hover:text-red-600 dark:hover:text-red-400"
                           title="Delete document"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -585,19 +583,19 @@ export default function ResidentDashboardPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           
           {/* Pre-Approvals Gates Checkpoint */}
-          <div className="border border-slate-800 rounded-xl bg-slate-950/20 p-6 space-y-4">
-            <h3 className="text-sm font-bold text-slate-200 border-b border-slate-800/40 pb-2 flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4 text-sky-400" /> Visitor Pre-Approvals & Gate Checkpoints
+          <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950/20 p-6 space-y-4">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-200 border-b border-slate-200 dark:border-slate-800/40 pb-2 flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-sky-600 dark:text-sky-400" /> Visitor Pre-Approvals & Gate Checkpoints
             </h3>
             
             {(!dashboardData?.visitors || dashboardData.visitors.length === 0) ? (
               <p className="text-xs text-slate-500 py-6 text-center">No visitor gates activities or check-ins logged for your unit.</p>
             ) : (
-              <ul className="divide-y divide-slate-800/40 text-xs">
+              <ul className="divide-y divide-slate-200 dark:divide-slate-800/40 text-xs">
                 {dashboardData.visitors.map((vis: Visitor) => (
                   <li key={vis.id} className="py-3 flex justify-between items-center">
                     <div>
-                      <p className="font-bold text-slate-200">{vis.name}</p>
+                      <p className="font-bold text-slate-900 dark:text-slate-200">{vis.name}</p>
                       <p className="text-[10px] text-slate-500">{vis.purpose || 'Visit'} • {vis.mobile}</p>
                     </div>
 
@@ -607,23 +605,23 @@ export default function ResidentDashboardPage() {
                           <button
                             onClick={() => handleVisitorDecision(vis.id, true)}
                             disabled={isProcessing}
-                            className="bg-emerald-950/40 border border-emerald-800 text-emerald-400 rounded-lg px-2.5 py-1 text-[11px] font-bold hover:bg-emerald-900/40 transition-all flex items-center gap-1"
+                            className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 rounded-lg px-2.5 py-1 text-[11px] font-bold hover:bg-emerald-50 dark:hover:bg-emerald-900/40 transition-all flex items-center gap-1"
                           >
                             <Check className="h-3.5 w-3.5" /> Allow
                           </button>
                           <button
                             onClick={() => handleVisitorDecision(vis.id, false)}
                             disabled={isProcessing}
-                            className="bg-red-950/40 border border-red-800 text-red-400 rounded-lg px-2.5 py-1 text-[11px] font-bold hover:bg-red-900/40 transition-all flex items-center gap-1"
+                            className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 rounded-lg px-2.5 py-1 text-[11px] font-bold hover:bg-red-50 dark:hover:bg-red-900/40 transition-all flex items-center gap-1"
                           >
                             <X className="h-3.5 w-3.5" /> Deny
                           </button>
                         </>
                       ) : (
-                        <span className={`text-[10px] font-bold border rounded-full px-2.5 py-0.5 uppercase tracking-wider ${
+                        <span className={`text-[10px] font-bold border rounded-sm px-2.5 py-0.5 ${
                           vis.status === 'APPROVED' 
-                            ? 'bg-emerald-950/30 border-emerald-800 text-emerald-400' 
-                            : 'bg-red-950/30 border-red-800 text-red-400'
+                            ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400' 
+                            : 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400'
                         }`}>
                           {vis.status}
                         </span>
@@ -636,15 +634,15 @@ export default function ResidentDashboardPage() {
           </div>
 
           {/* Active Polls/Voting panel */}
-          <div className="border border-slate-800 rounded-xl bg-slate-950/20 p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800/40 pb-2">
-              <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
-                <Vote className="h-4 w-4 text-purple-400" /> Active General Body Proposals & Polls
+          <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950/20 p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800/40 pb-2">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-200 flex items-center gap-2">
+                <Vote className="h-4 w-4 text-purple-600 dark:text-purple-400" /> Active General Body Proposals & Polls
               </h3>
               {isManagementRole && (
                 <button
                   onClick={() => setIsCreatePollOpen(true)}
-                  className="text-[11px] text-purple-400 hover:text-purple-300 font-semibold flex items-center gap-1"
+                  className="text-[11px] text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-semibold flex items-center gap-1"
                 >
                   <Plus className="h-3 w-3" /> New Proposal
                 </button>
@@ -662,10 +660,10 @@ export default function ResidentDashboardPage() {
                   const absPct = total > 0 ? Math.round(((p.abstainVotes || 0) / total) * 100) : 0;
 
                   return (
-                    <div key={p.id} className="bg-slate-950/60 border border-slate-800/80 p-4 rounded-xl space-y-3 text-xs">
+                    <div key={p.id} className="bg-white dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 p-4 rounded-xl space-y-3 text-xs">
                       <div className="flex justify-between items-start gap-2">
                         <div>
-                          <h4 className="font-bold text-slate-200 text-sm">
+                          <h4 className="font-bold text-slate-900 dark:text-slate-200 text-sm">
                             {p.question}
                           </h4>
                           {p.description && (
@@ -675,7 +673,7 @@ export default function ResidentDashboardPage() {
                         {isManagementRole && (
                           <button
                             onClick={() => handleDeletePoll(p.id, p.question)}
-                            className="text-slate-500 hover:text-red-400 p-1 shrink-0"
+                            className="text-slate-500 hover:text-red-600 dark:hover:text-red-400 p-1 shrink-0"
                             title="Delete proposal"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -685,33 +683,33 @@ export default function ResidentDashboardPage() {
 
                       {/* If already voted or voting stats available */}
                       {p.hasVoted ? (
-                        <div className="space-y-2 pt-2 border-t border-slate-800/60">
+                        <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-slate-800/60">
                           <div className="flex items-center justify-between text-[11px]">
                             <span className="text-slate-400">
-                              Your Vote: <strong className="text-indigo-400 uppercase">{p.userVote}</strong>
+                              Your Vote: <strong className="text-indigo-600 dark:text-indigo-400 uppercase">{p.userVote}</strong>
                             </span>
                             <span className="text-slate-500 font-mono">{total} vote{total !== 1 ? 's' : ''} cast</span>
                           </div>
                           
                           {/* Vote tally progress bar */}
-                          <div className="w-full bg-slate-900 rounded-full h-2 flex overflow-hidden border border-slate-800">
+                          <div className="w-full bg-white dark:bg-slate-900 rounded-full h-2 flex overflow-hidden border border-slate-200 dark:border-slate-800">
                             <div style={{ width: `${yesPct}%` }} className="bg-emerald-500" title={`YES: ${yesPct}%`} />
                             <div style={{ width: `${noPct}%` }} className="bg-red-500" title={`NO: ${noPct}%`} />
                             <div style={{ width: `${absPct}%` }} className="bg-amber-500" title={`ABSTAIN: ${absPct}%`} />
                           </div>
 
                           <div className="flex justify-between text-[10px] text-slate-500 font-mono pt-1">
-                            <span className="text-emerald-400 font-semibold">YES {yesPct}% ({p.yesVotes || 0})</span>
-                            <span className="text-red-400 font-semibold">NO {noPct}% ({p.noVotes || 0})</span>
-                            <span className="text-amber-400 font-semibold">ABSTAIN {absPct}% ({p.abstainVotes || 0})</span>
+                            <span className="text-emerald-600 dark:text-emerald-400 font-semibold">YES {yesPct}% ({p.yesVotes || 0})</span>
+                            <span className="text-red-600 dark:text-red-400 font-semibold">NO {noPct}% ({p.noVotes || 0})</span>
+                            <span className="text-amber-600 dark:text-amber-400 font-semibold">ABSTAIN {absPct}% ({p.abstainVotes || 0})</span>
                           </div>
                         </div>
                       ) : (
                         /* Radio Options choice */
-                        <div className="space-y-3 pt-2 border-t border-slate-800/60">
+                        <div className="space-y-3 pt-2 border-t border-slate-200 dark:border-slate-800/60">
                           <div className="flex gap-4">
                             {['YES', 'NO', 'ABSTAIN'].map((choice) => (
-                              <label key={choice} className="flex items-center gap-1.5 text-slate-300 font-semibold cursor-pointer text-xs">
+                              <label key={choice} className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-semibold cursor-pointer text-xs">
                                 <input
                                   type="radio"
                                   name={`poll-${p.id}`}
@@ -785,7 +783,7 @@ export default function ResidentDashboardPage() {
                     placeholder="e.g. MH 12 AB 1234"
                     value={vehicleForm.number}
                     onChange={(e) => setVehicleForm({ ...vehicleForm, number: e.target.value })}
-                    className="w-full mt-1 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 uppercase font-mono placeholder-slate-400 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition shadow-xs font-semibold"
+                    className="w-full mt-1 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 font-mono placeholder-slate-400 focus:border-indigo-600 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition shadow-xs font-semibold"
                   />
                 </div>
 

@@ -26,10 +26,7 @@ export class UserController {
   @ApiOperation({ summary: 'Get current user profile and society memberships' })
   @Get('me')
   async getMe(@Req() req: any) {
-    const userId = req.user.id;
-    const email = req.user.email;
-    const name = req.user.userMetadata?.name || req.user.name;
-    const result = await this.userService.getUserMemberships(userId, email, name);
+    const result = await this.userService.getUserMemberships(req.user.id);
     return {
       success: true,
       data: result,

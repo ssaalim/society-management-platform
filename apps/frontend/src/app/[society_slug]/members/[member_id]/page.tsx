@@ -6,6 +6,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { updateMemberSchema, UpdateMemberDto } from '../../../../../../backend/src/modules/member/dto/update-member.dto';
 import { useAuth } from '../../../providers/auth-context';
 import { apiClient } from '../../../../lib/api/client';
+import { prepareFileForUpload, compressionNote } from '@/lib/utils/compress';
+import { putToSignedUrl } from '@/lib/utils/upload';
 import { Building, UploadCloud, CheckCircle, FileText, Loader2, AlertCircle, ArrowLeft, Users, ShieldAlert, History, CreditCard, Plus, Trash2, Home, Key, X, ShieldCheck, Lock, Eye, EyeOff, UserCheck, UserX } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -93,33 +95,30 @@ export default function MemberDetailPage() {
 
   const handleFileUpload = async (fileType: string, e: React.ChangeEvent<HTMLInputElement>) => {
     if (!isManagementRole) return;
-    const file = e.target.files?.[0];
-    if (!file || !memberIdString) return;
+    const picked = e.target.files?.[0];
+    if (!picked || !memberIdString) return;
 
     setUploadsInProgress((prev) => ({ ...prev, [fileType]: true }));
     setMessage(null);
 
     try {
+      // Images are compressed and PDFs size-checked before upload.
+      const prepared = await prepareFileForUpload(picked);
+      const file = prepared.file;
       const resUrl = await apiClient.post(
-        `/societies/${activeSociety?.societyId}/documents/upload-url?fileType=bye_laws&fileName=${encodeURIComponent(file.name)}`
+        `/societies/${activeSociety?.societyId}/documents/upload-url?fileType=bye_laws&fileName=${encodeURIComponent(file.name)}&contentType=${encodeURIComponent(file.type || 'application/octet-stream')}&fileSize=${file.size}`
       );
 
       if (resUrl.data?.success) {
         const { uploadUrl, publicUrl } = resUrl.data.data;
 
-        await fetch(uploadUrl, {
-          method: 'PUT',
-          body: file,
-          headers: {
-            'Content-Type': file.type,
-          },
-        });
+        await putToSignedUrl(uploadUrl, file);
 
         setValue(fileType as any, publicUrl, { shouldDirty: true });
-        setMessage({ type: 'success', text: `Document file '${fileType}' uploaded. Save changes to finalize.` });
+        setMessage({ type: 'success', text: `Document file '${fileType}' uploaded. Save changes to finalize.${compressionNote(prepared)}` });
       }
-    } catch (err) {
-      setMessage({ type: 'error', text: 'Document upload failed.' });
+    } catch (err: any) {
+      setMessage({ type: 'error', text: err?.message || 'Document upload failed.' });
     } finally {
       setUploadsInProgress((prev) => ({ ...prev, [fileType]: false }));
     }
@@ -176,7 +175,7 @@ export default function MemberDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#030712]">
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 text-indigo-500 animate-spin" />
       </div>
     );
@@ -184,8 +183,6 @@ export default function MemberDetailPage() {
 
   return (
     <main className="relative flex min-h-screen flex-col items-center justify-start overflow-x-hidden w-full py-4 sm:py-5 px-3 sm:px-5 lg:px-6">
-      {/* Background Grids */}
-      <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
 
       <div className="w-full max-w-[1600px] mx-auto space-y-6 z-10">
         
@@ -193,29 +190,29 @@ export default function MemberDetailPage() {
         <div className="space-y-4">
           <Link
             href={`/${society_slug}/members`}
-            className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-300 transition-all"
+            className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-all"
           >
             <ArrowLeft className="h-3 w-3" /> Back to members directory
           </Link>
 
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-800 pb-5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 dark:border-slate-800 pb-5">
             <div className="flex items-center gap-3">
-              <Users className="h-8 w-8 text-indigo-400" />
+              <Users className="h-8 w-8 text-indigo-600 dark:text-indigo-400" />
               <div>
-                <h2 className="text-2xl font-bold tracking-tight text-slate-100">
+                <h2 className="text-xl font-normal text-slate-900 dark:text-slate-100">
                   {memberData?.name || 'Resident Details'}
                 </h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Membership No: <span className="font-mono text-slate-300">{memberData?.membershipNumber}</span>
+                  Membership No: <span className="font-mono text-slate-700 dark:text-slate-300">{memberData?.membershipNumber}</span>
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold px-3 py-1 bg-emerald-950/40 border border-emerald-900/50 text-emerald-300 rounded-full">
+              <span className="text-xs font-semibold px-3 py-1 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-300 rounded-sm">
                 {memberData?.memberType || 'OWNER'}
               </span>
               {memberData?.committeeDesignation && memberData.committeeDesignation !== 'NONE' && (
-                <span className="text-xs font-semibold px-3 py-1 bg-amber-950/40 border border-amber-900/50 text-amber-300 rounded-full">
+                <span className="text-xs font-semibold px-3 py-1 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 text-amber-700 dark:text-amber-300 rounded-sm">
                   ★ {memberData.committeeDesignation.replace('_', ' ')}
                 </span>
               )}
@@ -224,7 +221,7 @@ export default function MemberDetailPage() {
                   type="submit"
                   form="member-details-form"
                   disabled={isSaving}
-                  className="rounded-lg bg-indigo-600 hover:bg-indigo-500 text-slate-100 py-2 px-5 text-xs font-semibold disabled:opacity-55 transition-all flex items-center gap-2 shadow-md shadow-indigo-600/20"
+                  className="rounded-lg bg-indigo-600 hover:bg-indigo-500 text-slate-900 dark:text-slate-100 py-2 px-5 text-xs font-semibold disabled:opacity-55 transition-all flex items-center gap-2 shadow-md shadow-indigo-600/20"
                 >
                   {isSaving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                   Save Changes
@@ -281,30 +278,30 @@ export default function MemberDetailPage() {
             {activeTab === 'profile' && (
               <div className="space-y-6 max-w-3xl">
                 {/* Personal Identity Details */}
-                <div className="bg-slate-950/60 border border-slate-800 p-6 rounded-2xl space-y-4">
-                  <h3 className="text-sm font-bold text-slate-200 border-b border-slate-800 pb-3">Personal Details</h3>
+                <div className="bg-white dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl space-y-4">
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-slate-200 border-b border-slate-200 dark:border-slate-800 pb-3">Personal Details</h3>
                   
                   <div>
-                    <label className="text-xs text-slate-400 font-medium">Full Name <span className="text-red-400">*</span></label>
+                    <label className="text-xs text-slate-400 font-medium">Full Name <span className="text-red-600 dark:text-red-400">*</span></label>
                     <input
                       {...register('name')}
                       type="text"
                       placeholder="e.g. John Doe"
-                      className="w-full rounded-lg border border-slate-800 bg-slate-900/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-indigo-600/50 focus:outline-none mt-1"
+                      className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 py-2.5 px-3.5 text-sm text-slate-900 dark:text-slate-200 focus:border-indigo-600/50 focus:outline-none mt-1"
                     />
-                    {errors.name && <p className="text-xs text-red-400 mt-1">{errors.name.message}</p>}
+                    {errors.name && <p className="text-xs text-red-600 dark:text-red-400 mt-1">{errors.name.message}</p>}
                   </div>
 
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="text-xs text-slate-400 font-medium">Email Address <span className="text-red-400">*</span></label>
+                      <label className="text-xs text-slate-400 font-medium">Email Address <span className="text-red-600 dark:text-red-400">*</span></label>
                       <input
                         {...register('email')}
                         type="email"
                         placeholder="john@example.com"
-                        className="w-full rounded-lg border border-slate-800 bg-slate-900/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-indigo-600/50 focus:outline-none mt-1 font-mono"
+                        className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 py-2.5 px-3.5 text-sm text-slate-900 dark:text-slate-200 focus:border-indigo-600/50 focus:outline-none mt-1 font-mono"
                       />
-                      {errors.email && <p className="text-xs text-red-400 mt-1">{errors.email.message}</p>}
+                      {errors.email && <p className="text-xs text-red-600 dark:text-red-400 mt-1">{errors.email.message}</p>}
                     </div>
 
                     <div>
@@ -313,7 +310,7 @@ export default function MemberDetailPage() {
                         {...register('mobile')}
                         type="text"
                         placeholder="+91 9876543210"
-                        className="w-full rounded-lg border border-slate-800 bg-slate-900/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-indigo-600/50 focus:outline-none mt-1"
+                        className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 py-2.5 px-3.5 text-sm text-slate-900 dark:text-slate-200 focus:border-indigo-600/50 focus:outline-none mt-1"
                       />
                     </div>
                   </div>
@@ -324,15 +321,15 @@ export default function MemberDetailPage() {
                       <input
                         {...register('membershipNumber')}
                         type="text"
-                        className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-slate-700 focus:outline-none mt-1 font-mono"
+                        className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-900 dark:text-slate-200 focus:border-slate-300 dark:focus:border-slate-700 focus:outline-none mt-1 font-mono"
                       />
                     </div>
 
                     <div>
-                      <label className="text-xs text-slate-300 font-semibold">Occupancy Type *</label>
+                      <label className="text-xs text-slate-700 dark:text-slate-300 font-semibold">Occupancy Type *</label>
                       <select
                         {...register('memberType')}
-                        className="w-full rounded-lg border border-slate-800 bg-slate-900/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-indigo-600/50 focus:outline-none appearance-none mt-1"
+                        className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 py-2.5 px-3.5 text-sm text-slate-900 dark:text-slate-200 focus:border-indigo-600/50 focus:outline-none appearance-none mt-1"
                       >
                         <option value="OWNER">Owner (Primary)</option>
                         <option value="CO_OWNER">Co-owner (Joint)</option>
@@ -343,10 +340,10 @@ export default function MemberDetailPage() {
                     </div>
 
                     <div>
-                      <label className="text-xs text-slate-300 font-semibold">Committee Designation</label>
+                      <label className="text-xs text-slate-700 dark:text-slate-300 font-semibold">Committee Designation</label>
                       <select
                         {...register('committeeDesignation')}
-                        className="w-full rounded-lg border border-slate-800 bg-slate-900/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-indigo-600/50 focus:outline-none appearance-none mt-1"
+                        className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 py-2.5 px-3.5 text-sm text-slate-900 dark:text-slate-200 focus:border-indigo-600/50 focus:outline-none appearance-none mt-1"
                       >
                         <option value="NONE">— None (Regular Member)</option>
                         <option value="PRESIDENT">President / Chairman</option>
@@ -376,7 +373,7 @@ export default function MemberDetailPage() {
                       {...register('emergencyContactName')}
                       type="text"
                       placeholder="Emergency Contact Name"
-                      className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-slate-700 focus:outline-none mt-1"
+                      className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-900 dark:text-slate-200 focus:border-slate-300 dark:focus:border-slate-700 focus:outline-none mt-1"
                     />
                   </div>
 
@@ -386,14 +383,14 @@ export default function MemberDetailPage() {
                       {...register('emergencyContactPhone')}
                       type="text"
                       placeholder="Emergency Contact Phone"
-                      className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-200 focus:border-slate-700 focus:outline-none mt-1"
+                      className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 py-2.5 px-3.5 text-sm text-slate-900 dark:text-slate-200 focus:border-slate-300 dark:focus:border-slate-700 focus:outline-none mt-1"
                     />
                   </div>
                 </div>
 
                 {/* Uploads grid */}
                 <div className="space-y-3">
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">KYC Document Vault</h3>
+                  <h3 className="text-xs font-semibold text-slate-500">KYC Document Vault</h3>
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                     {[
                       { label: 'Photo Avatar', key: 'photoUrl' },
@@ -402,17 +399,17 @@ export default function MemberDetailPage() {
                       { label: 'Purchase Agreement', key: 'agreementUrl' },
                       { label: 'Police Verification', key: 'policeVerificationUrl' }
                     ].map((doc) => (
-                      <div key={doc.key} className="rounded-xl border border-slate-800 bg-slate-950/30 p-4 space-y-3">
-                        <div className="flex items-center justify-between text-xs font-semibold text-slate-300">
+                      <div key={doc.key} className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/30 p-4 space-y-3">
+                        <div className="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300">
                           <span>{doc.label}</span>
                           {uploadsInProgress[doc.key] ? (
-                            <Loader2 className="h-3 w-3 text-indigo-400 animate-spin" />
+                            <Loader2 className="h-3 w-3 text-indigo-600 dark:text-indigo-400 animate-spin" />
                           ) : (
                             <FileText className="h-3 w-3 text-slate-500" />
                           )}
                         </div>
                         {isManagementRole && (
-                          <div className="relative flex items-center justify-center border border-dashed border-slate-800 rounded-lg p-4 bg-black/60 hover:bg-slate-900/60 transition-all cursor-pointer">
+                          <div className="relative flex items-center justify-center border border-dashed border-slate-200 dark:border-slate-800 rounded-lg p-4 bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-900/60 transition-all cursor-pointer">
                             <input
                               type="file"
                               onChange={(e) => handleFileUpload(doc.key, e)}
@@ -428,16 +425,16 @@ export default function MemberDetailPage() {
 
                 {/* Delete profile area */}
                 {isManagementRole && (
-                  <div className="rounded-lg bg-red-950/20 border border-red-900/40 p-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mt-8">
+                  <div className="rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/40 p-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mt-8">
                     <div>
-                      <h4 className="text-sm font-semibold text-red-400">Archive Member Profile</h4>
+                      <h4 className="text-sm font-semibold text-red-600 dark:text-red-400">Archive Member Profile</h4>
                       <p className="text-xs text-slate-500">Deletes this member profile, clearing family details and nominees share indices.</p>
                     </div>
                     <button
                       type="button"
                       onClick={handleDeleteMember}
                       disabled={isSaving}
-                      className="rounded-lg bg-red-950/50 hover:bg-red-900/50 border border-red-900/60 text-red-300 py-2 px-4 text-xs font-semibold transition-all disabled:opacity-55"
+                      className="rounded-lg bg-red-50 dark:bg-red-950/50 hover:bg-red-50 dark:hover:bg-red-900/50 border border-red-200 dark:border-red-900/60 text-red-700 dark:text-red-300 py-2 px-4 text-xs font-semibold transition-all disabled:opacity-55"
                     >
                       Confirm Delete
                     </button>
@@ -450,7 +447,7 @@ export default function MemberDetailPage() {
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                    <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-2">
                       <Users className="h-4 w-4" /> Family Roster
                     </h3>
                     <p className="text-xs text-slate-500">Declare residents living in the unit details</p>
@@ -459,7 +456,7 @@ export default function MemberDetailPage() {
                     <button
                       type="button"
                       onClick={() => appendFamily({ name: '', relation: '', mobile: '', aadhaar: '' })}
-                      className="inline-flex items-center gap-1.5 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-slate-100 py-1.5 px-3.5 rounded-lg transition-all"
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-slate-900 dark:text-slate-100 py-1.5 px-3.5 rounded-lg transition-all"
                     >
                       <Plus className="h-3.5 w-3.5" /> Add Family Member
                     </button>
@@ -468,19 +465,19 @@ export default function MemberDetailPage() {
 
                 <div className="space-y-4">
                   {familyFields.length === 0 ? (
-                    <div className="text-center py-8 border border-slate-800 rounded-xl">
+                    <div className="text-center py-8 border border-slate-200 dark:border-slate-800 rounded-xl">
                       <p className="text-xs text-slate-500 italic">No family members registered.</p>
                     </div>
                   ) : (
                     familyFields.map((field, index) => (
-                      <div key={field.id} className="rounded-xl border border-slate-800 bg-slate-950/40 p-4 space-y-4">
+                      <div key={field.id} className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/40 p-4 space-y-4">
                         <div className="flex items-center justify-between">
                           <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Relative #{index + 1}</span>
                           {isManagementRole && (
                             <button
                               type="button"
                               onClick={() => removeFamily(index)}
-                              className="text-red-400 hover:text-red-300 transition-all"
+                              className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-all"
                             >
                               <Trash2 className="h-4 w-4" />
                             </button>
@@ -489,42 +486,42 @@ export default function MemberDetailPage() {
 
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
                           <div>
-                            <label className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Full Name</label>
+                            <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">Full Name</label>
                             <input
                               {...register(`familyMembers.${index}.name` as const)}
                               type="text"
                               placeholder="Name"
-                              className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-1.5 px-3 text-xs text-slate-200 focus:border-slate-700 focus:outline-none mt-1"
+                              className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 py-1.5 px-3 text-xs text-slate-900 dark:text-slate-200 focus:border-slate-300 dark:focus:border-slate-700 focus:outline-none mt-1"
                             />
                           </div>
 
                           <div>
-                            <label className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Relation</label>
+                            <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">Relation</label>
                             <input
                               {...register(`familyMembers.${index}.relation` as const)}
                               type="text"
                               placeholder="e.g. Spouse, Son"
-                              className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-1.5 px-3 text-xs text-slate-200 focus:border-slate-700 focus:outline-none mt-1"
+                              className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 py-1.5 px-3 text-xs text-slate-900 dark:text-slate-200 focus:border-slate-300 dark:focus:border-slate-700 focus:outline-none mt-1"
                             />
                           </div>
 
                           <div>
-                            <label className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Mobile</label>
+                            <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">Mobile</label>
                             <input
                               {...register(`familyMembers.${index}.mobile` as const)}
                               type="text"
                               placeholder="Mobile"
-                              className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-1.5 px-3 text-xs text-slate-200 focus:border-slate-700 focus:outline-none mt-1"
+                              className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 py-1.5 px-3 text-xs text-slate-900 dark:text-slate-200 focus:border-slate-300 dark:focus:border-slate-700 focus:outline-none mt-1"
                             />
                           </div>
 
                           <div>
-                            <label className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Aadhaar No</label>
+                            <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">Aadhaar No</label>
                             <input
                               {...register(`familyMembers.${index}.aadhaar` as const)}
                               type="text"
                               placeholder="12 digit Aadhaar"
-                              className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-1.5 px-3 text-xs text-slate-200 focus:border-slate-700 focus:outline-none mt-1"
+                              className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 py-1.5 px-3 text-xs text-slate-900 dark:text-slate-200 focus:border-slate-300 dark:focus:border-slate-700 focus:outline-none mt-1"
                             />
                           </div>
                         </div>
@@ -539,7 +536,7 @@ export default function MemberDetailPage() {
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                    <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-2">
                       <Users className="h-4 w-4" /> Share Nominees
                     </h3>
                     <p className="text-xs text-slate-500">Define ownership share nominees in event of transfer</p>
@@ -548,7 +545,7 @@ export default function MemberDetailPage() {
                     <button
                       type="button"
                       onClick={() => appendNominee({ name: '', relation: '', mobile: '', sharePercentage: 100 })}
-                      className="inline-flex items-center gap-1.5 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-slate-100 py-1.5 px-3.5 rounded-lg transition-all"
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-slate-900 dark:text-slate-100 py-1.5 px-3.5 rounded-lg transition-all"
                     >
                       <Plus className="h-3.5 w-3.5" /> Add Nominee
                     </button>
@@ -557,19 +554,19 @@ export default function MemberDetailPage() {
 
                 <div className="space-y-4">
                   {nomineeFields.length === 0 ? (
-                    <div className="text-center py-8 border border-slate-800 rounded-xl">
+                    <div className="text-center py-8 border border-slate-200 dark:border-slate-800 rounded-xl">
                       <p className="text-xs text-slate-500 italic">No nominees declared.</p>
                     </div>
                   ) : (
                     nomineeFields.map((field, index) => (
-                      <div key={field.id} className="rounded-xl border border-slate-800 bg-slate-950/40 p-4 space-y-4">
+                      <div key={field.id} className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/40 p-4 space-y-4">
                         <div className="flex items-center justify-between">
                           <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Nominee #{index + 1}</span>
                           {isManagementRole && (
                             <button
                               type="button"
                               onClick={() => removeNominee(index)}
-                              className="text-red-400 hover:text-red-300 transition-all"
+                              className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-all"
                             >
                               <Trash2 className="h-4 w-4" />
                             </button>
@@ -578,43 +575,43 @@ export default function MemberDetailPage() {
 
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
                           <div>
-                            <label className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Full Name</label>
+                            <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">Full Name</label>
                             <input
                               {...register(`nominees.${index}.name` as const)}
                               type="text"
                               placeholder="Name"
-                              className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-1.5 px-3 text-xs text-slate-200 focus:border-slate-700 focus:outline-none mt-1"
+                              className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 py-1.5 px-3 text-xs text-slate-900 dark:text-slate-200 focus:border-slate-300 dark:focus:border-slate-700 focus:outline-none mt-1"
                             />
                           </div>
 
                           <div>
-                            <label className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Relation</label>
+                            <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">Relation</label>
                             <input
                               {...register(`nominees.${index}.relation` as const)}
                               type="text"
                               placeholder="Relation"
-                              className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-1.5 px-3 text-xs text-slate-200 focus:border-slate-700 focus:outline-none mt-1"
+                              className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 py-1.5 px-3 text-xs text-slate-900 dark:text-slate-200 focus:border-slate-300 dark:focus:border-slate-700 focus:outline-none mt-1"
                             />
                           </div>
 
                           <div>
-                            <label className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Mobile</label>
+                            <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">Mobile</label>
                             <input
                               {...register(`nominees.${index}.mobile` as const)}
                               type="text"
                               placeholder="Mobile"
-                              className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-1.5 px-3 text-xs text-slate-200 focus:border-slate-700 focus:outline-none mt-1"
+                              className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 py-1.5 px-3 text-xs text-slate-900 dark:text-slate-200 focus:border-slate-300 dark:focus:border-slate-700 focus:outline-none mt-1"
                             />
                           </div>
 
                           <div>
-                            <label className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Share Percentage (%)</label>
+                            <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">Share Percentage (%)</label>
                             <input
                               {...register(`nominees.${index}.sharePercentage` as const, { valueAsNumber: true })}
                               type="number"
                               max="100"
                               placeholder="Share %"
-                              className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-1.5 px-3 text-xs text-slate-200 focus:border-slate-700 focus:outline-none mt-1"
+                              className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 py-1.5 px-3 text-xs text-slate-900 dark:text-slate-200 focus:border-slate-300 dark:focus:border-slate-700 focus:outline-none mt-1"
                             />
                           </div>
                         </div>
@@ -641,12 +638,12 @@ export default function MemberDetailPage() {
                 <div className="border-b border-indigo-100 dark:border-slate-800/80 pb-2.5 space-y-1">
                   <div className="flex items-center justify-center gap-1.5">
                     <Building className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
-                    <h3 className="text-xs font-black uppercase tracking-widest text-indigo-700 dark:text-indigo-400 truncate max-w-[220px]">
+                    <h3 className="text-xs font-black text-indigo-700 dark:text-indigo-400 truncate max-w-[220px]">
                       {activeSociety?.societyName || 'Housing Society'}
                     </h3>
                   </div>
                   <div className="flex items-center justify-center gap-2">
-                    <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                    <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400">
                       Official Resident Smart ID
                     </span>
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -668,7 +665,7 @@ export default function MemberDetailPage() {
                     {watchedName || 'Member Name'}
                   </h4>
                   <div className="flex items-center justify-center gap-1.5 flex-wrap">
-                    <span className="inline-block text-[10px] font-bold border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 rounded-full px-3 py-0.5 uppercase tracking-wide shadow-xs">
+                    <span className="inline-block text-[10px] font-bold border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 rounded-sm px-3 py-0.5 shadow-xs">
                       {watchedType || 'OWNER'}
                     </span>
                   </div>
@@ -677,7 +674,7 @@ export default function MemberDetailPage() {
                 {/* Card footer details */}
                 <div className="border-t border-indigo-100 dark:border-slate-800/80 pt-3 flex items-center justify-between text-slate-600 dark:text-slate-400">
                   <div className="text-left font-mono space-y-0.5">
-                    <span className="text-[8px] font-bold text-slate-400 dark:text-slate-500 block uppercase tracking-wider">Member ID No</span>
+                    <span className="text-[8px] font-bold text-slate-400 dark:text-slate-500 block">Member ID No</span>
                     <span className="text-xs font-black text-slate-900 dark:text-slate-200">{watchedNo || 'MEM-0000'}</span>
                   </div>
 
@@ -731,23 +728,23 @@ export default function MemberDetailPage() {
             {/* Owned Flats Section */}
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <Home className="h-4 w-4 text-emerald-400" />
-                <h3 className="text-sm font-bold text-slate-200">Owned Flats</h3>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-950/30 border border-emerald-900/50 text-emerald-400">
+                <Home className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                <h3 className="text-sm font-bold text-slate-900 dark:text-slate-200">Owned Flats</h3>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-sm bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/50 text-emerald-600 dark:text-emerald-400">
                   {memberData?.ownedFlats?.length || 0}
                 </span>
               </div>
 
               {(!memberData?.ownedFlats || memberData.ownedFlats.length === 0) ? (
-                <div className="text-center py-8 border border-dashed border-slate-800 rounded-xl">
+                <div className="text-center py-8 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
                   <Home className="h-8 w-8 text-slate-600 mx-auto mb-2" />
                   <p className="text-xs text-slate-500">No owned flats found for this member</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/20">
+                <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/20">
                   <table className="w-full text-left text-xs border-collapse whitespace-nowrap">
                     <thead>
-                      <tr className="bg-black/60 text-slate-500 dark:text-slate-400 font-semibold border-b border-slate-800">
+                      <tr className="bg-black/60 text-slate-500 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800">
                         <th className="p-3">Flat No</th>
                         <th className="p-3">Type</th>
                         <th className="p-3">Ownership</th>
@@ -757,19 +754,19 @@ export default function MemberDetailPage() {
                         <th className="p-3">End Date</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-800/40">
+                    <tbody className="divide-y divide-slate-200 dark:divide-slate-800/40">
                       {memberData.ownedFlats.map((flat: any, idx: number) => (
-                        <tr key={flat.flatId || idx} className="text-slate-300 hover:bg-slate-900/20 transition-colors">
+                        <tr key={flat.flatId || idx} className="text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900/20 transition-colors">
                           <td className="p-3">
                             <Link
                               href={`/${society_slug}/flats/${flat.flatId}`}
-                              className="font-bold text-indigo-400 hover:text-indigo-300 transition-all"
+                              className="font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-all"
                             >
                               {flat.number}
                             </Link>
                           </td>
                           <td className="p-3">
-                            <span className="text-[10px] font-semibold border border-slate-700 bg-slate-800/40 rounded-full px-2 py-0.5 uppercase">
+                            <span className="text-[10px] font-semibold border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800/40 rounded-sm px-2 py-0.5">
                               {flat.flatType || '-'}
                             </span>
                           </td>
@@ -778,16 +775,16 @@ export default function MemberDetailPage() {
                           </td>
                           <td className="p-3">
                             {flat.isPrimary ? (
-                              <span className="text-[10px] font-semibold bg-emerald-950/30 border border-emerald-900/50 text-emerald-400 rounded-full px-2 py-0.5">Primary</span>
+                              <span className="text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/50 text-emerald-600 dark:text-emerald-400 rounded-sm px-2 py-0.5">Primary</span>
                             ) : (
                               <span className="text-[10px] text-slate-500">Secondary</span>
                             )}
                           </td>
                           <td className="p-3">
-                            <span className={`text-[10px] font-semibold rounded-full px-2 py-0.5 ${
+                            <span className={`text-[10px] font-semibold rounded-sm px-2 py-0.5 ${
                               flat.isCurrent
-                                ? 'bg-emerald-950/30 border border-emerald-900/50 text-emerald-400'
-                                : 'bg-amber-950/30 border border-amber-900/50 text-amber-400'
+                                ? 'bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/50 text-emerald-600 dark:text-emerald-400'
+                                : 'bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 text-amber-600 dark:text-amber-400'
                             }`}>
                               {flat.isCurrent ? 'Current' : 'Past'}
                             </span>
@@ -805,23 +802,23 @@ export default function MemberDetailPage() {
             {/* Rented Flats Section */}
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <Key className="h-4 w-4 text-amber-400" />
-                <h3 className="text-sm font-bold text-slate-200">Rented Flats (Tenant)</h3>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-950/30 border border-amber-900/50 text-amber-400">
+                <Key className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                <h3 className="text-sm font-bold text-slate-900 dark:text-slate-200">Rented Flats (Tenant)</h3>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-sm bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 text-amber-600 dark:text-amber-400">
                   {memberData?.rentedFlats?.length || 0}
                 </span>
               </div>
 
               {(!memberData?.rentedFlats || memberData.rentedFlats.length === 0) ? (
-                <div className="text-center py-8 border border-dashed border-slate-800 rounded-xl">
+                <div className="text-center py-8 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
                   <Key className="h-8 w-8 text-slate-600 mx-auto mb-2" />
                   <p className="text-xs text-slate-500">No rented flats found for this member</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/20">
+                <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/20">
                   <table className="w-full text-left text-xs border-collapse whitespace-nowrap">
                     <thead>
-                      <tr className="bg-black/60 text-slate-500 dark:text-slate-400 font-semibold border-b border-slate-800">
+                      <tr className="bg-black/60 text-slate-500 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800">
                         <th className="p-3">Flat No</th>
                         <th className="p-3">Type</th>
                         <th className="p-3">Lease Start</th>
@@ -829,29 +826,29 @@ export default function MemberDetailPage() {
                         <th className="p-3">Status</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-800/40">
+                    <tbody className="divide-y divide-slate-200 dark:divide-slate-800/40">
                       {memberData.rentedFlats.map((flat: any, idx: number) => (
-                        <tr key={flat.flatId || idx} className="text-slate-300 hover:bg-slate-900/20 transition-colors">
+                        <tr key={flat.flatId || idx} className="text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900/20 transition-colors">
                           <td className="p-3">
                             <Link
                               href={`/${society_slug}/flats/${flat.flatId}`}
-                              className="font-bold text-indigo-400 hover:text-indigo-300 transition-all"
+                              className="font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-all"
                             >
                               {flat.number}
                             </Link>
                           </td>
                           <td className="p-3">
-                            <span className="text-[10px] font-semibold border border-slate-700 bg-slate-800/40 rounded-full px-2 py-0.5 uppercase">
+                            <span className="text-[10px] font-semibold border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800/40 rounded-sm px-2 py-0.5">
                               {flat.flatType || '-'}
                             </span>
                           </td>
                           <td className="p-3 text-slate-500 dark:text-slate-400 font-mono text-[11px]">{flat.leaseStart || '-'}</td>
                           <td className="p-3 text-slate-500 dark:text-slate-400 font-mono text-[11px]">{flat.leaseEnd || '-'}</td>
                           <td className="p-3">
-                            <span className={`text-[10px] font-semibold rounded-full px-2 py-0.5 ${
+                            <span className={`text-[10px] font-semibold rounded-sm px-2 py-0.5 ${
                               flat.isActive
-                                ? 'bg-emerald-950/30 border border-emerald-900/50 text-emerald-400'
-                                : 'bg-slate-800 border border-slate-700 text-slate-500 dark:text-slate-400'
+                                ? 'bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/50 text-emerald-600 dark:text-emerald-400'
+                                : 'bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400'
                             }`}>
                               {flat.isActive ? 'Active' : 'Ended'}
                             </span>
@@ -871,30 +868,30 @@ export default function MemberDetailPage() {
           <div className="space-y-6 max-w-3xl">
             
             {/* System Access & Login Status Header Box */}
-            <div className="bg-slate-950/60 border border-slate-800 p-6 rounded-2xl space-y-6">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+            <div className="bg-white dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl space-y-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
                 <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-xl bg-indigo-600/20 border border-indigo-500/20 text-indigo-400">
+                  <div className="p-2.5 rounded-xl bg-indigo-600/20 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400">
                     <ShieldCheck className="h-6 w-6" />
                   </div>
                   <div>
-                    <h3 className="text-base font-bold text-slate-100">System Login & Access Control</h3>
+                    <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">System Login & Access Control</h3>
                     <p className="text-xs text-slate-400">Configure member login permissions, account activity status, system role, and access password.</p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className={`text-[10px] font-bold px-3 py-1 rounded-full border uppercase tracking-wider ${
+                  <span className={`text-[10px] font-bold px-3 py-1 rounded-sm border ${
                     watch('canLogin')
-                      ? 'bg-emerald-950/50 border-emerald-800 text-emerald-400'
-                      : 'bg-red-950/50 border-red-800 text-red-400'
+                      ? 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400'
+                      : 'bg-red-50 dark:bg-red-950/50 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400'
                   }`}>
                     {watch('canLogin') ? 'LOGIN ENABLED' : 'LOGIN DISABLED'}
                   </span>
-                  <span className={`text-[10px] font-bold px-3 py-1 rounded-full border uppercase tracking-wider ${
+                  <span className={`text-[10px] font-bold px-3 py-1 rounded-sm border ${
                     watch('status') === 'ACTIVE'
-                      ? 'bg-emerald-950/50 border-emerald-800 text-emerald-400'
-                      : 'bg-amber-950/50 border-amber-800 text-amber-400'
+                      ? 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400'
+                      : 'bg-amber-50 dark:bg-amber-950/50 border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400'
                   }`}>
                     {watch('status') || 'ACTIVE'}
                   </span>
@@ -903,16 +900,16 @@ export default function MemberDetailPage() {
 
               {/* Login Enable/Disable Toggle */}
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                <div className="bg-slate-900/40 border border-slate-800 p-4 rounded-xl space-y-3">
+                <div className="bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 p-4 rounded-xl space-y-3">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-slate-200 flex items-center gap-2">
-                      <UserCheck className="h-4 w-4 text-emerald-400" /> System Login Access
+                    <label className="text-xs font-bold text-slate-900 dark:text-slate-200 flex items-center gap-2">
+                      <UserCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" /> System Login Access
                     </label>
                     <input
                       type="checkbox"
                       checked={watch('canLogin') ?? true}
                       onChange={(e) => setValue('canLogin', e.target.checked)}
-                      className="h-4 w-4 rounded border-slate-700 bg-slate-900 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                      className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
                     />
                   </div>
                   <p className="text-[11px] text-slate-400">
@@ -921,14 +918,14 @@ export default function MemberDetailPage() {
                 </div>
 
                 {/* Active / Inactive Status Switch */}
-                <div className="bg-slate-900/40 border border-slate-800 p-4 rounded-xl space-y-3">
-                  <label className="text-xs font-bold text-slate-200 flex items-center gap-2">
-                    <UserX className="h-4 w-4 text-amber-400" /> Account Activity Status
+                <div className="bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 p-4 rounded-xl space-y-3">
+                  <label className="text-xs font-bold text-slate-900 dark:text-slate-200 flex items-center gap-2">
+                    <UserX className="h-4 w-4 text-amber-600 dark:text-amber-400" /> Account Activity Status
                   </label>
                   <select
                     value={watch('status') || 'ACTIVE'}
                     onChange={(e) => setValue('status', e.target.value as any)}
-                    className="w-full rounded-lg border border-slate-800 bg-slate-950/80 py-2 px-3 text-xs text-slate-200 focus:border-indigo-600/50 focus:outline-none"
+                    className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/80 py-2 px-3 text-xs text-slate-900 dark:text-slate-200 focus:border-indigo-600/50 focus:outline-none"
                   >
                     <option value="ACTIVE">ACTIVE (Operational & Active)</option>
                     <option value="INACTIVE">INACTIVE (Suspended / Disabled)</option>
@@ -942,9 +939,9 @@ export default function MemberDetailPage() {
               </div>
 
               {/* System Role Selection */}
-              <div className="bg-slate-900/40 border border-slate-800 p-4 rounded-xl space-y-3">
-                <label className="text-xs font-bold text-slate-200 flex items-center gap-2">
-                  <ShieldAlert className="h-4 w-4 text-indigo-400" /> System Role & Designation
+              <div className="bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 p-4 rounded-xl space-y-3">
+                <label className="text-xs font-bold text-slate-900 dark:text-slate-200 flex items-center gap-2">
+                  <ShieldAlert className="h-4 w-4 text-indigo-600 dark:text-indigo-400" /> System Role & Designation
                 </label>
                 <select
                   value={watch('memberType') || 'OWNER'}
@@ -952,7 +949,7 @@ export default function MemberDetailPage() {
                     setValue('memberType', e.target.value as any);
                     setValue('role', e.target.value as any);
                   }}
-                  className="w-full rounded-lg border border-slate-800 bg-slate-950/80 py-2.5 px-3 text-xs text-slate-200 focus:border-indigo-600/50 focus:outline-none"
+                  className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/80 py-2.5 px-3 text-xs text-slate-900 dark:text-slate-200 focus:border-indigo-600/50 focus:outline-none"
                 >
                   <option value="OWNER">Owner (Default Flat Owner Role)</option>
                   <option value="CO_OWNER">Co-Owner (Co-Owner Resident Role)</option>
@@ -970,9 +967,9 @@ export default function MemberDetailPage() {
               </div>
 
               {/* Username / Login Email & Password Configuration */}
-              <div className="bg-slate-900/40 border border-slate-800 p-4 rounded-xl space-y-4">
-                <label className="text-xs font-bold text-slate-200 flex items-center gap-2">
-                  <Lock className="h-4 w-4 text-emerald-400" /> Username & Password Credentials
+              <div className="bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 p-4 rounded-xl space-y-4">
+                <label className="text-xs font-bold text-slate-900 dark:text-slate-200 flex items-center gap-2">
+                  <Lock className="h-4 w-4 text-emerald-600 dark:text-emerald-400" /> Username & Password Credentials
                 </label>
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -982,7 +979,7 @@ export default function MemberDetailPage() {
                       type="email"
                       placeholder="e.g. member@society.dev"
                       {...register('email')}
-                      className="w-full mt-1 rounded-lg border border-slate-800 bg-slate-950/80 py-2.5 px-3 text-xs text-slate-200 focus:border-indigo-600/50 focus:outline-none font-mono"
+                      className="w-full mt-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/80 py-2.5 px-3 text-xs text-slate-900 dark:text-slate-200 focus:border-indigo-600/50 focus:outline-none font-mono"
                     />
                     <p className="text-[10px] text-slate-500 mt-1">Email address used to log into the portal system.</p>
                   </div>
@@ -994,12 +991,12 @@ export default function MemberDetailPage() {
                         type={showPassword ? 'text' : 'password'}
                         placeholder="Enter password (min 6 chars)"
                         {...register('password')}
-                        className="w-full rounded-lg border border-slate-800 bg-slate-950/80 py-2.5 pl-3.5 pr-10 text-xs text-slate-200 placeholder-slate-600 focus:border-indigo-600/50 focus:outline-none font-mono"
+                        className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/80 py-2.5 pl-3.5 pr-10 text-xs text-slate-900 dark:text-slate-200 placeholder-slate-600 focus:border-indigo-600/50 focus:outline-none font-mono"
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-2.5 text-slate-500 hover:text-slate-300"
+                        className="absolute right-3 top-2.5 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
                       >
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>

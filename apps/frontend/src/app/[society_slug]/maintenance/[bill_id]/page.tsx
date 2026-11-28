@@ -172,7 +172,7 @@ export default function MaintenanceBillDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#030712]">
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 text-indigo-500 animate-spin" />
       </div>
     );
@@ -188,7 +188,8 @@ export default function MaintenanceBillDetailPage() {
   const paidPct = totalInvoiceDue > 0 ? Math.min(100, Math.round((totalPaidSoFar / totalInvoiceDue) * 100)) : 0;
   const societyName = societyDetails?.name || billData?.societyName || 'Housing Co-Operative Society';
   const societyRegNo = societyDetails?.registrationNumber || 'REG/HSG/2021/MAH';
-  const societyGstin = societyDetails?.gstin || '27AAAAA0000A1Z5';
+  // Never print a placeholder GSTIN on an invoice.
+  const societyGstin = societyDetails?.gstin || '—';
   const societyAddress = societyDetails?.address || 'Main Complex, Society Premises';
 
   return (
@@ -289,12 +290,12 @@ export default function MaintenanceBillDetailPage() {
                 </div>
 
                 <div className="text-left sm:text-right space-y-1">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 block">
+                  <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 block">
                     Maintenance Assessment Tax Invoice
                   </span>
                   <h3 className="text-xl font-extrabold text-slate-900 dark:text-slate-100 font-mono">{billData?.billNumber}</h3>
                   <div className="pt-1 flex flex-wrap sm:justify-end gap-1.5">
-                    <span className={`inline-block text-[10px] font-bold border rounded-full px-3 py-0.5 uppercase tracking-wider ${
+                    <span className={`inline-block text-[10px] font-bold border rounded-sm px-3 py-0.5 ${
                       billData?.status === 'PAID'
                         ? 'bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-950/30 dark:border-emerald-900/50 dark:text-emerald-400'
                         : 'bg-rose-50 border-rose-200 text-rose-800 dark:bg-red-950/30 dark:border-red-900/50 dark:text-red-400'
@@ -311,7 +312,7 @@ export default function MaintenanceBillDetailPage() {
               {/* Billing Info Grid & Assessment Summary */}
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 text-xs">
                 <div className="space-y-1">
-                  <h4 className="font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Billed To:</h4>
+                  <h4 className="font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Billed To:</h4>
                   <p className="text-base font-extrabold text-slate-900 dark:text-slate-100">
                     {billData?.billedToName || billData?.ownerName || 'Flat Owner / Resident'}
                   </p>
@@ -337,7 +338,7 @@ export default function MaintenanceBillDetailPage() {
                 </div>
 
                 <div>
-                  <h4 className="font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Assessment Summary:</h4>
+                  <h4 className="font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Assessment Summary:</h4>
                   <div className="space-y-1.5 bg-slate-50 dark:bg-slate-900/60 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800">
                     <div className="flex justify-between">
                       <span className="text-slate-600 dark:text-slate-400">Total Invoice Billed:</span>
@@ -367,7 +368,7 @@ export default function MaintenanceBillDetailPage() {
 
               {/* Itemized Lines Table */}
               <div className="space-y-2">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Invoice Particulars</h4>
+                <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400">Invoice Particulars</h4>
                 <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
                   <table className="w-full text-left text-xs border-collapse whitespace-nowrap">
                     <thead>
@@ -377,12 +378,37 @@ export default function MaintenanceBillDetailPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200 dark:divide-slate-800/40">
-                      {billData?.items.map((item: any) => (
-                        <tr key={item.id} className="text-slate-800 dark:text-slate-300">
-                          <td className="p-3 font-medium">{item.name}</td>
-                          <td className="p-3 text-right font-mono font-semibold">₹ {Number(item.amount).toLocaleString('en-IN')}</td>
-                        </tr>
-                      ))}
+                      {billData?.items
+                        .filter((item: any) => !/^GST @/.test(item.name))
+                        .map((item: any) => (
+                          <tr key={item.id} className="text-slate-800 dark:text-slate-300">
+                            <td className="p-3 font-medium">{item.name}</td>
+                            <td className="p-3 text-right font-mono font-semibold">₹ {Number(item.amount).toLocaleString('en-IN')}</td>
+                          </tr>
+                        ))}
+                      {Number(billData?.gstAmount) > 0 && (() => {
+                        // Intra-state supply: GST is shown as equal CGST and SGST halves on the taxable value.
+                        const gst = Number(billData.gstAmount);
+                        const rate = Number(billData.gstRate);
+                        const cgst = Math.round((gst / 2) * 100) / 100;
+                        const sgst = Math.round((gst - cgst) * 100) / 100;
+                        return (
+                          <>
+                            <tr className="text-slate-800 dark:text-slate-300 border-t border-slate-200 dark:border-slate-800">
+                              <td className="p-3 font-medium">Taxable value</td>
+                              <td className="p-3 text-right font-mono font-semibold">₹ {Number(billData.subtotalAmount).toLocaleString('en-IN')}</td>
+                            </tr>
+                            <tr className="text-slate-800 dark:text-slate-300">
+                              <td className="p-3 font-medium">CGST @ {rate / 2}%</td>
+                              <td className="p-3 text-right font-mono font-semibold">₹ {cgst.toLocaleString('en-IN')}</td>
+                            </tr>
+                            <tr className="text-slate-800 dark:text-slate-300">
+                              <td className="p-3 font-medium">SGST @ {rate / 2}%</td>
+                              <td className="p-3 text-right font-mono font-semibold">₹ {sgst.toLocaleString('en-IN')}</td>
+                            </tr>
+                          </>
+                        );
+                      })()}
                       <tr className="bg-slate-50 dark:bg-slate-950/50 font-bold border-t border-slate-200 dark:border-slate-800">
                         <td className="p-3 text-slate-900 dark:text-slate-200">Grand Total Billed</td>
                         <td className="p-3 text-right text-slate-900 dark:text-slate-100 font-mono text-sm">₹ {totalInvoiceDue.toLocaleString('en-IN')}</td>
@@ -396,7 +422,7 @@ export default function MaintenanceBillDetailPage() {
               {billData?.receipts?.length > 0 && (
                 <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-slate-800/40">
                   <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                    <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
                       <Receipt className="h-4 w-4 text-emerald-600 dark:text-emerald-400" /> Cleared Payments History
                     </h4>
                     <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
@@ -461,10 +487,10 @@ export default function MaintenanceBillDetailPage() {
           {selectedFormat === 'thermal_pos' && (
             <div className="w-[320px] max-w-full mx-auto bg-white text-slate-900 font-mono text-[11px] p-5 border border-dashed border-slate-400 rounded-xl shadow-md space-y-3 select-none">
               <div className="text-center space-y-0.5 border-b border-dashed border-slate-400 pb-2">
-                <h3 className="font-black text-xs uppercase tracking-wider">{societyName}</h3>
+                <h3 className="font-black text-xs">{societyName}</h3>
                 <p className="text-[9px] text-slate-600">{societyAddress}</p>
                 <p className="text-[9px]">Reg: {societyRegNo}</p>
-                <p className="font-bold text-[10px] uppercase tracking-widest pt-1">*** PAYMENT RECEIPT ***</p>
+                <p className="font-bold text-[10px] pt-1">*** PAYMENT RECEIPT ***</p>
               </div>
 
               <div className="space-y-0.5 text-[10px] border-b border-dashed border-slate-400 pb-2">
@@ -535,7 +561,7 @@ export default function MaintenanceBillDetailPage() {
                   <rect x="90" y="0" width="4" height="24" fill="currentColor" />
                   <rect x="96" y="0" width="1.5" height="24" fill="currentColor" />
                 </svg>
-                <p className="text-[8px] text-slate-500 font-mono tracking-widest">{billData?.billNumber}</p>
+                <p className="text-[8px] text-slate-500 font-mono">{billData?.billNumber}</p>
                 <p className="text-[9px] text-slate-600 pt-1">Thank you for your payment!</p>
                 <p className="text-[8px] text-slate-400">=== Computer Generated POS Slip ===</p>
               </div>
@@ -549,11 +575,11 @@ export default function MaintenanceBillDetailPage() {
             <div className="w-full max-w-2xl mx-auto bg-amber-50/30 dark:bg-slate-900 border-2 border-indigo-900/30 dark:border-indigo-500/40 p-6 rounded-2xl shadow-md space-y-4 text-slate-800 dark:text-slate-200">
               {/* Header Box */}
               <div className="text-center border-b-2 border-indigo-900/20 dark:border-indigo-500/30 pb-3 space-y-0.5">
-                <h3 className="text-base font-black uppercase tracking-wider text-indigo-900 dark:text-indigo-400">
+                <h3 className="text-base font-black uppercase text-indigo-900 dark:text-indigo-400">
                   {societyName}
                 </h3>
                 <p className="text-xs text-slate-600 dark:text-slate-400">{societyAddress}</p>
-                <div className="inline-block bg-indigo-100 dark:bg-indigo-950/80 text-indigo-800 dark:text-indigo-300 font-extrabold text-[10px] px-3 py-0.5 rounded-full border border-indigo-300 dark:border-indigo-800 uppercase tracking-widest mt-1">
+                <div className="inline-block bg-indigo-100 dark:bg-indigo-950/80 text-indigo-800 dark:text-indigo-300 font-extrabold text-[10px] px-3 py-0.5 rounded-sm border border-indigo-300 dark:border-indigo-800 mt-1">
                   OFFICIAL MAINTENANCE PAYMENT VOUCHER
                 </div>
               </div>
@@ -580,13 +606,13 @@ export default function MaintenanceBillDetailPage() {
 
               {/* Amount Box & Stamps */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
-                <div className="inline-flex items-center gap-2 bg-indigo-900 text-white font-mono px-4 py-2 rounded-xl text-base font-black shadow-sm">
+                <div className="inline-flex items-center gap-2 bg-indigo-50 dark:bg-indigo-900 text-white font-mono px-4 py-2 rounded-xl text-base font-black shadow-sm">
                   <span>AMOUNT:</span>
                   <span>₹ {totalInvoiceDue.toLocaleString('en-IN')}</span>
                 </div>
 
                 <div className="flex items-center gap-8 text-center text-xs">
-                  <div className="border border-dashed border-slate-400 p-2 rounded-lg text-[9px] text-slate-400 uppercase tracking-wider">
+                  <div className="border border-dashed border-slate-400 p-2 rounded-lg text-[9px] text-slate-400">
                     [ SOCIETY SEAL ]
                   </div>
                   <div>
@@ -615,19 +641,19 @@ export default function MaintenanceBillDetailPage() {
                     <p className="text-[10px] text-slate-500">Monthly Maintenance Statement</p>
                   </div>
                   <div className="text-right font-mono text-xs">
-                    <span className="text-[9px] text-slate-400 block uppercase">Invoice Ref</span>
+                    <span className="text-[9px] text-slate-400 block">Invoice Ref</span>
                     <span className="font-bold text-slate-900 dark:text-slate-100">{billData?.billNumber}</span>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 text-xs pt-1">
                   <div>
-                    <span className="text-[10px] text-slate-500 block uppercase">Resident / Flat</span>
+                    <span className="text-[10px] text-slate-500 block">Resident / Flat</span>
                     <p className="font-bold text-slate-900 dark:text-slate-100">{billData?.billedToName || billData?.ownerName || 'Resident'}</p>
                     <p className="text-indigo-600 dark:text-indigo-400 font-semibold">Flat {billData?.flatNumber} (Wing {billData?.wingName || 'A'})</p>
                   </div>
                   <div className="text-right">
-                    <span className="text-[10px] text-slate-500 block uppercase">Net Amount Due</span>
+                    <span className="text-[10px] text-slate-500 block">Net Amount Due</span>
                     <p className="text-base font-black text-slate-900 dark:text-slate-100">₹ {totalPayableNow.toLocaleString('en-IN')}</p>
                     <p className="text-[10px] text-rose-600 dark:text-rose-400 font-bold">Due by: {String(billData?.dueDate || '').substring(0, 10)}</p>
                   </div>
@@ -636,7 +662,7 @@ export default function MaintenanceBillDetailPage() {
 
               {/* Perforation Divider Line */}
               <div className="relative border-t-2 border-dashed border-slate-300 dark:border-slate-700 py-1 text-center bg-slate-100 dark:bg-slate-800">
-                <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500 flex items-center justify-center gap-1">
+                <span className="text-[9px] font-bold text-slate-500 flex items-center justify-center gap-1">
                   <Scissors className="h-3 w-3 text-slate-400" /> Detach and submit with Cheque/DD
                 </span>
               </div>
@@ -644,7 +670,7 @@ export default function MaintenanceBillDetailPage() {
               {/* Lower Section: Tear-off Remittance Advice Stub */}
               <div className="p-5 space-y-3 bg-white dark:bg-slate-900 text-xs">
                 <div className="flex justify-between items-center">
-                  <span className="font-bold text-[11px] uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  <span className="font-bold text-[11px] text-slate-700 dark:text-slate-300">
                     SOCIETY OFFICE REMITTANCE SLIP
                   </span>
                   <span className="font-mono text-[10px] text-slate-500">{billData?.billNumber}</span>
@@ -652,15 +678,15 @@ export default function MaintenanceBillDetailPage() {
 
                 <div className="grid grid-cols-3 gap-2 text-[11px]">
                   <div>
-                    <span className="text-slate-400 block text-[9px] uppercase">Flat No</span>
+                    <span className="text-slate-400 block text-[9px]">Flat No</span>
                     <span className="font-bold">{billData?.flatNumber}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400 block text-[9px] uppercase">Amount</span>
+                    <span className="text-slate-400 block text-[9px]">Amount</span>
                     <span className="font-bold font-mono">₹ {totalPayableNow.toLocaleString('en-IN')}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400 block text-[9px] uppercase">Date</span>
+                    <span className="text-slate-400 block text-[9px]">Date</span>
                     <span className="font-mono">{new Date().toLocaleDateString('en-IN')}</span>
                   </div>
                 </div>
@@ -781,7 +807,7 @@ export default function MaintenanceBillDetailPage() {
               <div className="bg-white dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 p-3 rounded-xl space-y-1.5 text-xs shadow-xs">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] text-slate-600 dark:text-slate-400 font-medium">After Logged Payment:</span>
-                  <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border uppercase tracking-wider ${
+                  <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-sm border ${
                     isPartial
                       ? 'bg-amber-50 dark:bg-amber-950/60 border-amber-200 dark:border-amber-800/80 text-amber-700 dark:text-amber-400'
                       : 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800/80 text-emerald-700 dark:text-emerald-400'

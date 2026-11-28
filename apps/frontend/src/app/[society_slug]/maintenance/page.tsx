@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../providers/auth-context';
+import { GenerateBillsPanel } from '@/components/maintenance/generate-bills-panel';
+import { BillingCategoriesPanel } from '@/components/maintenance/billing-categories-panel';
 import { apiClient } from '../../../lib/api/client';
 import { 
   Building, Search, Filter, ShieldAlert, Plus, Calculator, Settings, Receipt, 
@@ -198,7 +200,9 @@ export default function MaintenanceDashboardPage() {
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  const [activeView, setActiveView] = useState<'bills' | 'society_dues' | 'generate' | 'settings'>('bills');
+  const [activeView, setActiveView] = useState<'bills' | 'society_dues' | 'generate' | 'categories' | 'settings'>(
+    searchParams.get('view') === 'categories' ? 'categories' : 'bills',
+  );
   const [societyDuesList, setSocietyDuesList] = useState<any[]>([]);
   const [isDuesLoading, setIsDuesLoading] = useState<boolean>(false);
   const [duesSearchTerm, setDuesSearchTerm] = useState<string>('');
@@ -223,10 +227,6 @@ export default function MaintenanceDashboardPage() {
   const [bulkUserRemark, setBulkUserRemark] = useState<string>('');
 
   // Sweep Form state
-  const [periodStart, setPeriodStart] = useState<string>('');
-  const [periodEnd, setPeriodEnd] = useState<string>('');
-  const [dueDate, setDueDate] = useState<string>('');
-  const [generationType, setGenerationType] = useState<'SINGLE' | 'PER_MONTH'>('SINGLE');
 
   // Settings formula state
   const [formulaString, setFormulaString] = useState<string>('(area * rate) + parking + water');
@@ -430,42 +430,6 @@ export default function MaintenanceDashboardPage() {
     }
   };
 
-  const handleGenerateInvoices = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!periodStart || !periodEnd || !dueDate) {
-      setMessage({ type: 'error', text: 'All sweep dates must be filled.' });
-      return;
-    }
-
-    setIsProcessing(true);
-    setMessage(null);
-
-    try {
-      const res = await apiClient.post('/maintenance/generate', {
-        periodStart,
-        periodEnd,
-        dueDate,
-        generationType,
-      });
-
-      if (res.data?.success) {
-        setMessage({
-          type: 'success',
-          text: `Invoices generated successfully for ${res.data.data.count} flats.`
-        });
-        setActiveView('bills');
-        fetchBills();
-      }
-    } catch (err: any) {
-      setMessage({
-        type: 'error',
-        text: err.response?.data?.message || 'Failed to generate sweep.',
-      });
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
   // Maintenance Calculation Mode Config State
   const [calculationType, setCalculationType] = useState<string>('PER_SQ_FT');
   const [perSqFtRate, setPerSqFtRate] = useState<string>('3.50');
@@ -587,8 +551,6 @@ export default function MaintenanceDashboardPage() {
 
   return (
     <main className="relative flex min-h-screen flex-col items-center justify-start overflow-x-hidden w-full py-4 sm:py-5 px-3 sm:px-5 lg:px-6">
-      {/* Background Grids */}
-      <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
 
       <div className="w-full max-w-[1600px] mx-auto space-y-6 z-10">
 
@@ -597,7 +559,7 @@ export default function MaintenanceDashboardPage() {
           <div className="flex items-center gap-2.5">
             <CreditCard className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Billing & Maintenance Portal</h2>
+              <h2 className="text-xl font-normal text-slate-900 dark:text-slate-100">Billing & Maintenance Portal</h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Manage billing cycles, record single/multi-invoice payments, track part payments, and audit double-entry ledger postings</p>
             </div>
           </div>
@@ -641,6 +603,16 @@ export default function MaintenanceDashboardPage() {
                   <Calculator className="h-3.5 w-3.5" /> Batch Billing Sweep
                 </button>
                 <button
+                  onClick={() => setActiveView('categories')}
+                  className={`rounded-xl border py-1.5 px-3 text-xs font-semibold shrink-0 transition-all flex items-center gap-1.5 cursor-pointer ${
+                    activeView === 'categories'
+                      ? 'bg-indigo-600 border-indigo-500 text-white shadow-xs'
+                      : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900'
+                  }`}
+                >
+                  <Layers className="h-3.5 w-3.5" /> Billing Categories
+                </button>
+                <button
                   onClick={() => setActiveView('settings')}
                   className={`rounded-xl border py-1.5 px-3 text-xs font-semibold shrink-0 transition-all flex items-center gap-1.5 cursor-pointer ${
                     activeView === 'settings'
@@ -674,16 +646,16 @@ export default function MaintenanceDashboardPage() {
 
         {/* Multi-Invoice Bulk Action Bar */}
         {selectedBillIds.length > 0 && activeView === 'bills' && (
-          <div className="bg-indigo-950/60 border border-indigo-900/60 p-4 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4 animate-in fade-in duration-150 shadow-lg">
+          <div className="bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-900/60 p-4 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4 animate-in fade-in duration-150 shadow-lg">
             <div className="flex items-center gap-3">
               <div className="h-9 w-9 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-sm">
                 {selectedBillIds.length}
               </div>
               <div>
-                <p className="text-xs font-bold text-slate-100 flex items-center gap-1.5">
-                  <Building className="h-3.5 w-3.5 text-indigo-400" /> Flat {selectedFlatNumber} — {selectedBillIds.length} Invoices Selected for Lump-Sum Payment
+                <p className="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                  <Building className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" /> Flat {selectedFlatNumber} — {selectedBillIds.length} Invoices Selected for Lump-Sum Payment
                 </p>
-                <p className="text-[11px] text-indigo-300 mt-0.5">
+                <p className="text-[11px] text-indigo-700 dark:text-indigo-300 mt-0.5">
                   Combined Total Due: <span className="font-bold text-white">₹ {totalSelectedDue.toLocaleString('en-IN')}</span>
                 </p>
               </div>
@@ -692,7 +664,7 @@ export default function MaintenanceDashboardPage() {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setSelectedBillIds([])}
-                className="px-3 py-1.5 rounded-lg border border-slate-700 text-slate-300 hover:bg-slate-800 text-xs font-semibold"
+                className="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold"
               >
                 Deselect All
               </button>
@@ -711,7 +683,7 @@ export default function MaintenanceDashboardPage() {
           <div className="space-y-4">
 
             {/* Filter Search Bar */}
-            <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-slate-950/40 p-3 border border-slate-800 rounded-xl">
+            <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-slate-50 dark:bg-slate-950/40 p-3 border border-slate-200 dark:border-slate-800 rounded-xl">
               <div className="relative w-full sm:w-80">
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
                 <input
@@ -719,24 +691,24 @@ export default function MaintenanceDashboardPage() {
                   placeholder="Search flat number..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-800 bg-slate-900/60 text-xs text-slate-200 focus:outline-none focus:border-slate-700"
+                  className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 text-xs text-slate-900 dark:text-slate-200 focus:outline-none focus:border-slate-300 dark:focus:border-slate-700"
                 />
               </div>
 
               <div className="flex items-center gap-4 w-full sm:w-auto">
-                <label className="flex items-center cursor-pointer border-r border-slate-700 pr-4">
+                <label className="flex items-center cursor-pointer border-r border-slate-300 dark:border-slate-700 pr-4">
                   <div className="relative">
                     <input type="checkbox" className="sr-only" checked={showMyInvoices} onChange={(e) => setShowMyInvoices(e.target.checked)} />
-                    <div className={`block w-9 h-5 rounded-full transition-colors ${showMyInvoices ? 'bg-indigo-600' : 'bg-slate-700'}`}></div>
+                    <div className={`block w-9 h-5 rounded-full transition-colors ${showMyInvoices ? 'bg-indigo-600' : 'bg-slate-200 dark:bg-slate-700'}`}></div>
                     <div className={`dot absolute left-1 top-1 bg-white w-3 h-3 rounded-full transition-transform ${showMyInvoices ? 'translate-x-4' : ''}`}></div>
                   </div>
-                  <div className="ml-2 text-[11px] font-bold text-slate-300">Show My Bills</div>
+                  <div className="ml-2 text-[11px] font-bold text-slate-700 dark:text-slate-300">Show My Bills</div>
                 </label>
                 <Filter className="h-4 w-4 text-slate-500 hidden sm:inline" />
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full sm:w-44 py-2 px-3 rounded-lg border border-slate-800 bg-slate-900/60 text-xs text-slate-300 focus:outline-none appearance-none"
+                  className="w-full sm:w-44 py-2 px-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 text-xs text-slate-700 dark:text-slate-300 focus:outline-none appearance-none"
                 >
                   <option value="">All Statuses</option>
                   <option value="UNPAID">UNPAID</option>
@@ -753,16 +725,16 @@ export default function MaintenanceDashboardPage() {
                 <Loader2 className="h-8 w-8 animate-spin" />
               </div>
             ) : billsList.length === 0 ? (
-              <div className="text-center py-16 border border-dashed border-slate-800 rounded-xl">
+              <div className="text-center py-16 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
                 <Building className="h-10 w-10 text-slate-600 mx-auto mb-3" />
                 <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">No maintenance bills found</p>
                 <p className="text-xs text-slate-600 mt-1">Run a batch sweep or adjust filters to view invoice records.</p>
               </div>
             ) : (
-              <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/20">
+              <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/20">
                 <table className="w-full text-left text-xs border-collapse whitespace-nowrap">
                   <thead>
-                    <tr className="bg-slate-50 dark:bg-black/60 text-slate-700 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800 text-[10px] uppercase">
+                    <tr className="bg-slate-50 dark:bg-black/60 text-slate-700 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800 text-[10px]">
                       <th className="px-3.5 py-2.5 w-10">
                         <button
                           onClick={handleSelectAllPending}
@@ -771,7 +743,7 @@ export default function MaintenanceDashboardPage() {
                               ? `Select all unpaid invoices for Flat ${selectedFlatNumber}`
                               : 'Select all unpaid invoices for first flat'
                           }
-                          className="text-slate-500 dark:text-slate-400 hover:text-indigo-400"
+                          className="text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400"
                         >
                           <Layers className="h-3.5 w-3.5" />
                         </button>
@@ -843,11 +815,11 @@ export default function MaintenanceDashboardPage() {
                           </td>
                           <td className="p-4">
                             <span
-                              className={`text-[10px] font-bold border rounded-full px-2.5 py-1 uppercase tracking-wider ${bill.status === 'PAID'
-                                  ? 'bg-emerald-950/30 border-emerald-900/50 text-emerald-400'
+                              className={`text-[10px] font-bold border rounded-sm px-2.5 py-1 ${bill.status === 'PAID'
+                                  ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-600 dark:text-emerald-400'
                                   : bill.status === 'PARTIAL'
-                                    ? 'bg-amber-950/30 border-amber-900/50 text-amber-400'
-                                    : 'bg-red-950/30 border-red-900/50 text-red-400'
+                                    ? 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/50 text-amber-600 dark:text-amber-400'
+                                    : 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400'
                                 }`}
                             >
                               {bill.status}
@@ -865,7 +837,7 @@ export default function MaintenanceDashboardPage() {
                             {(isManagementRole || bill.status === 'PAID' || bill.status === 'PARTIAL') && (
                               <Link
                                 href={`/${society_slug}/maintenance/${bill.id}`}
-                                className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-all"
+                                className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-all"
                               >
                                 Open Invoice <ArrowRight className="h-3.5 w-3.5" />
                               </Link>
@@ -885,15 +857,15 @@ export default function MaintenanceDashboardPage() {
         {activeView === 'society_dues' && (
           <div className="space-y-3.5 animate-in fade-in duration-150">
             {/* Legal Notice Banner */}
-            <div className="p-3 rounded-xl border border-indigo-900/60 bg-indigo-950/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs shadow-xs">
+            <div className="p-3 rounded-xl border border-indigo-200 dark:border-indigo-900/60 bg-indigo-50 dark:bg-indigo-950/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs shadow-xs">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-indigo-600/20 border border-indigo-500/30 text-indigo-400">
+                <div className="p-2 rounded-xl bg-indigo-600/20 border border-indigo-500/30 text-indigo-600 dark:text-indigo-400">
                   <ShieldAlert className="h-4 w-4" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-slate-100 flex items-center gap-2">
+                  <h4 className="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                     Statutory Transparency Roster
-                    <span className="text-[10px] bg-indigo-900/80 text-indigo-300 px-2 py-0.2 rounded-full font-bold">
+                    <span className="text-[10px] bg-indigo-50 dark:bg-indigo-900/80 text-indigo-700 dark:text-indigo-300 px-2 py-0.2 rounded-sm font-bold">
                       MCS & RWA Compliant
                     </span>
                   </h4>
@@ -902,9 +874,9 @@ export default function MaintenanceDashboardPage() {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 font-mono text-[11px] bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-800 text-slate-300 whitespace-nowrap">
+              <div className="flex items-center gap-2 font-mono text-[11px] bg-white dark:bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 whitespace-nowrap">
                 <span>Total Flats with Dues:</span>
-                <strong className="text-amber-400">{societyDuesList.length}</strong>
+                <strong className="text-amber-600 dark:text-amber-400">{societyDuesList.length}</strong>
               </div>
             </div>
 
@@ -939,7 +911,7 @@ export default function MaintenanceDashboardPage() {
               </div>
             ) : societyDuesList.length === 0 ? (
               <div className="text-center py-16 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl space-y-2">
-                <CheckCircle className="h-8 w-8 text-emerald-400 mx-auto" />
+                <CheckCircle className="h-8 w-8 text-emerald-600 dark:text-emerald-400 mx-auto" />
                 <h3 className="text-sm font-bold text-slate-900 dark:text-slate-200">Zero Outstanding Dues!</h3>
                 <p className="text-xs text-slate-500">All flats in the society currently have their maintenance accounts cleared.</p>
               </div>
@@ -947,7 +919,7 @@ export default function MaintenanceDashboardPage() {
               <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/20 shadow-xs">
                 <table className="w-full text-left text-xs border-collapse whitespace-nowrap">
                   <thead>
-                    <tr className="bg-slate-50 dark:bg-black/60 text-slate-700 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800 text-[10px] uppercase">
+                    <tr className="bg-slate-50 dark:bg-black/60 text-slate-700 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800 text-[10px]">
                       <th className="px-3.5 py-2.5">Flat & Location</th>
                       <th className="px-3.5 py-2.5">Unit Type</th>
                       <th className="px-3.5 py-2.5">Occupancy</th>
@@ -978,7 +950,7 @@ export default function MaintenanceDashboardPage() {
                             </span>
                           </td>
                           <td className="px-3.5 py-2.5">
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-sm border ${
                               item.occupancyStatus === 'OCCUPIED'
                                 ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/60 text-emerald-700 dark:text-emerald-300'
                                 : 'bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
@@ -996,7 +968,7 @@ export default function MaintenanceDashboardPage() {
                             ₹ {Number(item.totalPendingAmount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                           </td>
                           <td className="px-3.5 py-2.5">
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider ${
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-sm border ${
                               item.status === 'OVERDUE'
                                 ? 'bg-rose-50 dark:bg-red-950/50 border-rose-200 dark:border-red-800 text-rose-700 dark:text-red-400'
                                 : 'bg-amber-50 dark:bg-amber-950/50 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400'
@@ -1013,91 +985,20 @@ export default function MaintenanceDashboardPage() {
           </div>
         )}
 
-        {/* Generate Sweep Form */}
+        {/* Bill generation: settings → preview → generate */}
         {activeView === 'generate' && (
-          <form onSubmit={handleGenerateInvoices} className="space-y-3.5 max-w-2xl bg-white dark:bg-slate-950/20 border border-slate-200 dark:border-slate-800 p-4 sm:p-5 rounded-xl shadow-xs">
-            <div className="bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 p-3 rounded-xl">
-              <h3 className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
-                <Calculator className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-                Generate Invoices Sweep
-              </h3>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Run a batch sweep operation. This automatically computes maintenance variables for all flats and logs double-entry receivables postings.</p>
-            </div>
-
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div>
-                <label className="text-xs text-slate-700 dark:text-slate-300 font-semibold">Billing Period Start</label>
-                <input
-                  type="date"
-                  value={periodStart}
-                  onChange={(e) => setPeriodStart(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 py-2 px-3 text-xs text-slate-900 dark:text-slate-200 focus:border-indigo-600 focus:outline-none mt-1"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="text-xs text-slate-700 dark:text-slate-300 font-semibold">Billing Period End</label>
-                <input
-                  type="date"
-                  value={periodEnd}
-                  onChange={(e) => setPeriodEnd(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 py-2 px-3 text-xs text-slate-900 dark:text-slate-200 focus:border-indigo-600 focus:outline-none mt-1"
-                  required
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="text-xs text-slate-700 dark:text-slate-300 font-semibold">Invoice Due Date</label>
-              <input
-                type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-                className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 py-2 px-3 text-xs text-slate-900 dark:text-slate-200 focus:border-indigo-600 focus:outline-none mt-1"
-                required
-              />
-            </div>
-
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2 border-t border-slate-200 dark:border-slate-800">
-              <div>
-                <label className="text-xs text-slate-700 dark:text-slate-300 font-semibold">Generation Type</label>
-                <div className="flex gap-4 mt-1.5">
-                  <label className="flex items-center gap-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="generationType"
-                      value="SINGLE"
-                      checked={generationType === 'SINGLE'}
-                      onChange={() => setGenerationType('SINGLE')}
-                      className="accent-indigo-600"
-                    />
-                    <span>Single Combined Invoice</span>
-                  </label>
-                  <label className="flex items-center gap-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="generationType"
-                      value="PER_MONTH"
-                      checked={generationType === 'PER_MONTH'}
-                      onChange={() => setGenerationType('PER_MONTH')}
-                      className="accent-indigo-600"
-                    />
-                    <span>Separate Invoice per Month</span>
-                  </label>
-                </div>
-              </div>
-              <button
-                type="submit"
-                disabled={isProcessing}
-                className="rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 text-xs font-bold transition-all disabled:opacity-55 flex items-center justify-center gap-1.5 shadow-xs"
-              >
-                {isProcessing && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                Generate Batch Sweeps
-              </button>
-            </div>
-          </form>
+          <GenerateBillsPanel
+            graceDays={penaltyGracePeriodDays}
+            onGenerated={(text) => {
+              setMessage({ type: 'success', text });
+              setActiveView('bills');
+              fetchBills();
+            }}
+          />
         )}
+
+        {/* Billing categories: residential / commercial rates, floor rates, GST, own late fees */}
+        {activeView === 'categories' && <BillingCategoriesPanel />}
 
         {/* Maintenance Calculation Mode Setup */}
         {activeView === 'settings' && (
@@ -1117,7 +1018,7 @@ export default function MaintenanceDashboardPage() {
             {/* Section 1: Mode Selectors */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
                   Step 1: Choose Primary Billing Mode
                 </span>
                 <span className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold">
@@ -1137,7 +1038,7 @@ export default function MaintenanceDashboardPage() {
                 >
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.2 rounded-full bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60">
+                      <span className="text-[10px] font-extrabold px-2 py-0.2 rounded-sm bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60">
                         Mode 1
                       </span>
                       <div className="flex items-center gap-1">
@@ -1169,7 +1070,7 @@ export default function MaintenanceDashboardPage() {
                 >
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.2 rounded-full bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60">
+                      <span className="text-[10px] font-extrabold px-2 py-0.2 rounded-sm bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60">
                         Mode 2
                       </span>
                       <div className="flex items-center gap-1">
@@ -1201,7 +1102,7 @@ export default function MaintenanceDashboardPage() {
                 >
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.2 rounded-full bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60">
+                      <span className="text-[10px] font-extrabold px-2 py-0.2 rounded-sm bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60">
                         Mode 3
                       </span>
                       <div className="flex items-center gap-1">
@@ -1296,7 +1197,7 @@ export default function MaintenanceDashboardPage() {
                       <label className="text-xs font-bold text-slate-800 dark:text-slate-200">Configured Society Flat Unit Types & Fixed Rates (₹)</label>
                       <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Define fixed base maintenance charges for each distinct flat type in your society.</p>
                     </div>
-                    <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-2.5 py-1 rounded-full border border-indigo-200 dark:border-indigo-800/60 shrink-0">
+                    <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-2.5 py-1 rounded-sm border border-indigo-200 dark:border-indigo-800/60 shrink-0">
                       {flatTypes.length} Types Active
                     </span>
                   </div>
@@ -1412,7 +1313,7 @@ export default function MaintenanceDashboardPage() {
 
               {/* Standard Formula Preset Templates */}
               <div className="space-y-2">
-                <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
                   <Sparkles className="h-3.5 w-3.5 text-amber-500" /> Standard Preset Templates (Click to Load):
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
@@ -1473,7 +1374,7 @@ export default function MaintenanceDashboardPage() {
               {/* Variable Pills / Insert Shortcuts with Inline Help Icons */}
               <div className="space-y-3 bg-slate-50/80 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 p-5 rounded-2xl">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] text-slate-600 dark:text-slate-400 font-bold uppercase tracking-wider">
+                  <span className="text-[11px] text-slate-600 dark:text-slate-400 font-bold">
                     Click any variable to append to formula (or click ? for full definition):
                   </span>
                   <span className="text-[10px] text-slate-500">{FORMULA_VARIABLES.length} variables supported</span>
@@ -1512,7 +1413,7 @@ export default function MaintenanceDashboardPage() {
                         Formula Variables Reference & Database Mapping
                       </h5>
                     </div>
-                    <span className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold bg-indigo-50 dark:bg-indigo-950/60 px-2.5 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-800/60">
+                    <span className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold bg-indigo-50 dark:bg-indigo-950/60 px-2.5 py-0.5 rounded-sm border border-indigo-200 dark:border-indigo-800/60">
                       Auto-Evaluated at Billing Sweep
                     </span>
                   </div>
@@ -1534,7 +1435,7 @@ export default function MaintenanceDashboardPage() {
                             <button
                               type="button"
                               onClick={() => setSelectedVarHelp(item)}
-                              className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full border uppercase cursor-pointer hover:opacity-80 transition ${item.categoryColor}`}
+                              className={`text-[9px] font-extrabold px-2 py-0.5 rounded-sm border cursor-pointer hover:opacity-80 transition ${item.categoryColor}`}
                               title="Click for full breakdown"
                             >
                               {item.category} ℹ️
@@ -1595,7 +1496,7 @@ export default function MaintenanceDashboardPage() {
                             <code className="text-xs font-mono font-extrabold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-800/60">
                               {selectedVarHelp.tag}
                             </code>
-                            <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border uppercase ${selectedVarHelp.categoryColor}`}>
+                            <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-sm border ${selectedVarHelp.categoryColor}`}>
                               {selectedVarHelp.category}
                             </span>
                           </div>
@@ -1616,7 +1517,7 @@ export default function MaintenanceDashboardPage() {
                     {/* Scrollable Body */}
                     <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 text-xs">
                       <div>
-                        <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Description & Purpose</label>
+                        <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400">Description & Purpose</label>
                         <p className="text-slate-800 dark:text-slate-200 mt-1 leading-relaxed bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
                           {selectedVarHelp.desc}
                         </p>
@@ -1624,14 +1525,14 @@ export default function MaintenanceDashboardPage() {
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Database Source</span>
+                          <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">Database Source</span>
                           <p className="font-mono text-[11px] text-slate-900 dark:text-slate-100 font-semibold truncate" title={selectedVarHelp.source}>
                             {selectedVarHelp.source}
                           </p>
                         </div>
 
                         <div className="bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Preview Value (Sample)</span>
+                          <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">Preview Value (Sample)</span>
                           <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold">
                             {selectedVarHelp.sampleVal}
                           </p>
@@ -1639,7 +1540,7 @@ export default function MaintenanceDashboardPage() {
                       </div>
 
                       <div>
-                        <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Example Algebraic Expression</label>
+                        <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400">Example Algebraic Expression</label>
                         <div className="flex items-center justify-between gap-2 mt-1 bg-slate-50 dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
                           <code className="text-xs font-mono font-bold text-indigo-600 dark:text-indigo-400">
                             {selectedVarHelp.example}
@@ -1957,15 +1858,15 @@ export default function MaintenanceDashboardPage() {
                 <div className="modal-summary-box bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 p-4 rounded-xl space-y-3">
                   <div className="grid grid-cols-3 gap-2 text-center text-xs">
                     <div>
-                      <span className="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-semibold">Total Due (Bill)</span>
+                      <span className="text-slate-500 dark:text-slate-400 text-[10px] font-semibold">Total Due (Bill)</span>
                       <span className="block font-bold text-slate-800 dark:text-slate-200 mt-0.5">₹ {billAmount.toLocaleString('en-IN')}</span>
                     </div>
                     <div>
-                      <span className="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-semibold">Paid So Far</span>
+                      <span className="text-slate-500 dark:text-slate-400 text-[10px] font-semibold">Paid So Far</span>
                       <span className="block font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">₹ {totalPaidSoFar.toLocaleString('en-IN')}</span>
                     </div>
                     <div>
-                      <span className="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-semibold">Balance Due</span>
+                      <span className="text-slate-500 dark:text-slate-400 text-[10px] font-semibold">Balance Due</span>
                       <span className="block font-black text-amber-600 dark:text-amber-400 mt-0.5">₹ {curRemainingBalance.toLocaleString('en-IN')}</span>
                     </div>
                   </div>
@@ -1988,11 +1889,11 @@ export default function MaintenanceDashboardPage() {
                 {/* Past Payment Details Section */}
                 <div className="modal-history-box bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 p-4 rounded-xl space-y-2.5">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-xs font-bold text-indigo-700 dark:text-indigo-300 uppercase tracking-wider">
+                    <div className="flex items-center gap-2 text-xs font-bold text-indigo-700 dark:text-indigo-300">
                       <History className="h-4 w-4 text-indigo-600 dark:text-indigo-400" /> Past Payment Details
                     </div>
                     {selectedBillForPayment.lastPayment && (
-                      <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full border uppercase tracking-wider ${selectedBillForPayment.lastPayment.paymentType === 'FULL'
+                      <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-sm border ${selectedBillForPayment.lastPayment.paymentType === 'FULL'
                           ? 'bg-emerald-100 dark:bg-emerald-950/50 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400'
                           : 'bg-amber-100 dark:bg-amber-950/50 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400'
                         }`}>
@@ -2075,8 +1976,8 @@ export default function MaintenanceDashboardPage() {
                   {/* Live Part Payment Impact Preview Box */}
                   <div className="bg-indigo-50/70 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-800/50 p-3.5 rounded-xl space-y-1.5 text-xs shadow-xs">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs text-indigo-900 dark:text-indigo-300 font-bold uppercase tracking-wide">Payment Impact Preview</span>
-                      <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border uppercase tracking-wider ${isPartPayment
+                      <span className="text-xs text-indigo-900 dark:text-indigo-300 font-bold">Payment Impact Preview</span>
+                      <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-sm border ${isPartPayment
                           ? 'bg-amber-100 dark:bg-amber-950/60 border-amber-300 dark:border-amber-800/80 text-amber-700 dark:text-amber-400'
                           : 'bg-emerald-100 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-800/80 text-emerald-700 dark:text-emerald-400'
                         }`}>
@@ -2206,7 +2107,7 @@ export default function MaintenanceDashboardPage() {
 
               {/* Selected Invoices Breakdown */}
               <div className="modal-summary-box bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 p-3.5 rounded-xl space-y-2 max-h-40 overflow-y-auto">
-                <span className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 tracking-wider">Selected Invoices</span>
+                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">Selected Invoices</span>
                 <div className="space-y-1 divide-y divide-slate-200 dark:divide-slate-800/40">
                   {selectedBillsData.map((b) => (
                     <div key={b.id} className="pt-1 flex items-center justify-between text-xs">

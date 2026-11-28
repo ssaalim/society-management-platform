@@ -3,7 +3,7 @@ import { FlatRepository } from './flat.repository';
 import { CreateFlatDto } from './dto/create-flat.dto';
 import { UpdateFlatDto } from './dto/update-flat.dto';
 import { DRIZZLE_PROVIDER, DrizzleDB } from '@core/database/database.module';
-import { auditLogs, flatOwners, flatTenants, owners, users, floors, members, tenants } from '../../../database/schema';
+import { auditLogs, flatOwners, flatTenants, owners, users, buildings, wings, floors, members, tenants } from '../../../database/schema';
 import { eq, and } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -30,6 +30,9 @@ export class FlatService {
     } = dto;
 
     let payload = { ...flatProps };
+    if (payload.floorId) {
+      await this.requireLayout(floors, payload.floorId, 'Floor');
+    }
     if (!payload.floorId) {
       const activeTenantId = this.flatRepository['activeTenantId'];
       const firstFloor = await this.db.select().from(floors).where(eq(floors.societyId, activeTenantId)).limit(1);
@@ -105,7 +108,30 @@ export class FlatService {
     };
   }
 
+  /** Throws unless the flat belongs to the current society. */
+  private async requireFlat(flatId: string) {
+    const flat = await this.flatRepository.findById(flatId);
+    if (!flat) {
+      throw new NotFoundException('Flat unit not found.');
+    }
+    return flat;
+  }
+
+  /** Throws unless the given layout parent (building / wing / floor) belongs to the current society. */
+  private async requireLayout(table: typeof buildings | typeof wings | typeof floors, id: string, label: string) {
+    const activeTenantId = this.flatRepository['activeTenantId'];
+    const rows = await this.db
+      .select({ id: table.id })
+      .from(table)
+      .where(and(eq(table.id, id), eq(table.societyId, activeTenantId)))
+      .limit(1);
+    if (rows.length === 0) {
+      throw new NotFoundException(`${label} not found in this society.`);
+    }
+  }
+
   async getOwnerHistory(flatId: string) {
+    await this.requireFlat(flatId);
     return this.flatRepository.getOwnerHistory(flatId);
   }
 
@@ -126,6 +152,9 @@ export class FlatService {
       ...flatProps
     } = dto as any;
 
+    if (flatProps.floorId) {
+      await this.requireLayout(floors, flatProps.floorId, 'Floor');
+    }
     const updated = await this.flatRepository.update(id, flatProps);
 
     if (ownerId) {
@@ -169,16 +198,17 @@ export class FlatService {
   async assignOwner(flatId: string, inputOwnerId: string) {
     let resolvedOwnerId = inputOwnerId;
     const activeTenantId = this.flatRepository['activeTenantId'];
+    await this.requireFlat(flatId);
 
     // Check if inputOwnerId exists in `owners` table directly
-    const ownerRec = await this.db.select().from(owners).where(eq(owners.id, inputOwnerId));
+    const ownerRec = await this.db.select().from(owners).where(and(eq(owners.id, inputOwnerId), eq(owners.societyId, activeTenantId)));
     if (ownerRec.length > 0) {
       resolvedOwnerId = ownerRec[0].id;
     } else {
       // Check if inputOwnerId is a memberId in `members` table
-      const memberRec = await this.db.select().from(members).where(eq(members.id, inputOwnerId));
+      const memberRec = await this.db.select().from(members).where(and(eq(members.id, inputOwnerId), eq(members.societyId, activeTenantId)));
       if (memberRec.length > 0) {
-        const existingOwner = await this.db.select().from(owners).where(eq(owners.userId, memberRec[0].userId));
+        const existingOwner = await this.db.select().from(owners).where(and(eq(owners.userId, memberRec[0].userId), eq(owners.societyId, activeTenantId)));
         if (existingOwner.length > 0) {
           resolvedOwnerId = existingOwner[0].id;
         } else {
@@ -192,7 +222,7 @@ export class FlatService {
         // Check if inputOwnerId is a userId
         const userRec = await this.db.select().from(users).where(eq(users.id, inputOwnerId));
         if (userRec.length > 0) {
-          const existingOwner = await this.db.select().from(owners).where(eq(owners.userId, inputOwnerId));
+          const existingOwner = await this.db.select().from(owners).where(and(eq(owners.userId, inputOwnerId), eq(owners.societyId, activeTenantId)));
           if (existingOwner.length > 0) {
             resolvedOwnerId = existingOwner[0].id;
           } else {
@@ -247,6 +277,16 @@ export class FlatService {
     }
 
     let targetOwnerId = dto.newOwnerId;
+    if (targetOwnerId) {
+      const ownerInSociety = await this.db
+        .select({ id: owners.id })
+        .from(owners)
+        .where(and(eq(owners.id, targetOwnerId), eq(owners.societyId, flat.societyId)))
+        .limit(1);
+      if (ownerInSociety.length === 0) {
+        throw new NotFoundException('Owner not found in this society.');
+      }
+    }
 
     // If newOwnerId is not provided directly, resolve or create user & owner record
     if (!targetOwnerId && dto.newOwnerEmail) {
@@ -333,14 +373,15 @@ export class FlatService {
   }) {
     let resolvedTenantId = data.tenantId;
     const activeTenantId = this.flatRepository['activeTenantId'];
+    await this.requireFlat(flatId);
 
-    const tenantRec = await this.db.select().from(tenants).where(eq(tenants.id, data.tenantId));
+    const tenantRec = await this.db.select().from(tenants).where(and(eq(tenants.id, data.tenantId), eq(tenants.societyId, activeTenantId)));
     if (tenantRec.length > 0) {
       resolvedTenantId = tenantRec[0].id;
     } else {
-      const memberRec = await this.db.select().from(members).where(eq(members.id, data.tenantId));
+      const memberRec = await this.db.select().from(members).where(and(eq(members.id, data.tenantId), eq(members.societyId, activeTenantId)));
       if (memberRec.length > 0) {
-        const existingTenant = await this.db.select().from(tenants).where(eq(tenants.userId, memberRec[0].userId));
+        const existingTenant = await this.db.select().from(tenants).where(and(eq(tenants.userId, memberRec[0].userId), eq(tenants.societyId, activeTenantId)));
         if (existingTenant.length > 0) {
           resolvedTenantId = existingTenant[0].id;
         } else {
@@ -353,7 +394,7 @@ export class FlatService {
       } else {
         const userRec = await this.db.select().from(users).where(eq(users.id, data.tenantId));
         if (userRec.length > 0) {
-          const existingTenant = await this.db.select().from(tenants).where(eq(tenants.userId, data.tenantId));
+          const existingTenant = await this.db.select().from(tenants).where(and(eq(tenants.userId, data.tenantId), eq(tenants.societyId, activeTenantId)));
           if (existingTenant.length > 0) {
             resolvedTenantId = existingTenant[0].id;
           } else {
@@ -398,6 +439,7 @@ export class FlatService {
    * Deactivates tenancy, logging move-out details.
    */
   async moveOutTenant(flatId: string, moveOutDate: string) {
+    await this.requireFlat(flatId);
     await this.db
       .update(flatTenants)
       .set({ 
@@ -555,6 +597,7 @@ export class FlatService {
     if (!buildingId) {
       throw new BadRequestException('Building ID is required to create a wing.');
     }
+    await this.requireLayout(buildings, buildingId, 'Building');
     return this.flatRepository.createWing(buildingId, name);
   }
 
@@ -565,6 +608,7 @@ export class FlatService {
     if (!wingId) {
       throw new BadRequestException('Wing ID is required to create a floor.');
     }
+    await this.requireLayout(wings, wingId, 'Wing');
     return this.flatRepository.createFloor(wingId, number);
   }
 

@@ -6,10 +6,14 @@ import {
   Param, 
   UseGuards, 
   Req, 
-  Query 
+  Query,
+  Patch,
+  Delete,
 } from '@nestjs/common';
 import { MaintenanceService } from './maintenance.service';
 import { GenerateBillsDto, generateBillsSchema } from './dto/generate-bills.dto';
+import { billingCategorySchema, assignCategorySchema } from './dto/billing-category.dto';
+import { BillingCategoryService } from './billing-category.service';
 import { CreateReceiptDto, createReceiptSchema, bulkReceiptSchema } from './dto/create-receipt.dto';
 import { SupabaseAuthGuard } from '@core/auth/supabase.guard';
 import { TenantGuard } from '@core/tenant/tenant.guard';
@@ -22,7 +26,58 @@ import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 @UseGuards(SupabaseAuthGuard, TenantGuard, RolesGuard)
 @Controller('maintenance')
 export class MaintenanceController {
-  constructor(private readonly maintenanceService: MaintenanceService) {}
+  constructor(
+    private readonly maintenanceService: MaintenanceService,
+    private readonly billingCategoryService: BillingCategoryService,
+  ) {}
+
+  @ApiOperation({ summary: 'List billing categories (residential / commercial rates)' })
+  @RequirePermissions('billing:read')
+  @Get('categories')
+  async listCategories() {
+    return { success: true, data: await this.billingCategoryService.list() };
+  }
+
+  @ApiOperation({ summary: 'Create a billing category' })
+  @RequirePermissions('billing:write')
+  @Post('categories')
+  async createCategory(@Body() body: any) {
+    return { success: true, data: await this.billingCategoryService.create(billingCategorySchema.parse(body)) };
+  }
+
+  @ApiOperation({ summary: 'Assign units to a billing category (or clear with null)' })
+  @RequirePermissions('billing:write')
+  @Post('categories/assign')
+  async assignCategory(@Body() body: any) {
+    const dto = assignCategorySchema.parse(body);
+    return { success: true, data: await this.billingCategoryService.assignFlats(dto.flatIds, dto.billingCategoryId) };
+  }
+
+  @ApiOperation({ summary: 'Update a billing category' })
+  @RequirePermissions('billing:write')
+  @Patch('categories/:categoryId')
+  async updateCategory(@Param('categoryId') categoryId: string, @Body() body: any) {
+    return { success: true, data: await this.billingCategoryService.update(categoryId, billingCategorySchema.parse(body)) };
+  }
+
+  @ApiOperation({ summary: 'Delete a billing category' })
+  @RequirePermissions('billing:write')
+  @Delete('categories/:categoryId')
+  async deleteCategory(@Param('categoryId') categoryId: string) {
+    return { success: true, data: await this.billingCategoryService.remove(categoryId) };
+  }
+
+  @ApiOperation({ summary: 'Preview a bill generation run (no bills are created)' })
+  @RequirePermissions('billing:write')
+  @Post('generate/preview')
+  async previewBills(@Body() body: any) {
+    const validatedDto = generateBillsSchema.parse(body);
+    const result = await this.maintenanceService.previewBills(validatedDto);
+    return {
+      success: true,
+      data: result,
+    };
+  }
 
   @ApiOperation({ summary: 'Run batch sweep to generate maintenance bills' })
   @RequirePermissions('billing:write')

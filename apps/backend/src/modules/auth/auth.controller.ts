@@ -23,6 +23,16 @@ export class AuthController {
     };
   }
 
+  @ApiOperation({ summary: 'Platform console sign-in (platform admins only)' })
+  @Post('platform-login')
+  async platformLogin(@Body() body: { email: string; password?: string }) {
+    const result = await this.authService.platformLogin(body);
+    return {
+      success: true,
+      data: result,
+    };
+  }
+
   @ApiOperation({ summary: 'Register a new user account' })
   @Post('register')
   async register(@Body() body: { email: string; password?: string; name?: string; mobile?: string }) {
@@ -30,41 +40,6 @@ export class AuthController {
     return {
       success: true,
       data: result,
-    };
-  }
-
-  /**
-   * Dev login endpoint for test picker.
-   */
-  @ApiOperation({ summary: '[DEV] Quick login with email to get user profile and token' })
-  @Post('dev-login')
-  async devLogin(@Body() body: { email: string; password?: string }) {
-    const result = await this.authService.login({
-      email: body.email,
-      password: body.password || 'password123',
-    });
-
-    return {
-      success: true,
-      data: {
-        devToken: result.token,
-        token: result.token,
-        user: result.user,
-        memberships: result.memberships,
-      },
-    };
-  }
-
-  /**
-   * List available demo users for picker.
-   */
-  @ApiOperation({ summary: 'List demo users for login picker' })
-  @Get('dev-users')
-  async listDevUsers() {
-    const users = await this.userService.findAllUsers();
-    return {
-      success: true,
-      data: users,
     };
   }
 

@@ -5,6 +5,8 @@ import { LoggerModule } from 'nestjs-pino';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { ClsModule } from 'nestjs-cls';
 import { DatabaseModule } from '@core/database/database.module';
+import { LedgerResolverModule } from '@core/accounting/ledger-resolver.module';
+import { ErrorsModule } from '@core/errors/errors.module';
 import { UserModule } from './modules/user/user.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { v4 as uuidv4 } from 'uuid';
@@ -26,6 +28,12 @@ import { QueueModule } from './modules/queue/queue.module';
 import { WorkerModule } from './modules/worker/worker.module';
 import { AuditModule } from './core/audit/audit.module';
 import { StaffModule } from './modules/staff/staff.module';
+import { FacilityModule } from './modules/facility/facility.module';
+import { CommitteeModule } from './modules/committee/committee.module';
+import { MeetingModule } from './modules/meeting/meeting.module';
+import { VisitorModule } from './modules/visitor/visitor.module';
+import { FundModule } from './modules/fund/fund.module';
+import { ChatModule } from './modules/chat/chat.module';
 import { CustomReportModule } from './modules/custom-report/custom-report.module';
 import { SearchModule } from './modules/search/search.module';
 import { StorageModule } from './core/storage/storage.module';
@@ -56,13 +64,15 @@ import { StorageModule } from './core/storage/storage.module';
         generateId: true,
         idGenerator: (req: any) => req.headers['x-request-id'] || uuidv4(),
         setup: (cls, req: any) => {
-          // Resolve and inject initial tenant id from request header x-tenant-id
-          const tenantId = req.headers['x-tenant-id'] || null;
-          cls.set('tenantId', tenantId);
+          // The society is set only by TenantGuard after it verifies membership. Never trust the raw x-tenant-id
+          // header here: routes without that guard would otherwise run against any society the caller names.
+          cls.set('tenantId', null);
         },
       },
     }),
     DatabaseModule,
+    LedgerResolverModule,
+    ErrorsModule,
     UserModule,
     AuthModule,
     SocietyModule,
@@ -74,6 +84,12 @@ import { StorageModule } from './core/storage/storage.module';
     ResidentModule,
     ComplaintModule,
     StaffModule,
+    FacilityModule,
+    CommitteeModule,
+    MeetingModule,
+    VisitorModule,
+    FundModule,
+    ChatModule,
     AssetModule,
     ReportModule,
     NotificationModule,

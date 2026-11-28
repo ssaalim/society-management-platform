@@ -99,6 +99,8 @@ export class ReportController {
   }
 
   @ApiOperation({ summary: 'Export data reports dynamically to CSV sheet files' })
+  @UseGuards(SupabaseAuthGuard, TenantGuard, RolesGuard)
+  @RequirePermissions('accounting:read')
   @Get('export')
   async exportCSV(
     @Query('type') type: string,

@@ -8,6 +8,7 @@ coverage
 
 # next.js
 .next/
+.next-*/
 out/
 build
 
@@ -32,3 +33,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 node_modules
+
+# Local development file uploads (used when Cloudflare R2 is not configured)
+apps/backend/uploads/

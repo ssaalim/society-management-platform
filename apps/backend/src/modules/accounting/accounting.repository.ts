@@ -9,7 +9,7 @@ import {
 } from '../../../database/schema';
 import { DRIZZLE_PROVIDER, DrizzleDB } from '@core/database/database.module';
 import { ClsService } from 'nestjs-cls';
-import { eq, and, sql, desc } from 'drizzle-orm';
+import { eq, and, sql, desc, notInArray } from 'drizzle-orm';
 
 @Injectable()
 export class AccountingRepository extends TenantBaseRepository<typeof vouchers> {
@@ -109,6 +109,8 @@ export class AccountingRepository extends TenantBaseRepository<typeof vouchers> 
       .select({
         id: expenses.id,
         billNumber: expenses.billNumber,
+        description: expenses.description,
+        recurringExpenseId: expenses.recurringExpenseId,
         amount: expenses.amount,
         date: expenses.date,
         status: expenses.status,
@@ -122,7 +124,8 @@ export class AccountingRepository extends TenantBaseRepository<typeof vouchers> 
       .from(expenses)
       .leftJoin(vendors, eq(expenses.vendorId, vendors.id))
       .leftJoin(vouchers, eq(expenses.voucherId, vouchers.id))
-      .where(eq(expenses.societyId, this.activeTenantId))
+      // Recurring-expense drafts and skipped periods are not real expenses yet.
+      .where(and(eq(expenses.societyId, this.activeTenantId), notInArray(expenses.status, ['DRAFT', 'SKIPPED'])))
       .orderBy(desc(expenses.date), desc(expenses.createdAt));
   }
 
@@ -145,42 +148,4 @@ export class AccountingRepository extends TenantBaseRepository<typeof vouchers> 
       .groupBy(ledgers.id, ledgers.name, ledgers.code, ledgers.group);
   }
 
-  /**
-   * Resolves double-entry ledger by name in active society scope.
-   */
-  async findLedgerByName(name: string) {
-    const ledger = await this.db
-      .select()
-      .from(ledgers)
-      .where(
-        and(
-          eq(ledgers.name, name),
-          eq(ledgers.societyId, this.activeTenantId)
-        )
-      );
-
-    if (ledger.length > 0) return ledger[0];
-
-    const code = name.toLowerCase().includes('cash')
-      ? 'CASH-01'
-      : name.toLowerCase().includes('bank')
-      ? 'BANK-01'
-      : name.toLowerCase().includes('income')
-      ? 'INC-01'
-      : name.toLowerCase().includes('receivables')
-      ? 'REC-01'
-      : 'GEN-01';
-
-    const group = (name.includes('Income') ? 'INCOME' : name.includes('Receivables') || name.includes('Cash') || name.includes('Bank') ? 'ASSETS' : 'LIABILITIES') as any;
-
-    const newLedgers = await this.db.insert(ledgers).values({
-      id: require('crypto').randomUUID(),
-      societyId: this.activeTenantId,
-      name,
-      code,
-      group,
-    }).returning();
-
-    return newLedgers[0];
-  }
 }

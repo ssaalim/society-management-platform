@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Inject, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, Inject, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { UserRepository } from './user.repository';
 import { DRIZZLE_PROVIDER, DrizzleDB } from '@core/database/database.module';
 import { 
@@ -96,115 +96,24 @@ export class UserService {
   }
 
   /**
-   * Retrieves active memberships list for the user profile.
-   * Auto-assigns Super Admin society access if user has superadmin role or email.
+   * The signed-in user's profile and the societies they belong to. Nothing is created here: a user sees only
+   * societies a society admin added them to, and platform admins (users.is_platform_admin) are not members of any.
    */
-  async getUserMemberships(userId: string, email?: string, name?: string) {
-    const userEmail = email ? email.trim().toLowerCase() : 'admin@society.dev';
-    const userName = name || (email ? email.split('@')[0] : 'Super Admin');
-
-    // 1. Safely resolve or upsert user profile
-    const existingById = await this.userRepository.findById(userId);
-    const existingByEmail = email ? await this.userRepository.findByEmail(userEmail) : null;
-
-    let targetUserId = userId;
-
-    if (existingById) {
-      await this.db.update(users).set({
-        name: userName,
-        updatedAt: new Date(),
-      }).where(eq(users.id, userId));
-    } else if (existingByEmail) {
-      targetUserId = existingByEmail.id;
-      await this.db.update(users).set({
-        name: userName,
-        updatedAt: new Date(),
-      }).where(eq(users.id, existingByEmail.id));
-    } else {
-      await this.db
-        .insert(users)
-        .values({
-          id: userId,
-          email: userEmail,
-          name: userName,
-          isActive: true,
-        })
-        .onConflictDoNothing();
+  async getUserMemberships(userId: string) {
+    const user = await this.userRepository.findById(userId);
+    if (!user || !user.isActive) {
+      throw new UnauthorizedException('Account not found or deactivated.');
     }
-
-    // 2. Query existing society memberships
-    let memberships = await this.userRepository.findUserMemberships(targetUserId);
-
-    // 3. If user has no society memberships yet, auto-provision SUPER_ADMIN mapping if applicable
-    if (memberships.length === 0) {
-      let superAdminRole = await this.db.query.roles.findFirst({
-        where: eq(roles.name, 'SUPER_ADMIN'),
-      });
-      if (!superAdminRole) {
-        const newRoles = await this.db
-          .insert(roles)
-          .values({
-            id: '10000000-0000-0000-0000-000000000001',
-            name: 'SUPER_ADMIN',
-            description: 'Platform Administrator',
-          })
-          .onConflictDoNothing()
-          .returning();
-        superAdminRole = newRoles[0] || (await this.db.query.roles.findFirst({ where: eq(roles.name, 'SUPER_ADMIN') }));
-      }
-
-      let allSocieties = await this.db.query.societies.findMany();
-      if (allSocieties.length === 0) {
-        const newSoc = await this.db
-          .insert(societies)
-          .values({
-            id: '30000000-0000-0000-0000-000000000001',
-            name: 'Sunview Heights CHS Ltd.',
-            slug: 'sunview-heights',
-            address: 'Plot No. 42, Sector 21, Kharghar, Navi Mumbai - 410210',
-            registrationNumber: 'MH/HSG/2018/00042',
-          })
-          .onConflictDoNothing()
-          .returning();
-        allSocieties = newSoc.length > 0 ? newSoc : (await this.db.query.societies.findMany());
-      }
-
-      if (superAdminRole && allSocieties.length > 0) {
-        for (const s of allSocieties) {
-          await this.db
-            .insert(userSocieties)
-            .values({
-              id: require('crypto').randomUUID(),
-              userId: targetUserId,
-              societyId: s.id,
-              roleId: superAdminRole.id,
-            })
-            .onConflictDoNothing();
-        }
-      }
-
-      // Re-fetch memberships now that user is mapped
-      memberships = await this.userRepository.findUserMemberships(targetUserId);
-    }
-
-    const finalUser = (await this.userRepository.findById(targetUserId)) || {
-      id: targetUserId,
-      email: userEmail,
-      name: userName,
-      mobile: null,
-      avatarUrl: null,
-      defaultSocietyId: null,
-      isActive: true,
-    };
-
+    const memberships = await this.userRepository.findUserMemberships(userId);
     return {
       user: {
-        id: finalUser.id,
-        email: finalUser.email,
-        name: finalUser.name,
-        mobile: finalUser.mobile,
-        avatarUrl: finalUser.avatarUrl,
-        defaultSocietyId: finalUser.defaultSocietyId,
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        mobile: user.mobile,
+        avatarUrl: user.avatarUrl,
+        defaultSocietyId: user.defaultSocietyId,
+        isPlatformAdmin: user.isPlatformAdmin,
       },
       memberships,
     };
@@ -228,10 +137,6 @@ export class UserService {
 
   async findByEmail(email: string) {
     return this.userRepository.findByEmail(email);
-  }
-
-  async findAllUsers() {
-    return this.userRepository.findAll();
   }
 
   // ==========================================
