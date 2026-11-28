@@ -18,7 +18,8 @@
     "db:merge-ledgers": "ts-node database/merge-duplicate-ledgers.ts",
     "db:studio": "drizzle-kit studio",
     "test": "jest",
-    "test:cov": "jest --coverage"
+    "test:cov": "jest --coverage",
+    "db:set-password": "ts-node database/set-password.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1116.0",
