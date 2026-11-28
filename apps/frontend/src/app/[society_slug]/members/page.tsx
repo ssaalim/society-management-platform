@@ -70,6 +70,8 @@ export default function MembersListingPage() {
   const { activeSociety } = useAuth();
 
   const isManagementRole = ['SUPER_ADMIN', 'PRESIDENT', 'SECRETARY', 'COMMITTEE_MEMBER'].includes(activeSociety?.role || '');
+  // Who the server lets make app invite codes (InviteService OFFICE).
+  const canInvite = ['SUPER_ADMIN', 'SOCIETY_ADMIN', 'PRESIDENT', 'VICE_PRESIDENT', 'SECRETARY', 'JOINT_SECRETARY', 'TREASURER', 'ACCOUNTANT', 'ESTATE_MANAGER'].includes(activeSociety?.role || '');
 
   // Tab state
   const [activeTab, setActiveTab] = useState<'members' | 'system_users'>('members');
@@ -777,16 +779,18 @@ export default function MembersListingPage() {
                         </td>
                         <td className="py-3.5 px-4 text-right">
                           <div className="flex items-center justify-end gap-2">
+                            {canInvite && (
+                              <button
+                                onClick={() => setInviting(u)}
+                                className="p-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-all"
+                                title="Invite to the mobile app (or reset password)"
+                                aria-label={`Invite ${u.name || u.email} to the app`}
+                              >
+                                <Smartphone className="h-3.5 w-3.5" />
+                              </button>
+                            )}
                             {isManagementRole && (
                               <>
-                                <button
-                                  onClick={() => setInviting(u)}
-                                  className="p-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-all"
-                                  title="Invite to the mobile app (or reset password)"
-                                  aria-label={`Invite ${u.name || u.email} to the app`}
-                                >
-                                  <Smartphone className="h-3.5 w-3.5" />
-                                </button>
                                 <button
                                   onClick={() => {
                                     setEditingUserRole(u);
