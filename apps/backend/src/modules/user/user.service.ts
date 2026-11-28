@@ -147,6 +147,8 @@ export class UserService {
     const list = await this.db
       .select({
         id: users.id,
+        // The members page reads the account id as userId (role change, revoke, app invite).
+        userId: users.id,
         name: users.name,
         email: users.email,
         mobile: users.mobile,
@@ -157,6 +159,7 @@ export class UserService {
         roleDescription: roles.description,
         userSocietyId: userSocieties.id,
         joinedAt: userSocieties.createdAt,
+        createdAt: userSocieties.createdAt,
       })
       .from(userSocieties)
       .innerJoin(users, eq(userSocieties.userId, users.id))
